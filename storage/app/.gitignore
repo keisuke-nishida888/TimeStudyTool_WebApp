@@ -1,0 +1,4 @@
+*
+!/public/
+!/debug/
+!.gitignore

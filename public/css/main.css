@@ -1,0 +1,2520 @@
+html, body {
+                background-color: #fff;
+                color: #636b6f;
+                font-family: 'Nunito', sans-serif;
+                font-weight: 200;
+                height: 100vh;
+                margin: 0;
+            }
+
+            .full-height {
+                height: 100vh;
+            }
+
+            .flex-center {
+                align-items: center;
+                display: flex;
+                justify-content: center;
+            }
+
+            .position-ref {
+                position: relative;
+            }
+
+            .top-right {
+                position: absolute;
+                right: 10px;
+                top: 18px;
+            }
+
+            .content {
+                text-align: center;
+            }
+/*
+            .title {
+                font-size: 84px;
+            } */
+
+            /* aタグの下線を消す */
+            a{
+                text-decoration: none;
+            }
+
+            .links > a {
+                color: #636b6f;
+                padding: 0 25px;
+                font-size:calc(13px / var(--coef));
+                font-weight: 600;
+                letter-spacing: .1rem;
+                text-decoration: none;
+                text-transform: uppercase;
+            }
+
+            .m-b-md {
+                margin-bottom: 30px;
+            }
+
+
+
+
+            /* PC向け */
+            @media screen and (min-width: 481px)
+            {
+
+            }
+            @media screen and (max-width: 480px)
+            {
+                #btn_loginuser
+                {
+                    position: absolute;
+                    top:414.89px;
+                    left: 768.1px;
+                }
+            }
+
+
+
+            :root
+            {
+                --mainmenu_img: 15vh;/*変数定義*/
+                --coef:1.5;
+            }
+
+
+
+            .all
+            {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                width:calc(1800px / var(--coef));
+                height:calc(1200px / var(--coef));
+            }
+
+            .err_txt
+            {
+                position: absolute;
+                margin:0;
+                padding:0;
+                -ms-transform: translate(-50%,-50%);
+                -webkit-transform: translate(-50%,-50%);
+                transform: translate(-50%,-50%);
+                top: 400px;
+                left: 50%;
+                font-size: 32px;
+                width: 1000px;
+            }
+
+            .errno_txt
+            {
+                position: absolute;
+                margin:0;
+                padding:0;
+                -ms-transform: translate(-50%,-50%);
+                -webkit-transform: translate(-50%,-50%);
+                transform: translate(-50%,-50%);
+                top: 250px;
+                left: 50%;
+                font-weight: bold;
+                font-size: 60px;
+            }
+
+            /* 共通 */
+            #img_bar
+            {
+                z-index: 1px;
+                width:calc(1700px / var(--coef));
+            }
+
+            image
+            {
+
+                outline: none;
+            }
+
+            #title
+            {
+                font-weight: bold;
+                color: white;
+                font-size:calc(28px / var(--coef));
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                -ms-transform: translate(-50%,-50%);
+                -webkit-transform: translate(-50%,-50%);
+                transform: translate(-50%,-50%);
+                margin:0;
+                padding:0;
+            }
+
+            #login_title
+            {
+                font-weight: bold;
+                font-size:calc(60px / var(--coef));
+                /* display: flex; */
+                /*justify-content: center; /*左右中央揃え*/
+                /*align-items: center;     上下中央揃え*/
+
+                position: relative;
+                top:calc(85px / var(--coef));
+                font-family: "MS Pゴシック";
+            }
+
+            p{text-align:center;}
+
+
+            #bar_div
+            {
+                position: relative;
+                top:calc(33.54px / var(--coef));
+                width: calc(1700px / var(--coef));
+                height: calc(75.35px / var(--coef));
+                margin: auto;
+            }
+
+            #img_login_logo
+            {
+                position: relative;
+                top:calc(33.54px / var(--coef));
+                width:calc(300px / var(--coef));
+                height:calc(175.59px / var(--coef));
+            }
+
+            .cont
+            {
+                text-align:left;
+                position: relative;
+                top:calc(160px / var(--coef));
+                /* width: calc(40px / var(--coef)); */
+                margin:0 auto;
+            }
+
+            .cont input[type = "text"],
+            .cont input[type = "password"]
+            {
+                text-align:left;
+                width: calc(300px / var(--coef));
+            }
+            .cont td:nth-child(1)
+            {
+                width:calc(130px / var(--coef));
+            }
+
+            .cont2
+            {
+                position: relative;
+                top: calc(-72px / var(--coef));
+                left: calc(1140px / var(--coef));
+            }
+
+
+
+            #img_logo
+            {
+                position: fixed;
+                top:calc(875.54px / var(--coef));
+                left:calc(80px / var(--coef));
+                width:calc(100px / var(--coef));
+                z-index: 2;
+            }
+
+            #btn_login
+            {
+                width:calc(243.67px / var(--coef));
+                position: relative;
+                top:calc(250px / var(--coef));
+            }
+
+            #btn_logout
+            {
+                position: absolute;
+                top:calc(6px / var(--coef));
+                left:calc(1535px / var(--coef));
+                width:calc(152px / var(--coef));
+                z-index: 2;
+            }
+
+            .text_style
+            {
+                font-weight: bold;
+                font-size:calc(16px / var(--coef));
+            }
+
+            .text_style2
+            {
+                font-weight: bold;
+                font-size: 10px;
+                left:-3px;
+            }
+
+            #breadcrumbs
+            {
+                position: absolute;
+                top:calc(100px / var(--coef));
+                left:calc(63.22px / var(--coef));
+                font-size: calc(16px / var(--coef));
+                z-index: 2;
+            }
+
+            #btn_back
+            {
+                position: absolute;
+                top:calc(6px / var(--coef));
+                left:calc(13px / var(--coef));
+                width:calc(112px / var(--coef));
+                z-index: 2;
+                outline:none;
+            }
+
+            .container0
+            {
+                position: absolute;
+                top:calc(10px / var(--coef));
+                /* left:calc(600px / var(--coef)); */
+                width:calc(1800px / var(--coef));
+                height:calc(1200px / var(--coef));
+                text-align:center;
+                margin:0 auto;
+                z-index: 1;
+            }
+
+            .container_facil
+            {
+                top:calc(180px / var(--coef));
+                /* left:calc(1500px / var(--coef)); */
+                width:calc(1800px / var(--coef));
+                /* height:calc(1000px / var(--coef)); */
+
+                z-index: 1;
+            }
+            .container_facil input[type = "text"]
+            {
+
+                font-size:calc(24px / var(--coef));
+                height:calc(31px / var(--coef));
+                width:calc(322px / var(--coef));
+            }
+
+            input[type = "image"]
+            {
+                outline:none;
+            }
+
+
+            .container
+            {
+                position: absolute;
+                top:calc(180px / var(--coef));
+                left:calc(200px / var(--coef));
+                /* width:calc(1800px / var(--coef)); */
+                height:calc(1000px / var(--coef));
+
+                z-index: 1;
+            }
+
+
+            .container2
+            {
+                position: absolute;
+                top:calc(65px / var(--coef));
+                left:calc(850px / var(--coef));
+
+                z-index: 1;
+            }
+            .container3
+            {
+                position: absolute;
+                top:calc(65px / var(--coef));
+                left:calc(820px / var(--coef));
+
+                z-index: 1;
+            }
+
+            .allcont
+            {
+                position: absolute;
+                width:calc(1800px / var(--coef));
+                height: calc(1200px / var(--coef));
+            }
+
+            /* メインメニュー */
+            /* 管理者ユーザ */
+            #btn_loginuser
+            {
+                position: absolute;
+                /* タイトルバーの位置(33.54px)と高さ(75.35px)とパンくずリスト(100px)分だけ差し引く */
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left:calc(740px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_linkquestionary1
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left:calc(1280px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_facility
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left:calc(200px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+
+            /* #btn_costregist
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left:calc(571px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            } */
+
+            /* ボツ */
+            #btn_wearable
+            {
+                position: absolute;
+                top:calc(516.78px / var(--coef));
+                left:calc(268.13px / var(--coef));
+                /* left:calc(208.13px / var(--coef)); */
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_wearable_3
+            {
+                position: absolute;
+                /* top:calc(314.89px / var(--coef));
+                left:calc(268.13px / var(--coef));
+                width:calc(263.74px / var(--coef)); */
+                top:calc(414.89px / var(--coef));
+                left:calc(358.13px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_risksensor
+            {
+                position: absolute;
+                top:calc(516.78px / var(--coef));
+                left:calc(1259px / var(--coef));
+                /* left:calc(1199px / var(--coef)); */
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_risksensor_3
+            {
+                position: absolute;
+                top:calc(314.89px / var(--coef));
+                left:calc(1259px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            /* ボツ ここまで */
+
+            /* 一般ユーザ */
+
+            #btn_linkquestionary2
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px)/ var(--coef));
+                left:calc(1169px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+
+            #btn_facility_3
+            {
+                position: absolute;
+                width: calc(263.74px / var(--coef));
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left: calc(358.13px / var(--coef));
+
+            }
+
+
+            /* 施設ユーザ */
+            /* (施設登録済み) */
+            #btn_facilityinput
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                /* left:calc(358.13px / var(--coef)); */
+                left:calc(268.13px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_linkquestionary3
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left:calc(1259px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            /* (施設登録未) */
+            #btn_facilityinput_3
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                /* left:calc(768.1px / var(--coef)); */
+                left:calc(358.13px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_linkquestionary4
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left:calc(1169px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+            #btn_helpermain
+            {
+                position: absolute;
+                top: calc(190.89px - 33.54px - 100px - 28px / var(--coef));
+                /* left: calc(-292px / var(--coef)); */
+                left: calc(-630.9px / var(--coef));
+                width: calc(263.74px / var(--coef));
+            }
+
+
+
+
+            .chx_txt
+            {
+                font-size: 12px;
+                color: red;
+            }
+
+
+            #btn_deluser,
+            #btn_delfacility,
+            #btn_delwearable,
+            #btn_delrisksensor
+            {
+                position: absolute;
+                top:calc(634.2px / var(--coef));
+                left:calc(1553.7px / var(--coef));
+                width:calc(196px / var(--coef));
+            }
+
+            #btn_delhelper {
+                position: absolute;
+                top: calc(724.2px / var(--coef));
+                left: calc(1553.7px / var(--coef));
+                width: calc(196px / var(--coef));
+            }
+
+            #lb_time1
+            {
+                position: absolute;
+                top: calc(484px / var(--coef));
+                left: calc(700px / var(--coef));
+                font-size: 12px;
+            }
+            #lb_time2
+            {
+                position: absolute;
+                top: calc(814px / var(--coef));
+                left: calc(700px / var(--coef));
+                font-size: 12px;
+            }
+            #st_ymd {
+                margin-top: 15px;
+                height:calc(40px / var(--coef));
+                width:calc(300px / var(--coef));
+            }
+            #ed_ymd{
+                margin-top: 15px;
+                height:calc(40px / var(--coef));
+                width:calc(300px / var(--coef));
+            }
+
+            input[type = "text"],
+            input[type = "password"],
+            input[type = "email"]
+            {
+                font-size:calc(24px / var(--coef));
+                height:calc(31px / var(--coef));
+                width:calc(622px / var(--coef));
+            }
+            input[type=checkbox] {
+                width: 20px;
+                height: 20px;
+                vertical-align: middle;
+            }
+            select
+            {
+                font-size:calc(24px / var(--coef));
+                left:calc(31px / var(--coef));
+                width:calc(622px / var(--coef));
+                height:calc(30px / var(--coef));
+            }
+
+
+            .container2 input[type = "text"]
+            {
+                font-size:calc(18px / var(--coef));
+                height:calc(30px / var(--coef));
+                width:calc(222px / var(--coef));
+            }
+            .container3 input[type = "text"]
+            {
+                font-size:calc(18px / var(--coef));
+                height:calc(30px / var(--coef));
+                width:calc(222px / var(--coef));
+            }
+
+            .container2 select,
+            .div3 select
+            {
+                height:calc(26px / var(--coef));
+                width:calc(190px / var(--coef));
+                font-size:calc(20px / var(--coef));
+                height:calc(30px / var(--coef));
+            }
+            .container3 select,
+            .div3 select
+            {
+                height:calc(26px / var(--coef));
+                width:calc(150px / var(--coef));
+                height:calc(30px / var(--coef));
+                font-size:calc(14px / var(--coef));
+            }
+
+            .container3 label,
+            .div3 label
+            {
+                font-size:calc(14px / var(--coef));
+            }
+
+
+
+            #span select
+            {
+
+                height:calc(31px / var(--coef));
+                width:calc(62px / var(--coef));
+                font-size:calc(20px / var(--coef));
+            }
+
+            #a_csvoutput_helper_list
+            {
+                position: absolute;
+                top:calc(101px / var(--coef));
+                left:calc(1407px / var(--coef));
+            }
+
+            #a_csvout_helper_data
+            {
+                position: absolute;
+                top: calc(201px / var(--coef));
+                left: calc(1407px / var(--coef));
+            }
+
+            .csvoutput_helper_list
+            {
+                width: calc(342.33px/ var(--coef));
+                height: 59.88px;
+                border: 0;
+                font-size: 19px;
+                text-align: center;
+                color: #fff;
+                border-radius: 40px;
+                background-color: #6CD0D3;
+                font-family: sans-serif;
+            }
+
+            .csvoutput_helper_list:hover
+            {
+                cursor: pointer;
+            }
+
+            .csvout_helper_data
+            {
+                position: absolute;
+                top: calc(201px / var(--coef));
+                left: calc(1407px / var(--coef));
+                width: calc(342.33px/ var(--coef));
+                height: 59.88px;
+                border: 0;
+                font-size: 19px;
+                text-align: center;
+                color: #fff;
+                border-radius: 40px;
+                background-color: #6CD0D3;
+                font-family: sans-serif;
+            }
+
+            .csvout_helper_data:hover
+            {
+                cursor: pointer;
+            }
+
+            #a_helperdata
+            {
+                position: absolute;
+                top:calc(301px / var(--coef));
+                left:calc(1407px / var(--coef));
+            }
+
+            #pop_custom_alert_btns
+            {
+                display: flex;
+                justify-content: space-evenly;
+                text-align: center;
+            }
+
+            #btn_helperdata_csvout,
+            #btn_cancel
+            {
+                width: calc(350px / var(--coef));
+                height: 50px;
+                border: 0;
+                font-size: 18px;
+                text-align: center;
+                color: #fff;
+                border-radius: 40px;
+                background-color: #6CD0D3;
+                font-family: sans-serif;
+            }
+
+            #btn_helperdata_csvout,
+            #btn_cancel:hover {
+                cursor: pointer;
+            }
+
+            #a_comparison
+            {
+                /* padding-bottom: 10px; */
+            }
+
+            #a_cost_ctrl
+            {
+                position: absolute;
+                top:calc(101px / var(--coef));
+                left:calc(1400px / var(--coef));
+            }
+
+            #a_helper
+            {
+                position: absolute;
+                top:calc(223px / var(--coef));
+                left:calc(1400px / var(--coef));
+            }
+
+            #btn_no
+            {
+                position: absolute;
+                top:calc(350px / var(--coef));
+                left:calc(547px / var(--coef));
+                width:calc(196px / var(--coef));
+            }
+
+            #btn_yes
+            {
+                position: absolute;
+                top:calc(350px / var(--coef));
+                left:calc(157px / var(--coef));
+                width:calc(196px / var(--coef));
+                z-index: 2;
+            }
+
+            #cover_btn_no
+            {
+                position: absolute;
+                top: calc(250px / var(--coef));
+                left: calc(430px / var(--coef));
+                width: calc(196px / var(--coef));
+            }
+
+            #cover_btn_yes
+            {
+                position: absolute;
+                top: calc(250px / var(--coef));
+                left: calc(60px / var(--coef));
+                width: calc(196px / var(--coef));
+                z-index: 2;
+            }
+
+            #btn_cxl_do
+            {
+                position: fixed;
+                display: block;
+                margin-left: 400px;
+                margin-right: auto;
+                width:calc(196px / var(--coef));
+                visibility:Hidden;
+                z-index: 12;
+            }
+
+            #btn_ok
+            {
+                position: relative;
+                top:calc(290px / var(--coef));
+
+                width:calc(196px / var(--coef));
+                z-index: 12;
+            }
+
+            #btn_reload
+            {
+                position: relative;
+                top:calc(190px / var(--coef));
+                visibility:collapse;
+                width:calc(196px / var(--coef));
+                z-index: 12;
+            }
+
+
+	    /*
+            #btn_cxl
+            {
+                position: fixed;
+                top:calc(595.2px / var(--coef));
+                left:calc(1533.7px/ var(--coef));
+                width:calc(196px/ var(--coef));
+                z-index: 2;
+            }
+	    */
+
+
+
+            #a_loginuser_add,
+            #a_wearable_add,
+            #a_risksensor_add,
+            #a_facility_add
+            {
+                position: absolute;
+                top:calc(356.2px / var(--coef));
+                left:calc(1553.7px / var(--coef));
+                width:calc(196px/ var(--coef));
+            }
+
+            #a_helper_add
+            {
+                position: absolute;
+                top: calc(446.2px / var(--coef));
+                left: calc(1553.7px / var(--coef));
+                width: calc(196px/ var(--coef));
+            }
+
+            #a_loginuser_fix,
+            #a_wearable_fix,
+            #a_risksensor_fix,
+            #a_facility_fix
+            {
+                position: absolute;
+                top:calc(495.2px / var(--coef));
+                left:calc(1553.7px / var(--coef));
+                width:calc(196px/ var(--coef));
+                overflow: auto;
+            }
+
+            #a_helper_fix {
+                position: absolute;
+                top: calc(585.2px / var(--coef));
+                left: calc(1553.7px / var(--coef));
+                width: calc(196px/ var(--coef));
+            }
+
+            .img_style
+            {
+                width:calc(196px/ var(--coef));
+            }
+            .img_style2
+            {
+                width:calc(350px/ var(--coef));
+            }
+            .img_style3
+            {
+                width:calc(289px/ var(--coef));
+            }
+            .img_style4
+            {
+                width:calc(342.33px/ var(--coef));
+            }
+            .img_style5
+            {
+                border-radius: 40px;
+                height: 49.33;
+                width:calc(220px/ var(--coef));
+            }
+
+            /* テーブルヘッダ */
+            #img_loginuser_tb,
+            #img_facility_tb,
+            #img_helper_tb,
+            #img_wearable_tb,
+            #img_risksensor_tb
+            {
+                position: absolute;
+                top:calc(120.92px / var(--coef));
+                left:calc(56.23px / var(--coef));
+                width:calc(1301.4px / var(--coef));
+            }
+
+            #btn_fixacility_pre,
+            #btn_addwearable_pre,
+            #btn_fixwearable_pre,
+            #btn_addrisksensor_pre,
+            #btn_fixrisksensor_pre
+            {
+                /* position: sticky;
+                position: -webkit-sticky;
+                top:calc(456.2px / var(--coef)); */
+                position: fixed;
+                top:calc(456.2px / var(--coef));
+                left:calc(1533.7px / var(--coef));
+                width:calc(196px / var(--coef));
+                z-index: 2;
+            }
+
+            #btn_adduser_pre,
+            #btn_fixuser_pre,
+            #btn_addhelper_pre,
+            #btn_fixhelper_pre,
+            #btn_addfacility_input_pre,
+            #btn_fixfacility_input_pre,
+            #btn_addfacility_pre,
+            #btn_fixfacility_pre
+            {
+		    /*
+                position: relative;
+                position: absolute;
+                position: fixed;
+		*/
+                position: absolute;
+                margin-top: calc(40px / var(--coef));
+                left:calc(1550px / var(--coef));
+                width:calc(180px / var(--coef));
+                z-index: 3;
+            }
+
+            #btn_cxl
+            {
+		    /*
+                position: relative;
+                position: absolute;
+                position: fixed;
+		*/
+                position: absolute;
+                margin-top: calc(150px / var(--coef));
+                /*top:calc(220px / var(--coef));*/
+                left:calc(1550px / var(--coef));
+                width:calc(180px / var(--coef));
+                z-index: 3;
+            }
+
+            #vertical_items
+            {
+                position: absolute;
+                display: flex;
+                flex-direction: column;
+                z-index: 2;
+
+                align-items: center;
+
+                top: calc(60px / var(--coef));
+                left: calc(1470px / var(--coef));
+                width: calc(220px / var(--coef));
+            }
+
+            #btn_datadisp_pre
+            {
+                padding-bottom: 7px;
+                width:calc(220px / var(--coef));
+            }
+
+            #a_average_data {
+                padding-bottom: 7px;
+            }
+
+            .average_data {
+                width: calc(220px/ var(--coef));
+                height: 49.33px;
+                border: 0;
+                font-size: 19px;
+                text-align: center;
+                color: #fff;
+                border-radius: 40px;
+                background-color: #A1A2A3;
+                font-family: sans-serif;
+            }
+
+            .average_data:hover {
+                cursor: pointer;
+            }
+
+            #btn_csvoutput_pre
+            {
+                position: absolute;
+                top:calc(74.54px / var(--coef));
+                left:calc(1536.33px / var(--coef));
+                width:calc(200px / var(--coef));
+
+                z-index: 2;
+            }
+
+
+            #btn_comparison_pre
+            {
+                position: absolute;
+                top:calc(125px / var(--coef));
+                left:calc(1386px / var(--coef));
+                width:calc(130px / var(--coef));
+
+                z-index: 2;
+            }
+
+            /* #btn_csvoutput
+            {
+                position: absolute;
+                top:calc(201.47px / var(--coef));
+                left:calc(448.23px / var(--coef));
+
+                z-index: 12;
+            } */
+
+              /* データ表示 */
+              #risk_back,
+              #totalcnt_back,
+              #totalcnt_tw_back
+              {
+                width:calc(250px / var(--coef));
+              }
+
+              #risk_back1,
+              #totalcnt_back1,
+              #totalcnt_tw_back1
+              {
+                  width:calc(150px / var(--coef));
+              }
+
+              #risk_div
+              {
+                  position: absolute;
+              }
+
+              .risk_val
+              {
+                position: absolute;
+                top:calc(80px / var(--coef));
+                left:calc(120px / var(--coef));
+
+                font-weight: bold;
+                font-size:calc(38px / var(--coef));
+              }
+
+              .risk_val1
+              {
+                position: absolute;
+                top:calc(45px / var(--coef));
+                left:calc(75px / var(--coef));
+
+                font-weight: bold;
+                font-size:calc(28px / var(--coef));
+              }
+
+
+              #disp_title
+              {
+                font-weight: bold;
+                position: absolute;
+                top:calc(13px / var(--coef));
+                left:calc(20px / var(--coef));
+              }
+
+            #disp_title1
+            {
+                font-weight: bold;
+                position: absolute;
+                top:calc(3px / var(--coef));
+                left:calc(10px / var(--coef));
+
+            }
+
+            #disp_unit
+            {
+                position: absolute;
+                top:calc(90px / var(--coef));
+                left:calc(200px / var(--coef));
+                font-size:calc(38px / var(--coef));
+                font-weight: bold;
+            }
+
+            #disp_unit1
+            {
+                position: absolute;
+                top:calc(50px / var(--coef));
+                left:calc(115px / var(--coef));
+                font-size:calc(28px / var(--coef));
+                font-weight: bold;
+            }
+
+            .dispcnt_title
+            {
+                font-weight: bold;
+                position: absolute;
+                top:-16px;
+                left:0px;
+                font-size:calc(20px / var(--coef));
+            }
+
+            .dispcnt_title1
+            {
+                font-weight: bold;
+                position: absolute;
+                top:calc(-20px / var(--coef));
+                left:0px;
+                font-size:calc(14px / var(--coef));
+            }
+
+            .dispcnt_unit
+            {
+                font-weight: bold;
+                position: absolute;
+                top:calc(20px / var(--coef));
+                left:calc(200px / var(--coef));
+                font-size:calc(38px / var(--coef));
+            }
+
+            .dispcnt_unit1
+            {
+                font-weight: bold;
+                position: absolute;
+                top:calc(13px / var(--coef));
+                left:calc(115px / var(--coef));
+                font-size:calc(22px / var(--coef));
+            }
+
+            .dispcnt_val
+            {
+                position: absolute;
+                top:calc(15px / var(--coef));
+                left:calc(110px / var(--coef));
+                font-weight: bold;
+                font-size:calc(38px / var(--coef));
+            }
+            .dispcnt_val1
+            {
+                position: absolute;
+                top:calc(6px / var(--coef));
+                left:calc(50px / var(--coef));
+                font-weight: bold;
+                font-size:calc(28px / var(--coef));
+            }
+
+            #avetm_for_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(150px / var(--coef));
+                left:calc(-20px / var(--coef));
+            }
+            #avetm_for_div1
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(95px / var(--coef));
+                left:calc(-60px / var(--coef));
+            }
+
+            #alltm_for_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(150px / var(--coef));
+                left:calc(150px / var(--coef));
+            }
+            #alltm_for_div1
+            {
+                position: absolute;
+                top:calc(95px / var(--coef));
+                left:calc(95px / var(--coef));
+            }
+
+            #avetm_tw_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(210px / var(--coef));
+                left:calc(-20px / var(--coef));
+            }
+            #avetm_tw_div1
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(140px / var(--coef));
+                left:calc(-60px / var(--coef));
+            }
+
+            #alltm_tw_div
+            {
+                position: absolute;
+                top:calc(210px / var(--coef));
+                left:calc(150px / var(--coef));
+            }
+            #alltm_tw_div1
+            {
+                position: absolute;
+                top:calc(140px / var(--coef));
+                left:calc(95px / var(--coef));
+            }
+
+            .tm_val
+            {
+                font-weight: bold;
+                position: absolute;
+                top:calc(30px / var(--coef));
+                left:calc(20px / var(--coef));
+                font-size:calc(18px / var(--coef));
+            }
+            .tm_val1
+            {
+                font-weight: bold;
+                position: absolute;
+                /* font-size: 13px; */
+                top:calc(20px / var(--coef));
+                left:calc(20px / var(--coef));
+                font-size:calc(17px / var(--coef));
+            }
+
+            #cnt_for_div
+            {
+                position: absolute;
+                top:calc(300px / var(--coef));
+            }
+            #cnt_for_div1
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(205px / var(--coef));
+            }
+
+            #cnt_tw_div
+            {
+                position: absolute;
+                top:calc(400px / var(--coef));
+            }
+            #cnt_tw_div1
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(275px / var(--coef));
+            }
+
+            #starttm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(485px / var(--coef));
+                left:calc(-20px / var(--coef));
+            }
+            .starttm_div1
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(330px / var(--coef));
+                left:calc(-40px / var(--coef));
+            }
+
+            #endtm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(515px / var(--coef));
+                left:calc(-20px / var(--coef));
+            }
+            .endtm_div1
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(350px / var(--coef));
+                left:calc(-40px / var(--coef));
+            }
+
+            #alltm_div
+            {
+                position: absolute;
+                top:calc(500px / var(--coef));
+                left:calc(130px / var(--coef));
+            }
+
+            .alltm_div1
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top:calc(340px / var(--coef));
+                left:calc(95px / var(--coef));
+            }
+
+            .totaltm_val
+            {
+                font-weight: bold;
+                position: absolute;
+                top:0px;
+                left:calc(70px / var(--coef));
+                font-size:calc(18px / var(--coef));
+            }
+
+            .totaltm_val1
+            {
+                font-weight: bold;
+                position: absolute;
+                left:calc(60px / var(--coef));
+                font-size:calc(17px / var(--coef));
+            }
+
+            .validate
+            {
+                font-size:calc(12px / var(--coef));
+                color: red;
+            }
+
+            .mess
+            {
+                position: relative;
+                font-size:calc(24px / var(--coef));
+                color: red;
+                top:calc(150px / var(--coef));
+                margin: auto;
+            }
+
+
+
+            .tb
+            {
+                position: relative;
+                font-size:calc(24px / var(--coef));
+                text-align:left;
+                border-collapse: collapse;
+                width:calc(1432px / var(--coef));
+
+            }
+            .tb td
+            {
+                height:calc(56px / var(--coef));
+            }
+            .tb select,
+            .tb input[type = "text"]
+            {
+                width:calc(300px / var(--coef));
+            }
+
+            .tb td:nth-child(1)
+            {
+                width:calc(280px / var(--coef));
+            }
+            .tb td:nth-child(2)
+            {
+                width:calc(520px / var(--coef));
+            }
+
+
+            .facil_table,
+            .facil_table1
+            {
+                position: relative;
+                font-size:calc(24px / var(--coef));
+                text-align:left;
+                border-collapse: collapse;
+                width:calc(1700px / var(--coef));
+                top:calc(250px / var(--coef));
+                margin: 0 auto;
+            }
+            .facil_table td
+            {
+                height:calc(56px / var(--coef));
+                border-bottom: solid 1px rgb(212, 212, 212);
+                border-right: solid 1px rgb(212, 212, 212);
+            }
+            .facil_table1 td
+            {
+                height:calc(56px / var(--coef));
+            }
+            .lb
+            {
+                font-size: calc(28px / var(--coef));
+            }
+
+            /*幅調整*/
+            .facil_table td:nth-child(1)
+            {
+                width:calc(230px / var(--coef));
+                border-left: solid 1px rgb(212, 212, 212);
+            }
+            .facil_table td:nth-child(2),
+            .facil_table td:nth-child(3),
+            .facil_table td:nth-child(4)
+            {
+                width:calc(300px / var(--coef));
+            }
+            .facil_table1 td:nth-child(1)
+            {
+                width:calc(300px / var(--coef));
+            }
+            .facil_table1 td:nth-child(2)
+            {
+                width:calc(100px / var(--coef));
+            }
+
+            .facil_table1 td:nth-child(3)
+            {
+                width:calc(300px / var(--coef));
+            }
+
+            .facil_table tr:nth-child(1),
+            .facil_table1 tr:nth-child(1),
+            .tb tr:nth-child(1)
+            {
+                background-color: rgb(202, 202, 202);
+                height:calc(30px / var(--coef));
+                text-align:center;
+            }
+
+            .facil_table td:nth-child(3)
+            .facil_table td:nth-child(4)
+            {
+                width:calc(180px / var(--coef));
+            }
+
+            .facil_table input[type = "text"],
+            .facil_table1 input[type = "text"]
+            {
+                font-size:calc(18px / var(--coef));
+                height:calc(30px / var(--coef));
+                width:calc(122px / var(--coef));
+            }
+            .facil_table input[type = "email"],
+            .facil_table1 input[type = "email"]
+            {
+                width:calc(550px / var(--coef));
+            }
+
+            .facil_table select,
+            .facil_table1 select
+            {
+                width:calc(322px / var(--coef));
+            }
+
+            /* 利用者ID選択 */
+            #table1
+            {
+                position: absolute;
+                font-size:calc(24px / var(--coef));
+                text-align: center;
+                border-collapse: collapse;
+                border: 2px solid;
+                background-color: #ffffff;
+                table-layout:fixed;
+                border-color: #636b6f;
+                /* border-radius:20px 20px 20px 20px; */
+                border: 2px;
+                word-break: break-all;
+
+                top:calc(178px / var(--coef));
+                left:calc(56px / var(--coef));
+                width:calc(1332px / var(--coef));
+                height:calc(550px / var(--coef));
+            }
+
+            /*幅調整*/
+            #table1 td
+            {
+                border-bottom: solid 1px rgb(212, 212, 212);
+                border-right: solid 1px rgb(212, 212, 212);
+                height:calc(56px / var(--coef));
+            }
+
+            #table1 td:nth-child(1)
+            {
+                /* background:#60A3D2; */
+                width:calc(66px / var(--coef));
+            }
+
+            #table1 td:nth-child(2)
+            {
+                /* background:#60A3D2; */
+                width:calc(772px / var(--coef));
+            }
+
+            #table1 td:nth-child(3)
+            {
+                /* background:#60A3D2; */
+                width:calc(458px / var(--coef));
+            }
+
+            #table1 td:nth-child(4),
+            #table1 td:nth-child(5)
+            {
+                /* background:rgb(206, 96, 210); */
+                width:calc(535px / var(--coef));
+            }
+
+
+            /* 介助者 */
+            /* 利用者ID選択 */
+            #table2
+            {
+                position: absolute;
+                font-size:calc(24px / var(--coef));
+                text-align: center;
+                border-collapse: collapse;
+                border: 2px solid;
+                background-color: #ffffff;
+                table-layout:fixed;
+                border-color: #636b6f;
+                /* border-radius:20px 20px 20px 20px; */
+                border: 2px;
+                word-break: break-all;
+
+                top:calc(178px / var(--coef));
+                left:calc(56px / var(--coef));
+                width:calc(1332px / var(--coef));
+                height:calc(550px / var(--coef));
+
+            }
+             /*幅調整*/
+            #table2 td
+            {
+                border-bottom: solid 1px rgb(212, 212, 212);
+                border-right: solid 1px rgb(212, 212, 212);
+                height:calc(56px / var(--coef));
+            }
+
+            #table2 td:nth-child(1)
+            {
+                width:calc(66px / var(--coef));
+            }
+
+            #table2 td:nth-child(2)
+            {
+                /* width:calc(308px / var(--coef)); */
+                width:calc(1234px / var(--coef));
+
+            }
+
+            /* #table2 td:nth-child(3)
+            {
+                width:calc(492px / var(--coef));
+            }
+
+            #table2 td:nth-child(4)
+            {
+                width:calc(435px / var(--coef));
+            } */
+
+
+            /* 介助者 */
+            /* 利用者ID選択 */
+            #table3
+            {
+                position: absolute;
+                font-size:calc(24px / var(--coef));
+                text-align: center;
+                border-collapse: collapse;
+                border: 2px solid;
+                background-color: #ffffff;
+                table-layout:fixed;
+                border-color: #636b6f;
+                /* border-radius:20px 20px 20px 20px; */
+                border: 2px;
+                word-break: break-all;
+
+                top:calc(178px / var(--coef));
+                left:calc(56px / var(--coef));
+                width:calc(1332px / var(--coef));
+                height:calc(550px / var(--coef));
+
+            }
+             /*幅調整*/
+            #table3 td
+            {
+                border-bottom: solid 1px rgb(212, 212, 212);
+                border-right: solid 1px rgb(212, 212, 212);
+                height:calc(56px / var(--coef));
+            }
+
+            #table3 td:nth-child(1)
+            {
+                width:calc(66px / var(--coef));
+            }
+
+            #table3 td:nth-child(2)
+            {
+                /* width:calc(242px / var(--coef)); */
+                width:calc(500px / var(--coef));
+            }
+
+            #table3 td:nth-child(3)
+            {
+                /* width:calc(262px / var(--coef)); */
+                width:calc(300px / var(--coef));
+            }
+
+            #table3 td:nth-child(4)
+            {
+                /* width:calc(169px / var(--coef)); */
+                width:calc(217px / var(--coef));
+            }
+
+            #table3 td:nth-child(5)
+            {
+                /* width:calc(140px / var(--coef)); */
+                width:calc(217px / var(--coef));
+            }
+
+            /* #table3 td:nth-child(6)
+            {
+                width:calc(148px / var(--coef));
+            }
+
+            #table3 td:nth-child(7)
+            {
+                width:calc(279px / var(--coef));
+            } */
+
+            /* 利用者ID選択 */
+            #table4
+            {
+                word-break: break-all;
+                position: absolute;
+                font-size:calc(24px / var(--coef));
+                text-align: center;
+                border-collapse: collapse;
+                border: 2px solid;
+                background-color: #ffffff;
+                table-layout:fixed;
+                border-color: #636b6f;
+                /* border-radius:20px 20px 20px 20px; */
+                border: 2px;
+
+                top:calc(178px / var(--coef));
+                left:calc(56px / var(--coef));
+                width:calc(1332px / var(--coef));
+                height:calc(550px / var(--coef));
+
+            }
+
+            /*幅調整*/
+            #table4 td
+            {
+                border-bottom: solid 1px rgb(212, 212, 212);
+                border-right: solid 1px rgb(212, 212, 212);
+                height:calc(56px / var(--coef));
+            }
+
+            #table4 td:nth-child(1)
+            {
+                /* background:#60A3D2; */
+                width:calc(66px / var(--coef));
+            }
+
+            #table4 td:nth-child(2)
+            {
+                /* background:#60A3D2; */
+                width:calc(226px / var(--coef));
+            }
+
+            #table4 td:nth-child(3)
+            {
+                /* background:#60A3D2; */
+                width:calc(196px / var(--coef));
+            }
+
+            #table4 td:nth-child(4)
+            {
+                width:calc(297px / var(--coef));
+            }
+            #table4 td:nth-child(5)
+            {
+                /* background:rgb(206, 96, 210); */
+                width:calc(229px / var(--coef));
+            }
+            #table4 td:nth-child(6)
+            {
+                /* background:rgb(206, 96, 210); */
+                width:calc(279px / var(--coef));
+            }
+
+            /*スクロール用*/
+            thead.scrollHead,tbody.scrollBody{
+                display:block;
+            }
+            tbody.scrollBody{
+                overflow-y:scroll;
+                height:calc(550px / var(--coef));
+            }
+
+            ::-webkit-scrollbar {
+            width:calc(30px / var(--coef));
+            }
+            ::-webkit-scrollbar-track {
+            background: #dbdbdb;
+            border-radius: 10px;
+            }
+            ::-webkit-scrollbar-thumb{
+            background: #bdbdbd;
+            border-radius: 10px;
+            }
+
+            a {outline:none;}
+            a img {outline:none;}
+
+
+            #test
+            {
+                z-index: 100;
+            }
+
+            #btn_adduser,
+            #btn_fixuser,
+            #btn_addfacility,
+            #btn_fixfacility,
+            #btn_addhelper,
+            #btn_fixhelper,
+            #btn_addwearable,
+            #btn_fixwearable,
+            #btn_addrisksensor,
+            #btn_fixrisksensor,
+            #btn_addfacility_input,
+            #btn_fixfacility_input,
+            #btn_datadisp,
+            #btn_csvoutput
+            {
+                /* position: absolute; */
+
+                /* top:calc(201.47px / var(--coef));
+                left:calc(248.23 / var(--coef));
+                width:calc(110.55px / var(--coef));
+                height:calc(45.35px / var(--coef)); */
+
+                /* position: absolute;
+                top:calc(350px / var(--coef));
+                left:calc(17px / var(--coef));
+                width:calc(196px / var(--coef)); */
+                position: fixed;
+                display: block;
+                margin-left: 400px;
+                margin-right: auto;
+                width:calc(196px / var(--coef));
+                visibility:Hidden;
+                z-index: 12;
+            }
+
+            #btn_helperdata_csvoutput {
+                position: fixed;
+                display: block;
+                margin-left: 400px;
+                margin-right: auto;
+                width: calc(196px / var(--coef));
+                visibility: Hidden;
+                z-index: 12;
+            }
+
+            #address,
+            #facility,
+            #mail,
+            #url
+            {
+                width:calc(550px / var(--coef));
+            }
+
+            /* #txt_wearable
+            {
+                position: absolute;
+                font-size:calc(16px / var(--coef));
+                color: red;
+                top:calc(260px / var(--coef));
+                left:calc(1150px / var(--coef));
+                z-index: 1;
+            }
+            #txt_wearable1
+            {
+                position: absolute;
+                font-size:calc(16px / var(--coef));
+                color: red;
+                top:calc(200px / var(--coef));
+                left:calc(1150px / var(--coef));
+                z-index: 1;
+            }
+            #txt_wearable2
+            {
+                position: absolute;
+                font-size:calc(16px / var(--coef));
+                color: red;
+                top:calc(530px / var(--coef));
+                left:calc(1150px / var(--coef));
+                z-index: 1;
+            } */
+
+            #lb_error,
+            #lb_alert
+            {
+                position: relative;
+                font-size:calc(32px / var(--coef));
+                top:calc(200px / var(--coef));
+
+                z-index: 12;
+            }
+
+            #cover_lb_alert
+            {
+                position: relative;
+                font-size: calc(32px / var(--coef));
+                top: calc(100px / var(--coef));
+
+                z-index: 12;
+            }
+
+
+            #pop_custom_alert_text
+            {
+                display: flex;
+                flex-flow: column;
+                /* padding-left: 12px; */
+                font-weight: bold;
+            }
+
+            #lb_custom_alert_title
+            {
+                padding-top: 12px;
+                padding-left: 12px;
+                font-size: calc(25px / var(--coef));
+            }
+
+            #lb_custom_alert
+            {
+                padding-left: 12px;
+                padding-top: 50px;
+                float: left;
+                font-size: calc(25px / var(--coef));
+                top: calc(120px / var(--coef));
+                z-index: 12;
+                text-align: left;
+            }
+
+            #pop_custom_alert_content
+            {
+                padding-top: 20px;
+                display: flex;
+                justify-content: center;
+                text-align: center;
+            }
+
+            #pop_error_custom_alert_content {
+                display: flex;
+                justify-content: center;
+                text-align: center;
+            }
+
+            #pop_error_custom_alert_content > p
+            {
+                font-size: 10px;
+            }
+
+            #error_st_ymd,
+            #error_date,
+            #error,
+            #error_ed_ymd
+            {
+                visibility: Hidden;
+                color: red;
+            }
+
+            #error_st_ymd
+            {
+                float: left;
+            }
+
+            #error_ed_ymd {
+                float: right;
+            }
+
+
+            #pop_error_back
+            {
+                position: fixed;
+                width:calc(1800px / var(--coef));
+                height:calc(1200px / var(--coef));
+                text-align: center;
+                color: white;
+                background-color:  rgba(245, 245, 245, 0.356);
+                z-index:10;
+            }
+
+            #policy_dailog
+            {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: calc(1570px / var(--coef));
+                height: calc(990px / var(--coef));
+                background-color: rgb(255, 255, 255);
+                z-index: 11;
+                overflow-y: auto; /* 縦方向のスクロールバーを表示 */
+                overflow-x: hidden; /* 横方向のスクロールバーを非表示 */
+                max-width: 100vw; /* 画面の幅を超えないようにする */
+                max-height: 100vh; /* 画面の高さを超えないようにする */
+            }
+            #policy_sentence
+            {
+                position: fixed;
+                font-size:calc(32px / var(--coef));
+                top:calc(100px / var(--coef));
+                white-space: normal;
+                z-index: 12;
+                margin: 30px 100px 10px 100px;
+                padding-bottom: 150px;
+            }
+
+            #indent
+            {
+                text-indent: 1em;
+            }
+
+            #policy_title
+            {
+                line-height: 3;
+                font-size: 30px;
+            }
+
+            #policy_check_title
+            {
+                font-weight: bold;
+            }
+
+            #policy_check
+            {
+                position: relative;
+                top:calc(3050px / var(--coef));
+                width:calc(50px / var(--coef));
+                z-index: 12;
+            }
+
+            #policy_certification
+            {
+                position: relative;
+                top:calc(3053px / var(--coef));
+                width:calc(50px / var(--coef));
+                z-index: 12;
+                white-space: nowrap;
+            }
+
+            #policy_close
+            {
+                position: relative;
+                top:calc(3050px / var(--coef));
+                width:calc(196px / var(--coef));
+                z-index: 12;
+            }
+
+            #pop_alert_back
+            {
+                position: fixed;
+                width:calc(1800px / var(--coef));
+                height:calc(1200px / var(--coef));
+                text-align: center;
+                color: white;
+                visibility: collapse;
+                background-color:  rgba(245, 245, 245, 0.356);
+                z-index:10;
+            }
+
+            #pop_error
+            {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                text-align: center;
+                transform: translate(-50%, -50%);
+                width:calc(900px / var(--coef));
+                height:calc(600px / var(--coef));
+                background-color: rgb(255, 255, 255);
+                z-index:11;
+            }
+
+            #pop_alert
+            {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                text-align: center;
+                transform: translate(-50%, -50%);
+                width:calc(900px / var(--coef));
+                height:calc(600px / var(--coef));
+                background-color: rgb(255, 255, 255);
+                visibility: collapse;
+                z-index:11;
+            }
+
+            #cover_pop_alert
+            {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                text-align: center;
+                transform: translate(-50%, -50%);
+                width: calc(715px / var(--coef));
+                height: calc(450px / var(--coef));
+                background-color: rgb(255, 255, 255);
+                visibility: collapse;
+                z-index: 11;
+            }
+
+            #pop_custom_alert {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: calc(900px / var(--coef));
+                height: calc(600px / var(--coef));
+                background-color: rgb(255, 255, 255);
+                visibility: collapse;
+                z-index: 10;
+            }
+
+
+            #total_disp
+            {
+                position: absolute;
+                top:calc(350px / var(--coef));
+                left:calc(1480px / var(--coef));
+            }
+
+            #total_disp1
+            {
+                position: absolute;
+                top:calc(110px / var(--coef));
+                left:calc(1540px / var(--coef));
+                font-size:10px;
+            }
+
+            #total_disp2
+            {
+                position: absolute;
+                top:calc(490px / var(--coef));
+                left:calc(1540px / var(--coef));
+                font-size:10px;
+                font-weight: bold;
+            }
+
+            .div2
+            {
+                position: absolute;
+                left:calc(230px / var(--coef));
+                width:calc(230px / var(--coef));
+                top:0px;
+            }
+
+            .div3
+            {
+                position: absolute;
+                top:calc(65px / var(--coef));
+                left:calc(1210px / var(--coef));
+            }
+
+            /* 介助者データ表示　平均値表示時のデータ表示 */
+            #average_total_disp
+            {
+                position: absolute;
+                top: calc(340px / var(--coef));
+                left: calc(1540px / var(--coef));
+                font-size: calc(12px / var(--coef));
+                visibility: collapse;
+            }
+
+            #average_risk_div
+            {
+                position: absolute;
+            }
+
+            #average_risk_back,
+            #average_totalcnt_back,
+            #average_totalcnt_tw_back1
+            {
+                width: calc(150px / var(--coef));
+            }
+
+            #average_disp_unit
+            {
+                font-weight: bold;
+                position: absolute;
+                top: calc(50px / var(--coef));
+                left: calc(115px / var(--coef));
+                font-size: calc(28px / var(--coef));
+            }
+
+            #average_starttm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(330px / var(--coef));
+                left: calc(-40px / var(--coef));
+            }
+
+            #average_endtm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(350px / var(--coef));
+                left: calc(-40px / var(--coef));
+            }
+
+            #average_alltm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(340px / var(--coef));
+                left: calc(95px / var(--coef));
+            }
+
+            #average_content
+            {
+                visibility: hidden;
+            }
+
+            /* 介助者データ表示　施設平均値 */
+            #facility_average_disp
+            {
+                position: absolute;
+                top: calc(790px / var(--coef));
+                left: calc(1540px / var(--coef));
+                font-size: calc(12px / var(--coef));
+            }
+
+            #facility_average_risk_div {
+                position: absolute;
+            }
+
+            #facility_average_risk_back,
+            #facility_average_totalcnt_back,
+            #facility_average_totalcnt_tw_back {
+                width: calc(150px / var(--coef));
+            }
+
+            .facility_average_title {
+                font-size: 20px;
+                position: absolute;
+                writing-mode: horizontal-tb;
+                left: -50px;
+                bottom: 5px;
+                white-space: nowrap;
+            }
+
+            .all_average_title {
+                font-size: 20px;
+                position: absolute;
+                writing-mode: horizontal-tb;
+                left: -50px;
+                bottom: 50px;
+                white-space: nowrap;
+            }
+            .facility_average_disp_select {
+                font-size: calc(24px / var(--coef));
+                width: 185px;
+                left: -30px;
+                bottom: 20px;
+                position: absolute;
+            }
+            #facility_average_risk
+            {}
+
+            #facility_average_disp_title
+            {
+                position: absolute;
+                top: calc(3px / var(--coef));
+                left: calc(10px / var(--coef));
+            }
+
+            #facility_average_disp_unit
+            {
+                font-weight: bold;
+                position: absolute;
+                top: calc(50px / var(--coef));
+                left: calc(115px / var(--coef));
+                font-size: calc(28px / var(--coef));
+            }
+
+            #facility_average_avetm_for_div
+            {
+                position: absolute;
+                top: calc(95px / var(--coef));
+                left: calc(-60px / var(--coef));
+            }
+
+            #facility_average_alltm_for_div
+            {
+                position: absolute;
+                top: calc(95px / var(--coef));
+                left: calc(95px / var(--coef));
+            }
+
+            #facility_average_avetm_tw_div
+            {
+                position: absolute;
+                top: calc(140px / var(--coef));
+                left: calc(-60px / var(--coef));
+            }
+
+            #facility_average_alltm_tw_div
+            {
+                position: absolute;
+                top: calc(140px / var(--coef));
+                left: calc(95px / var(--coef));
+            }
+
+            #facility_average_cnt_for_div
+            {
+                position: absolute;
+                top: calc(205px / var(--coef));
+            }
+
+            #facility_average_cnt_tw_div
+            {
+                position: absolute;
+                top: calc(275px / var(--coef));
+            }
+
+            #facility_average_starttm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(330px / var(--coef));
+                left: calc(-40px / var(--coef));
+            }
+
+            #facility_average_endtm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(350px / var(--coef));
+                left: calc(-40px / var(--coef));
+            }
+
+            #facility_average_alltm_div
+            {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(340px / var(--coef));
+                left: calc(-60px / var(--coef));
+            }
+
+            /* 介助者データ表示　全国平均値 */
+            #all_average_disp {
+                position: absolute;
+                top: calc(1300px / var(--coef));
+                left: calc(1540px / var(--coef));
+                font-size: calc(12px / var(--coef));
+            }
+
+            #all_average_risk_div {
+                position: absolute;
+            }
+
+            #all_average_risk_back,
+            #all_average_totalcnt_back,
+            #all_average_totalcnt_tw_back {
+                width: calc(150px / var(--coef));
+            }
+
+            #all_average_risk {}
+
+            #all_average_disp_title {
+                position: absolute;
+                top: calc(3px / var(--coef));
+                left: calc(10px / var(--coef));
+            }
+
+            #all_average_disp_unit {
+                font-weight: bold;
+                position: absolute;
+                top: calc(50px / var(--coef));
+                left: calc(115px / var(--coef));
+                font-size: calc(28px / var(--coef));
+            }
+
+            #all_average_avetm_for_div {
+                position: absolute;
+                top: calc(95px / var(--coef));
+                left: calc(-60px / var(--coef));
+            }
+
+            #all_average_alltm_for_div {
+                position: absolute;
+                top: calc(95px / var(--coef));
+                left: calc(95px / var(--coef));
+            }
+
+            #all_average_avetm_tw_div {
+                position: absolute;
+                top: calc(140px / var(--coef));
+                left: calc(-60px / var(--coef));
+            }
+
+            #all_average_alltm_tw_div {
+                position: absolute;
+                top: calc(140px / var(--coef));
+                left: calc(95px / var(--coef));
+            }
+
+            #all_average_cnt_for_div {
+                position: absolute;
+                top: calc(205px / var(--coef));
+            }
+
+            #all_average_cnt_tw_div {
+                position: absolute;
+                top: calc(275px / var(--coef));
+            }
+
+            #all_average_starttm_div {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(330px / var(--coef));
+                left: calc(-40px / var(--coef));
+            }
+
+            #all_average_endtm_div {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(350px / var(--coef));
+                left: calc(-40px / var(--coef));
+            }
+
+            #all_average_alltm_div {
+                font-size: 10px;
+                font-weight: bold;
+                position: absolute;
+                top: calc(340px / var(--coef));
+                left: calc(-60px / var(--coef));
+            }
+
+            #span
+            {
+                position: absolute;
+                top:calc(135px / var(--coef));
+                left:calc(70px / var(--coef));
+            }
+
+
+            /* コスト登録 */
+            #form_currentfile
+            {
+                position: absolute;
+                top:calc(300px / var(--coef));
+                left:calc(300px / var(--coef));
+            }
+
+            #form_introfile
+            {
+                position: absolute;
+                top:calc(500px / var(--coef));
+                left:calc(300px / var(--coef));
+            }
+
+            #currentfile_file,
+            #currentfile,
+            #introfile_file,
+            #introfile
+            {
+                font-size:calc(30px / var(--coef));
+            }
+
+            #btn_currentfile
+            {
+                position: absolute;
+                top:calc(280px / var(--coef));
+                left:calc(980px / var(--coef));
+                width:calc(342.33px / var(--coef));
+            }
+
+            #btn_introfile
+            {
+                position: absolute;
+                top:calc(480px / var(--coef));
+                left:calc(980px / var(--coef));
+                width:calc(342.33px / var(--coef));
+            }
+
+            #btn_2currentfile
+            {
+                position: absolute;
+                top:calc(280px / var(--coef));
+                left:calc(1380px / var(--coef));
+                width:calc(342.33px / var(--coef));
+            }
+
+            #btn_2introfile
+            {
+                position: absolute;
+                top:calc(480px / var(--coef));
+                left:calc(1380px / var(--coef));
+                width:calc(342.33px / var(--coef));
+            }
+
+
+            /* グラフ */
+
+
+            .chart
+            {
+                position: absolute;
+                top:calc(250px / var(--coef));
+                left:calc(50px / var(--coef));
+                width:calc(1380px / var(--coef));
+                height:calc(550px / var(--coef));
+                background-color: white;
+            }
+            #chart2
+            {
+                position: absolute;
+                top:calc(190px / var(--coef));
+                left:calc(50px / var(--coef));
+                width:calc(1380px / var(--coef));
+                height:calc(320px / var(--coef));
+                background-color: white;
+            }
+            #chart3
+            {
+                position: absolute;
+                top:calc(520px / var(--coef));
+                left:calc(50px / var(--coef));
+                width:calc(1380px / var(--coef));
+                height:calc(320px / var(--coef));
+                background-color: white;
+            }
+
+            .chartWrapper
+            {
+                position: absolute;
+                top:calc(300px / var(--coef));
+                left:calc(10px / var(--coef));
+                width:calc(1380px / var(--coef));
+                height:calc(550px / var(--coef));
+                background-color: white;
+            }
+
+            .chartWrapper2 {
+
+                position: absolute;
+                top:calc(230px / var(--coef));
+                left:calc(10px / var(--coef));
+                width:calc(1380px / var(--coef));
+                height:calc(320px / var(--coef));
+                background-color: white;
+            }
+
+            .chartWrapper3 {
+
+                position: absolute;
+                top:calc(580px / var(--coef));
+                left:calc(10px / var(--coef));
+                width:calc(1380px / var(--coef));
+                height:calc(320px / var(--coef));
+                background-color: white;
+            }
+
+            .chartWrapper > canvas,
+            .chartWrapper2 > canvas,
+            .chartWrapper3 > canvas{
+                position: absolute;
+                pointer-events:none;
+            }
+
+            .chartAreaWrapper,
+            .chartAreaWrapper3,
+            .chartAreaWrapper5{
+                overflow-x: scroll;
+                position: relative;
+                width: 100%;
+            }
+
+
+            .chartAreaWrapper2
+            {
+                position: relative;
+                height:calc(550px / var(--coef));
+            }
+
+
+            .chartAreaWrapper4,
+            .chartAreaWrapper6 {
+
+                position: relative;
+                height:calc(320px / var(--coef));
+            }
+            #myChartAxis
+            {
+                position: absolute;
+                top:calc(0px / var(--coef));
+            }
+
+            #myChartAxis1_2
+            {
+                position: absolute;
+                top:calc(300px / var(--coef));
+                left:calc(1345px / var(--coef));
+            }
+
+            #myChartAxis2_2
+            {
+                position: absolute;
+                top:calc(230px / var(--coef));
+                left:calc(1360px / var(--coef));
+            }
+
+            #myChartAxis3_2
+            {
+                position: absolute;
+                top:calc(580px / var(--coef));
+                left:calc(1560px / var(--coef));
+            }
+            .custom-calendar-data a.ui-state-default {
+                background-color: rgb(182, 250, 182);
+            }
+            .custom-calendar-saturday a.ui-state-default {
+                background-color: #c1e0ff;
+            }
+            .custom-calendar-sunday a.ui-state-default {
+                background-color: #ffc1c1;
+            }
+            .privacyDialog {
+                background-color: #ffc1c1;
+                padding:10px;
+                border-radius: 6px 6px 6px 6px;
+                background-color: #FFF;
+                box-shadow: 6px 6px 6px rgba(0,0,0,0.4);
+            }
+
+.cs_hidden
+{
+    visibility: collapse;
+}
+
+#pop_timestudytool {
+    position: fixed;
+    display: block;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(600px / var(--coef));
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    z-index: 12;
+}
+

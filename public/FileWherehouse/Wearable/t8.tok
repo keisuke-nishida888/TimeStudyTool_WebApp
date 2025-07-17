@@ -1,0 +1,1 @@
+{"errors":[{"errorType":"invalid_grant","message":"Authorization code invalid: s://www.fitbit.com/oauth2/authorize?response_type=code Visit https://dev.fitbit.com/docs/oauth2 for more information on the Fitbit Web API authorization process."}],"success":false}
