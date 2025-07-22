@@ -1,7 +1,9 @@
 FROM php:7.3-fpm-buster
 
-RUN apt-get update && \
-    apt-get install -y \
+RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list \
+    && sed -i '/security.debian.org/s/^/#/' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y \
         libgd-dev \
         libzip-dev \
         zip \
@@ -9,7 +11,7 @@ RUN apt-get update && \
         libonig-dev \
         libxml2-dev \
         unzip \
-        && docker-php-ext-install pdo_mysql gd zip
+    && docker-php-ext-install pdo_mysql gd zip
 
 # Allow Composer to run as superuser
 ENV COMPOSER_ALLOW_SUPERUSER 1
