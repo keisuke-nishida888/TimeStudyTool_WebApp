@@ -8,10 +8,25 @@ use App\Models\bpainhed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Response;
+use App\Models\User;
 
 class ApiController extends Controller
 {
-    //
+    /**
+     * メール送信設定を返すAPI
+     * POST /api/get-mail-setting
+     */
+    public function getMailSetting(Request $request)
+    {
+  
+        //メール送信情報を返す（ここでは仮フィールド名。実DB構成に合わせて修正）
+        return response()->json([
+            'from_mail' => 'fa.nishida.keisuke@gmail.com',         // 差出人アドレス
+            'smtp_password' => 'rtemponbsxiwzvtg', // SMTPパスワード
+            // 必要に応じて宛先やサーバ名等も
+        ]);
+    }
+
 
     public function store(Request $requestJ)
     {

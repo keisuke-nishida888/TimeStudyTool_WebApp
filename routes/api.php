@@ -20,3 +20,4 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::post('/data', 'App\Http\Controllers\Api\ApiController@store');
+Route::post('/get-mail-setting', [ApiController::class, 'getMailSetting']);
