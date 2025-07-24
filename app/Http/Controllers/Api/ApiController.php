@@ -27,6 +27,23 @@ class ApiController extends Controller
         ]);
     }
 
+     /**
+     * 作業名（task_table）一覧を返すAPI
+     * GET /api/get-task-table
+     */
+    public function getTaskTable()
+    {
+        // task_table から全件取得
+        $tasks = DB::table('task_table')
+            ->select('task_id', 'task_name', 'task_type_no', 'task_category_no')
+            ->orderBy('task_id', 'asc')
+            ->get();
+
+        // JSONで返却
+        return response()->json($tasks);
+    }
+
+
 
     public function store(Request $requestJ)
     {
