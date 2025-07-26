@@ -53,6 +53,11 @@ class TaskController extends Controller
     // 追加処理
     public function TaskAdd(Request $request)
     {
+        // 30件制限チェック
+        if (Task::count() >= 30) {
+            return redirect('/task_add')->withErrors(['task_name' => '作業内容は最大30件までです。不要な作業を削除してください。']);
+        }
+
         $request->validate([
             'task_name' => 'required|string|max:255',
             'task_type_no' => 'required|integer|min:0|max:2',
