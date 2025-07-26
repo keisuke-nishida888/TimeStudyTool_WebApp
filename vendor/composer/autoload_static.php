@@ -38,6 +38,7 @@ class ComposerStaticInit1f3d15e88c3e360fff5335757b66e84c
         'c72349b1fe8d0deeedd3a52e8aa814d8' => __DIR__ . '/..' . '/mockery/mockery/library/helpers.php',
         'ce9671a430e4846b44e1c68c7611f9f5' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
+        '8c6721e014d4dfe5acfa1d6d41e59ee7' => __DIR__ . '/../..' . '/app/Helpers/TaskHelper.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -543,6 +544,7 @@ class ComposerStaticInit1f3d15e88c3e360fff5335757b66e84c
     public static $classMap = array (
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
+        'App\\Helpers\\TaskHelper' => __DIR__ . '/../..' . '/app/Helpers/TaskHelper.php',
         'App\\Http\\Controllers\\Api\\ApiController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/ApiController.php',
         'App\\Http\\Controllers\\Auth\\ConfirmPasswordController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/ConfirmPasswordController.php',
         'App\\Http\\Controllers\\Auth\\ForgotPasswordController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/ForgotPasswordController.php',

@@ -490,12 +490,12 @@ html, body {
             }
 
             #btn_delhelper,
-            #btn_deltask {
-                position: absolute;
-                top: calc(724.2px / var(--coef));
-                left: calc(1553.7px / var(--coef));
-                width: calc(196px / var(--coef));
-            }
+#btn_deltask {
+    position: absolute;
+    top: calc(724.2px / var(--coef));
+    left: calc(1553.7px / var(--coef));
+    width: calc(196px / var(--coef));
+}
 
             #lb_time1
             {
@@ -1648,24 +1648,145 @@ html, body {
 
             /* 作業内容一覧テーブル用 */
             #table_task td:nth-child(1)
-            {
-                width:calc(200px / var(--coef));
-            }
+{
+    width:calc(333px / var(--coef));
+}
 
-            #table_task td:nth-child(2)
-            {
-                width:calc(400px / var(--coef));
-            }
+#table_task td:nth-child(2)
+{
+    width:calc(333px / var(--coef));
+}
 
-            #table_task td:nth-child(3)
-            {
-                width:calc(200px / var(--coef));
-            }
+#table_task td:nth-child(3)
+{
+    width:calc(333px / var(--coef));
+}
 
-            #table_task td:nth-child(4)
-            {
-                width:calc(200px / var(--coef));
-            }
+#table_task td:nth-child(4)
+{
+    width:calc(333px / var(--coef));
+}
+
+#table_task
+{
+    position: absolute;
+    top:calc(178px / var(--coef));
+    left:calc(56px / var(--coef));
+    width:calc(1332px / var(--coef));
+    height:calc(550px / var(--coef));
+    border-collapse: collapse;
+    border: 2px solid #636b6f;
+    background-color: #ffffff;
+    table-layout: fixed;
+    font-size:calc(24px / var(--coef));
+    text-align: center;
+}
+
+#table_task td
+{
+    border-bottom: solid 1px rgb(212, 212, 212);
+    border-right: solid 1px rgb(212, 212, 212);
+    height:calc(56px / var(--coef));
+}
+
+/* 作業内容追加・修正画面用のスタイル */
+.btn_add, .btn_fix
+{
+    position: absolute;
+    top:calc(700px / var(--coef));
+    left:calc(600px / var(--coef));
+    width:calc(200px / var(--coef));
+    height:calc(50px / var(--coef));
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size:calc(20px / var(--coef));
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: 1000;
+}
+
+.btn_add:hover, .btn_fix:hover
+{
+    background-color: #45a049;
+}
+
+.btn_cancel
+{
+    position: absolute;
+    top:calc(700px / var(--coef));
+    left:calc(820px / var(--coef));
+    width:calc(200px / var(--coef));
+    height:calc(50px / var(--coef));
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size:calc(20px / var(--coef));
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: 1000;
+}
+
+.btn_cancel:hover
+{
+    background-color: #da190b;
+}
+
+/* 作業内容追加・修正画面のフォームスタイル */
+.container
+{
+    position: absolute;
+    top:calc(100px / var(--coef));
+    left:calc(100px / var(--coef));
+    width:calc(1400px / var(--coef));
+}
+
+.tb
+{
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size:calc(22px / var(--coef));
+}
+
+.tb td
+{
+    padding:calc(25px / var(--coef));
+    border-bottom: 2px solid #ddd;
+    vertical-align: middle;
+}
+
+.lb
+{
+    font-weight: bold;
+    width:calc(250px / var(--coef));
+    text-align: right;
+    padding-right:calc(30px / var(--coef));
+    font-size:calc(22px / var(--coef));
+}
+
+.tb input[type="text"], .tb select
+{
+    width:calc(600px / var(--coef));
+    height:calc(60px / var(--coef));
+    padding:calc(15px / var(--coef));
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size:calc(20px / var(--coef));
+    background-color: #f9f9f9;
+}
+
+.tb input[type="text"]:focus, .tb select:focus
+{
+    outline: none;
+    border-color: #4CAF50;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
 
             /*スクロール用*/
             thead.scrollHead,tbody.scrollBody{

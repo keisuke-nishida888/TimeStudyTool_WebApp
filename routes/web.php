@@ -115,6 +115,20 @@ Route::group(['middleware' => ['auth','authroot']], function(){
         //作業内容一覧
         Route::get('/task', 'App\Http\Controllers\TaskController@index');
         Route::post('/task', 'App\Http\Controllers\TaskController@index');
+            //削除
+            Route::post('/task_delete','App\Http\Controllers\TaskController@del');
+            //作業内容追加
+            Route::get('/task_add', 'App\Http\Controllers\TaskController@add_index');
+            Route::post('/task_add', 'App\Http\Controllers\TaskController@add_index');
+                //追加処理
+                Route::post('/task_addctrl','App\Http\Controllers\TaskController@TaskAdd');
+            //作業内容修正
+            Route::get('/task_fix', 'App\Http\Controllers\TaskController@fix_index');
+            Route::post('/task_fix', 'App\Http\Controllers\TaskController@fix_index');
+                //フォームリセット
+                Route::post('/cxl_taskfix', 'App\Http\Controllers\TaskController@cxl_TaskFix');
+                //修正処理
+                Route::post('/task_fixctrl', 'App\Http\Controllers\TaskController@TaskFix');
 
         //介助者データ表示 ※※介助者一覧と順番入れ替えないこと※※
         Route::get('/helperdata', 'App\Http\Controllers\HelperdataController@index');

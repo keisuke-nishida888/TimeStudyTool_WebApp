@@ -98,6 +98,18 @@ Breadcrumbs::for('risksensor_fix', function ($trail) {
         $trail->push('作業内容一覧',url('task'));
     });
 
+    // 　メインメニュー > 施設一覧 >  作業内容一覧 >  作業内容追加
+    Breadcrumbs::for('task_add', function ($trail) {
+        $trail->parent('task');
+        $trail->push('作業内容追加',url('task_add'));
+    });
+
+    // 　メインメニュー > 施設一覧 >  作業内容一覧 >  作業内容修正
+    Breadcrumbs::for('task_fix', function ($trail) {
+        $trail->parent('task');
+        $trail->push('作業内容修正',url('task_fix'));
+    });
+
 
     // 　メインメニュー > 施設一覧 >  介助者一覧
     // Breadcrumbs::for('helper', function ($trail) {
