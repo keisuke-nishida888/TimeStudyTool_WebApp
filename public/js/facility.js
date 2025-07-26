@@ -379,5 +379,13 @@
             
     });
 
+    // 作業内容一覧用のIDチェック関数
+    function Idcheck_task(targetID) {
+        if (targetID == null || targetID == "") {
+            alert("行を選択してください。");
+            return false;
+        }
+        return true;
+    }
 
     

@@ -112,6 +112,10 @@ Route::group(['middleware' => ['auth','authroot']], function(){
             //アップロード
             Route::post('/costctrl_upload', 'App\Http\Controllers\CostController@Upload');
 
+        //作業内容一覧
+        Route::get('/task', 'App\Http\Controllers\TaskController@index');
+        Route::post('/task', 'App\Http\Controllers\TaskController@index');
+
         //介助者データ表示 ※※介助者一覧と順番入れ替えないこと※※
         Route::get('/helperdata', 'App\Http\Controllers\HelperdataController@index');
         Route::post('/helperdata', 'App\Http\Controllers\HelperdataController@index');

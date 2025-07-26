@@ -31,7 +31,7 @@ class authroot
             "HelperController",
             "HelperdataController",
             "MainmenuController",
-            "CostController",
+            "TaskController",
             "Login"
         );
         //管理者
@@ -44,7 +44,7 @@ class authroot
             "HelperdataController",
             "CostregistController",
             "MainmenuController",
-            "CostController",
+            "TaskController",
             "Login"
         );
         //施設
@@ -53,6 +53,7 @@ class authroot
             "MainmenuController",
             "HelperController",
             "HelperdataController",
+            "TaskController",
             "Login"
         );
 

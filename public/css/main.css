@@ -489,7 +489,8 @@ html, body {
                 width:calc(196px / var(--coef));
             }
 
-            #btn_delhelper {
+            #btn_delhelper,
+            #btn_deltask {
                 position: absolute;
                 top: calc(724.2px / var(--coef));
                 left: calc(1553.7px / var(--coef));
@@ -680,7 +681,7 @@ html, body {
                 /* padding-bottom: 10px; */
             }
 
-            #a_cost_ctrl
+            #a_task
             {
                 position: absolute;
                 top:calc(101px / var(--coef));
@@ -774,7 +775,8 @@ html, body {
             #a_loginuser_add,
             #a_wearable_add,
             #a_risksensor_add,
-            #a_facility_add
+            #a_facility_add,
+            #a_task_add
             {
                 position: absolute;
                 top:calc(356.2px / var(--coef));
@@ -793,7 +795,8 @@ html, body {
             #a_loginuser_fix,
             #a_wearable_fix,
             #a_risksensor_fix,
-            #a_facility_fix
+            #a_facility_fix,
+            #a_task_fix
             {
                 position: absolute;
                 top:calc(495.2px / var(--coef));
@@ -837,7 +840,8 @@ html, body {
             #img_facility_tb,
             #img_helper_tb,
             #img_wearable_tb,
-            #img_risksensor_tb
+            #img_risksensor_tb,
+            #img_task_tb
             {
                 position: absolute;
                 top:calc(120.92px / var(--coef));
@@ -1579,7 +1583,8 @@ html, body {
             } */
 
             /* 利用者ID選択 */
-            #table4
+            #table4,
+            #table_task
             {
                 word-break: break-all;
                 position: absolute;
@@ -1639,6 +1644,27 @@ html, body {
             {
                 /* background:rgb(206, 96, 210); */
                 width:calc(279px / var(--coef));
+            }
+
+            /* 作業内容一覧テーブル用 */
+            #table_task td:nth-child(1)
+            {
+                width:calc(200px / var(--coef));
+            }
+
+            #table_task td:nth-child(2)
+            {
+                width:calc(400px / var(--coef));
+            }
+
+            #table_task td:nth-child(3)
+            {
+                width:calc(200px / var(--coef));
+            }
+
+            #table_task td:nth-child(4)
+            {
+                width:calc(200px / var(--coef));
             }
 
             /*スクロール用*/

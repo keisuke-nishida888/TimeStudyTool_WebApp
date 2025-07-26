@@ -92,6 +92,12 @@ Breadcrumbs::for('risksensor_fix', function ($trail) {
         $trail->push('コストデータ管理',url('cost_ctrl'));
     });
 
+    // 　メインメニュー > 施設一覧 >  作業内容一覧
+    Breadcrumbs::for('task', function ($trail) {
+        $trail->parent('facility');
+        $trail->push('作業内容一覧',url('task'));
+    });
+
 
     // 　メインメニュー > 施設一覧 >  介助者一覧
     // Breadcrumbs::for('helper', function ($trail) {

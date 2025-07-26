@@ -5,10 +5,8 @@
 <script src="/js/facility.js"></script>
 
 <div class="allcont">
-<form id="a_cost_ctrl" action = '/cost_ctrl'  method = "post" onsubmit = "return Idcheck(targetID)">
-    @csrf
-    <input id="targetid3" type="hidden" name="id" value="">
-    <input type="image" class="img_style2" src="image/img_costctrl.png" alt="コストデータ管理" border="0">
+<form id="a_task" action = '/task'  method = "get">
+    <input type="image" class="img_style2" src="image/img_task.png" alt="作業名内容一覧" border="0">
 </form>
 
 <form id="a_helper" action = '/helper'  method = "post" onsubmit = "return Idcheck(targetID)">
