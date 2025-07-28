@@ -22,3 +22,4 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('/data', 'App\Http\Controllers\Api\ApiController@store');
 Route::post('/get-mail-setting', [ApiController::class, 'getMailSetting']);
 Route::get('/get-task-table', [ApiController::class, 'getTaskTable']);
+Route::post('/api/time_study_import', [ApiController::class, 'timeStudyImport']);

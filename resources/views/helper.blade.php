@@ -36,9 +36,9 @@
     <button id="btn_timestudytool" class="csvoutput_helper_list" onclick="VisibleChange(this.id)">Time Study Tool連携</button>
 </div>
 
-{{-- CSV出力　利用者一覧 --}}
+{{-- CSV取込--}}
 <div id="a_csvoutput_helper_list">
-    <button id="btn_csvoutput_helper_list" class="csvoutput_helper_list" onclick="helperListCsvOutput({{$facilityno}})">CSV出力　介助者一覧</button>
+    <button id="btn_csvoutput_helper_list" class="csvoutput_helper_list" onclick="console.log('CSV取込ボタンがクリックされました'); showTaskCsvImportModal()">CSV取込</button>
 </div>
 
 {{-- CSV出力　利用者データ --}}
@@ -215,6 +215,58 @@
     </div>
 </span>
 
+{{-- 作業内容CSV取り込みモーダル --}}
+<span id="pop_task_csvimport" style="visibility: collapse;">
+    <center><nobr id="lb_task_csvimport">作業内容CSV取り込み</nobr></center>
+    <form id="form_task_csvimport" method="POST" enctype="multipart/form-data" onsubmit="return false;">
+        @csrf
+        <div style="margin:10px 0;">
+            <label for="task_csvimport_helpername" style="display:inline-block; margin-right:8px;">作業者</label>
+            <select id="task_csvimport_helpername" name="helpername" required style="min-width:120px;">
+                @foreach($data as $val)
+                    <option value="{{ $val['helper_id'] }}">{{ $val['helpername'] }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div style="margin:10px 0;">
+            <label for="task_csvimport_file" style="display:inline-block; padding:8px 20px; background:#3b82f6; color:white; border-radius:4px; cursor:pointer;">
+                ファイルを選択
+            </label>
+            <input type="file" id="task_csvimport_file" name="csv_file" accept=".csv" style="display:none;" onchange="showTaskCsvFileName(this)">
+            <span id="task_csv_filename" style="margin-left:10px; color:#333;"></span>
+        </div>
+        <div style="margin-top:10px; text-align:center;">
+            <button id="btn_task_csvimport_start" onclick="startTaskCsvImport()" style="
+                display:inline-block; padding:8px 20px; border:2px solid #2563eb; color:#2563eb; border-radius:4px;
+                background:#fff; cursor:pointer; margin-right:10px;">
+                取り込み開始
+            </button>
+            <button id="btn_task_csvimport_cancel" onclick="closeTaskCsvImportModal()" style="
+                display:inline-block; padding:8px 20px; border:2px solid #f44336; color:#f44336; border-radius:4px;
+                background:#fff; cursor:pointer;">
+                キャンセル
+            </button>
+        </div>
+    </form>
+</span>
+
+{{-- 作業内容CSV取り込み確認モーダル --}}
+<span id="pop_task_csvimport_confirm" style="visibility: collapse;">
+    <center><nobr id="lb_task_csvimport_confirm">作業内容データを取り込みます。よろしいですか。</nobr></center>
+    <div style="margin-top:10px; text-align:center;">
+        <button id="btn_task_csvimport_yes" onclick="confirmTaskCsvImport()" style="
+            display:inline-block; padding:8px 20px; border:2px solid #4CAF50; color:#4CAF50; border-radius:4px;
+            background:#fff; cursor:pointer; margin-right:10px;">
+            はい
+        </button>
+        <button id="btn_task_csvimport_no" onclick="cancelTaskCsvImport()" style="
+            display:inline-block; padding:8px 20px; border:2px solid #f44336; color:#f44336; border-radius:4px;
+            background:#fff; cursor:pointer;">
+            いいえ
+        </button>
+    </div>
+</span>
+
 
 
 
@@ -272,6 +324,113 @@ function uploadTimeStudyCSV() {
         alert(e);
     }
 }
+
+// 作業内容CSV取り込み関連の関数
+function showTaskCsvImportModal() {
+    console.log('showTaskCsvImportModal called');
+    const modal = document.getElementById('pop_task_csvimport');
+    const overlay = document.getElementById('pop_alert_back');
+    
+    if (modal) {
+        console.log('Modal found, setting visibility to visible');
+        modal.style.visibility = 'visible';
+    } else {
+        console.log('Modal not found');
+    }
+    
+    if (overlay) {
+        console.log('Overlay found, setting visibility to visible');
+        overlay.style.visibility = 'visible';
+    } else {
+        console.log('Overlay not found');
+    }
+}
+
+function closeTaskCsvImportModal() {
+    document.getElementById('pop_task_csvimport').style.visibility = 'collapse';
+    document.getElementById('pop_alert_back').style.visibility = 'collapse';
+}
+
+function showTaskCsvFileName(input) {
+    const fileName = input.files[0] ? input.files[0].name : '';
+    document.getElementById('task_csv_filename').innerText = fileName;
+}
+
+function startTaskCsvImport() {
+    if (!document.getElementById('task_csvimport_file').files[0]) {
+        alert('CSVファイルを選択してください。');
+        return;
+    }
+    
+    if (!document.getElementById('task_csvimport_helpername').value) {
+        alert('作業者を選択してください。');
+        return;
+    }
+    
+    // 確認モーダルを表示
+    document.getElementById('pop_task_csvimport').style.visibility = 'collapse';
+    document.getElementById('pop_task_csvimport_confirm').style.visibility = 'visible';
+}
+
+function confirmTaskCsvImport() {
+    var formdata = new FormData();
+    
+    formdata.append('csv_file', document.getElementById('task_csvimport_file').files[0]);
+    formdata.append('helpername', document.getElementById('task_csvimport_helpername').value);
+    
+    // CSRFトークン取得
+    var token = document.querySelector('meta[name="csrf-token"]').content;
+    formdata.append('_token', token);
+    
+    var url = "/task_csv_import";
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('X-CSRF-Token', token);
+    
+    xhr.responseType = 'json';
+    xhr.send(formdata);
+    
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                var response = this.response;
+                if (response.success) {
+                    closeTaskCsvImportModal();
+                    document.getElementById('pop_task_csvimport_confirm').style.visibility = 'collapse';
+                    alert('CSVファイルの取り込みが成功しました。');
+                } else {
+                    alert(response.message);
+                }
+            } else {
+                alert('エラーが発生しました。');
+            }
+        }
+    };
+}
+
+function cancelTaskCsvImport() {
+    document.getElementById('pop_task_csvimport_confirm').style.visibility = 'collapse';
+    document.getElementById('pop_task_csvimport').style.visibility = 'visible';
+}
+
+// ページ読み込み時のデバッグ
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    const modal = document.getElementById('pop_task_csvimport');
+    const overlay = document.getElementById('pop_alert_back');
+    const button = document.getElementById('btn_csvoutput_helper_list');
+    
+    console.log('Modal element:', modal);
+    console.log('Overlay element:', overlay);
+    console.log('Button element:', button);
+    
+    if (modal) {
+        console.log('Modal initial visibility:', modal.style.visibility);
+    }
+    if (overlay) {
+        console.log('Overlay initial visibility:', overlay.style.visibility);
+    }
+});
 
 
 </script>

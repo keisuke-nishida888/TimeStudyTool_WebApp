@@ -497,6 +497,13 @@ html, body {
     width: calc(196px / var(--coef));
 }
 
+#btn_csvimport {
+    position: absolute;
+    top: calc(724.2px / var(--coef));
+    left: calc(1770px / var(--coef));
+    width: calc(196px / var(--coef));
+}
+
             #lb_time1
             {
                 position: absolute;
@@ -591,11 +598,18 @@ html, body {
             }
 
             #a_csvoutput_helper_list
-            {
-                position: absolute;
-                top:calc(101px / var(--coef));
-                left:calc(1407px / var(--coef));
-            }
+{
+    position: absolute;
+    top:calc(101px / var(--coef));
+    left:calc(1407px / var(--coef));
+}
+
+#a_csvimport_task
+{
+    position: absolute;
+    top:calc(101px / var(--coef));
+    left:calc(1407px / var(--coef));
+}
 
             #a_csvout_helper_data
             {
@@ -2650,6 +2664,34 @@ html, body {
 .cs_hidden
 {
     visibility: collapse;
+}
+
+#pop_task_csvimport {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    min-width: 400px;
+    max-width: 600px;
+}
+
+#pop_task_csvimport_confirm {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1002;
+    min-width: 300px;
+    max-width: 400px;
 }
 
 #pop_timestudytool {

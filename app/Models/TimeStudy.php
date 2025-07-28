@@ -9,16 +9,14 @@ class TimeStudy extends Model
 {
     use HasFactory;
     protected $table = 'time_study';
-    protected $primaryKey = 'id';
-    public $incrementing = true;
+    protected $primaryKey = 'timestudy_id';
+    public $incrementing = false;
 
     protected $fillable = [
-        'bpainhedno',
+        'timestudy_id',
         'helpno',
-        'ymd',
-        'year',
+        'task_id',
         'start',
         'stop',
-        'task_name',
     ];
 }

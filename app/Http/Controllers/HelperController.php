@@ -1012,6 +1012,160 @@ class HelperController extends Controller
         }
     }
 
+    // CSV取り込み処理（TimeStudyデータ登録）
+    public function csvImport(Request $request)
+    {
+        try {
+            \Log::info('CSV取り込み開始');
+            
+            if (!$request->hasFile('csv_file')) {
+                \Log::error('CSVファイルが選択されていません');
+                return response()->json(['success' => false, 'message' => 'CSVファイルを選択してください。']);
+            }
+
+            $file = $request->file('csv_file');
+            if ($file->getClientOriginalExtension() !== 'csv') {
+                \Log::error('CSVファイルではありません: ' . $file->getClientOriginalExtension());
+                return response()->json(['success' => false, 'message' => 'CSVファイルを選択してください。']);
+            }
+
+            $helperId = $request->input('helpername');
+            \Log::info('選択された介助者ID: ' . $helperId);
+
+            // CSVファイルを読み込み
+            $path = $file->getRealPath();
+            $data = array_map('str_getcsv', file($path));
+            \Log::info('CSVファイル読み込み完了。行数: ' . count($data));
+
+            // ヘッダー行をスキップ
+            array_shift($data);
+            \Log::info('ヘッダー行をスキップ。データ行数: ' . count($data));
+
+            $importCount = 0;
+            foreach ($data as $row) {
+                if (count($row) < 8) {
+                    continue; // 不正な行はスキップ
+                }
+
+                // CSVの形式: timestudy_id, task_id, task_name, task_type_no, task_category_no, start, stop, helpno
+                $timestudyId = trim($row[0]);
+                $taskId = trim($row[1]);
+                $taskName = trim($row[2]);
+                $taskTypeNo = (int)$row[3];
+                $taskCategoryNo = (int)$row[4];
+                $start = trim($row[5]);
+                $stop = trim($row[6]);
+                $csvHelpno = (int)$row[7]; // CSVファイルのhelpno
+
+                \Log::info('CSV行データ: ' . json_encode([
+                    'timestudy_id' => $timestudyId,
+                    'task_id' => $taskId,
+                    'task_name' => $taskName,
+                    'start' => $start,
+                    'stop' => $stop,
+                    'helpno' => $csvHelpno
+                ]));
+
+                // バリデーション
+                if (empty($timestudyId) || empty($taskId) || empty($taskName) || empty($start) || empty($stop)) {
+                    \Log::warning('必須項目が空です: ' . json_encode($row));
+                    continue; // 必須項目が空の場合はスキップ
+                }
+
+                // 日付形式のバリデーション（複数の形式に対応）
+                $startDateTime = null;
+                $stopDateTime = null;
+                
+                // 形式1: Y-m-d H:i:s
+                $startDateTime = \DateTime::createFromFormat('Y-m-d H:i:s', $start);
+                $stopDateTime = \DateTime::createFromFormat('Y-m-d H:i:s', $stop);
+                
+                // 形式2: Y-m-d\TH:i:s
+                if (!$startDateTime) {
+                    $startDateTime = \DateTime::createFromFormat('Y-m-d\TH:i:s', $start);
+                }
+                if (!$stopDateTime) {
+                    $stopDateTime = \DateTime::createFromFormat('Y-m-d\TH:i:s', $stop);
+                }
+                
+                // 形式3: Y-m-d\TH:i:s.u (マイクロ秒付き)
+                if (!$startDateTime) {
+                    $startDateTime = \DateTime::createFromFormat('Y-m-d\TH:i:s.u', $start);
+                }
+                if (!$stopDateTime) {
+                    $stopDateTime = \DateTime::createFromFormat('Y-m-d\TH:i:s.u', $stop);
+                }
+                
+                // 形式4: Y-m-d
+                if (!$startDateTime) {
+                    $startDateTime = \DateTime::createFromFormat('Y-m-d', $start);
+                }
+                if (!$stopDateTime) {
+                    $stopDateTime = \DateTime::createFromFormat('Y-m-d', $stop);
+                }
+
+                if (!$startDateTime || !$stopDateTime) {
+                    \Log::warning('日付変換エラー: start=' . $start . ', stop=' . $stop);
+                    continue; // 日付変換エラーはスキップ
+                } else {
+                    \Log::info('日付変換成功: start=' . $startDateTime->format('Y-m-d H:i:s') . ', stop=' . $stopDateTime->format('Y-m-d H:i:s'));
+                }
+
+                // helperテーブルでCSVのhelpnoに対応するidが存在するかチェック
+                $helper = \App\Models\Helper::where('id', $csvHelpno)->where('delflag', 0)->first();
+                if (!$helper) {
+                    \Log::warning('介助者が存在しません: helpno=' . $csvHelpno);
+                    continue; // 該当する介助者が存在しない場合はスキップ
+                }
+
+                // TimeStudyテーブルに登録（helper.idを使用）
+                try {
+                    // 日付を正しい形式に変換
+                    $startFormatted = $startDateTime->format('Y-m-d H:i:s');
+                    $stopFormatted = $stopDateTime->format('Y-m-d H:i:s');
+                    
+                    $timeStudy = \App\Models\TimeStudy::create([
+                        'timestudy_id' => $timestudyId,
+                        'helpno' => $helper->id, // helperテーブルのidを使用
+                        'task_id' => $taskId,
+                        'start' => $startFormatted,
+                        'stop' => $stopFormatted,
+                    ]);
+                    
+                    \Log::info('TimeStudy登録成功: ' . json_encode([
+                        'timestudy_id' => $timeStudy->timestudy_id,
+                        'helpno' => $helper->id,
+                        'task_id' => $taskId,
+                        'start' => $startFormatted,
+                        'stop' => $stopFormatted
+                    ]));
+                    
+                    $importCount++;
+                } catch (\Exception $e) {
+                    \Log::error('TimeStudy登録エラー: ' . $e->getMessage());
+                    \Log::error('登録データ: ' . json_encode([
+                        'timestudy_id' => $timestudyId,
+                        'helpno' => $helper->id,
+                        'task_id' => $taskId,
+                        'start' => $start,
+                        'stop' => $stop
+                    ]));
+                    continue;
+                }
+            }
+
+            return response()->json([
+                'success' => true, 
+                'message' => $importCount . '件のTimeStudyデータを登録しました。'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('CSV取り込みエラー: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'CSVファイルの取り込みに失敗しました。']);
+        }
+    }
+
+    /*
     public function timeStudyCsvUpload(Request $request)
     {
         try {
@@ -1063,5 +1217,5 @@ class HelperController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
-    }
+    }*/
 }

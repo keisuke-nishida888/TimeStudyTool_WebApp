@@ -129,6 +129,8 @@ Route::group(['middleware' => ['auth','authroot']], function(){
                 Route::post('/cxl_taskfix', 'App\Http\Controllers\TaskController@cxl_TaskFix');
                 //修正処理
                 Route::post('/task_fixctrl', 'App\Http\Controllers\TaskController@TaskFix');
+            //CSV取り込み
+            Route::post('/task_csv_import', 'App\Http\Controllers\HelperController@csvImport');
 
         //介助者データ表示 ※※介助者一覧と順番入れ替えないこと※※
         Route::get('/helperdata', 'App\Http\Controllers\HelperdataController@index');

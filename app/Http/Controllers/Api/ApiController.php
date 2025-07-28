@@ -9,11 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Response;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
 
 class ApiController extends Controller
 {
     /**
-     * メール送信設定を返すAPI
+    *　 メール送信機能
+    * メール送信設定を返すAPI
      * POST /api/get-mail-setting
      */
     public function getMailSetting(Request $request)
@@ -28,6 +31,7 @@ class ApiController extends Controller
     }
 
      /**
+    　　*　　作業名同期 
      * 作業名（task_table）一覧を返すAPI
      * GET /api/get-task-table
      */
@@ -43,6 +47,29 @@ class ApiController extends Controller
         return response()->json($tasks);
     }
 
+     /**
+    　　*　　WEB登録
+     * TimeStudyデータをAPIで通信する。
+     * POST /api/time_study_import
+     */
+    public function timeStudyImport(Request $request)
+{
+    $records = $request->input('records', []);
+    foreach ($records as $rec) {
+        DB::table('time_study')->updateOrInsert(
+            ['timestudy_id' => $rec['timestudy_id']], // 主キーで判定
+            [
+                'task_id' => $rec['task_id'],
+                'start' => $rec['start'],
+                'stop' => $rec['stop'],
+                'helpno' => $rec['helpno'],
+                'websent' => 1,                // 受信済みフラグ
+                'updated_at' => now(),
+            ]
+        );
+    }
+    return response()->json(['result' => 'ok']);
+}
 
 
     public function store(Request $requestJ)
