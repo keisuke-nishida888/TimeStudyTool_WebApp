@@ -272,7 +272,7 @@ function createTimeGraph(data) {
         timeLabels.push(`${i.toString().padStart(2, '0')}:30`);
     }
     
-    // 各作業のデータセットを作成
+    // 横棒グラフ用のデータセットを作成
     const datasets = [];
     console.log('Creating datasets for task names:', data.taskNames);
     console.log('Graph data structure:', data.graphData);
@@ -283,38 +283,36 @@ function createTimeGraph(data) {
         console.log('Task data for ' + taskName + ':', taskData);
         console.log('Task duration for ' + taskName + ':', taskDuration + ' minutes');
         
-        // 簡単なアプローチ：各時間スロットの値を配列として作成
-        const dataPoints = [];
-        
-        // timeLabelsと同じ順序でデータポイントを作成
-        timeLabels.forEach(timeSlot => {
-            const value = taskData[timeSlot];
-            dataPoints.push(value !== null && value !== undefined ? value : null);
-        });
+        // 横棒グラフ用：各作業名に対して1つのデータポイントを作成
+        // 作業時間を分単位で表現
+        const dataPoints = [taskDuration]; // 作業時間を1つの値として設定
         
         console.log('Data points for ' + taskName + ':', dataPoints);
         
-        // データセットに非nullの値があるかチェック
-        const hasData = dataPoints.some(value => value !== null);
+        // データがあるかチェック
+        const hasData = taskDuration > 0;
         console.log('Has data for ' + taskName + ':', hasData);
         
         if (hasData) {
+            // 作業の色を決定（最初の非null値を使用）
+            let taskColor = 'rgba(100, 100, 100, 0.7)'; // デフォルト色
+            for (let timeSlot in taskData) {
+                if (taskData[timeSlot] !== null && taskData[timeSlot] !== undefined) {
+                    taskColor = colors[taskData[timeSlot]] || taskColor;
+                    break;
+                }
+            }
+            
             datasets.push({
                 label: taskName,
                 data: dataPoints,
-                backgroundColor: dataPoints.map(value => {
-                    if (value === null) return 'rgba(200, 200, 200, 0.1)';
-                    return colors[value] || 'rgba(100, 100, 100, 0.7)';
-                }),
-                borderColor: dataPoints.map(value => {
-                    if (value === null) return 'rgba(200, 200, 200, 0.3)';
-                    return colors[value] || 'rgba(100, 100, 100, 0.9)';
-                }),
+                backgroundColor: taskColor,
+                borderColor: taskColor.replace('0.7', '1'),
                 borderWidth: 1,
-                barPercentage: 0.9,
-                categoryPercentage: 0.8
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
             });
-            console.log('Added dataset for ' + taskName);
+            console.log('Added dataset for ' + taskName + ' with color: ' + taskColor);
         } else {
             console.log('No data found for ' + taskName);
         }
@@ -333,7 +331,7 @@ function createTimeGraph(data) {
     timeGraph = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: timeLabels,
+            labels: ['作業時間'], // 横棒グラフ用のラベル
             datasets: datasets
         },
         options: {
@@ -347,16 +345,11 @@ function createTimeGraph(data) {
                 x: {
                     title: {
                         display: true,
-                        text: '時間'
+                        text: '作業時間（分）'
                     },
                     ticks: {
-                        maxTicksLimit: 24, // 1時間ごとに表示
                         callback: function(value, index, values) {
-                            // 1時間ごとにラベルを表示
-                            if (index % 2 === 0) {
-                                return this.getLabelForValue(value);
-                            }
-                            return '';
+                            return value + '分';
                         }
                     }
                 },
@@ -403,29 +396,23 @@ function createTimeGraph(data) {
                             const taskDuration = data.taskDurations ? data.taskDurations[taskName] : 0;
                             
                             if (taskDuration > 0) {
-                                // データポイントの最大値を取得
-                                const dataPoints = dataset.data;
-                                const maxValue = Math.max(...dataPoints.filter(val => val !== null));
+                                // バーの終点位置を計算
+                                const xAxis = chart.scales.x;
+                                const yAxis = chart.scales.y;
                                 
-                                if (maxValue !== null && maxValue !== -Infinity) {
-                                    // 最大値の位置を計算
-                                    const xAxis = chart.scales.x;
-                                    const yAxis = chart.scales.y;
-                                    
-                                    const xPos = xAxis.getPixelForValue(maxValue);
-                                    const yPos = yAxis.getPixelForValue(datasetIndex);
-                                    
-                                    // テキストを描画
-                                    ctx.save();
-                                    ctx.font = '12px Arial';
-                                    ctx.fillStyle = '#333';
-                                    ctx.textAlign = 'left';
-                                    ctx.textBaseline = 'middle';
-                                    
-                                    // バーの終点に少しオフセットを加えて表示
-                                    ctx.fillText(`${taskDuration}分`, xPos + 5, yPos);
-                                    ctx.restore();
-                                }
+                                const xPos = xAxis.getPixelForValue(taskDuration);
+                                const yPos = yAxis.getPixelForValue(datasetIndex);
+                                
+                                // テキストを描画
+                                ctx.save();
+                                ctx.font = 'bold 12px Arial';
+                                ctx.fillStyle = '#333';
+                                ctx.textAlign = 'left';
+                                ctx.textBaseline = 'middle';
+                                
+                                // バーの終点に少しオフセットを加えて表示
+                                ctx.fillText(`${taskDuration}分`, xPos + 8, yPos);
+                                ctx.restore();
                             }
                         });
                     }
