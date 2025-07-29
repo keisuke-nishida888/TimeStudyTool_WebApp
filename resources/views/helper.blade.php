@@ -31,11 +31,6 @@
 
 <input type="image" id="btn_delhelper"  src="image/img_del.png" alt="介助者削除" onclick="del_check(targetID,this.id)" border="0">
 
-{{-- Time Study Tool連携 --}}
-<div>
-    <button id="btn_timestudytool" class="csvoutput_helper_list" onclick="VisibleChange(this.id)">Time Study Tool連携</button>
-</div>
-
 {{-- CSV取込--}}
 <div id="a_csvoutput_helper_list">
     <button id="btn_csvoutput_helper_list" class="csvoutput_helper_list" onclick="console.log('CSV取込ボタンがクリックされました'); showTaskCsvImportModal()">CSV取込</button>
