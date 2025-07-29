@@ -142,6 +142,8 @@ Route::group(['middleware' => ['auth','authroot']], function(){
             Route::post('/Wearabledata_disp2', 'App\Http\Controllers\HelperdataController@Wearabledata_disp2');
             //csv出力
             Route::post('/csvoutput', 'App\Http\Controllers\HelperdataController@Csvoutput');
+            // グラフデータ取得
+            Route::post('/get_graph_data', 'App\Http\Controllers\HelperdataController@getGraphData');
             // 施設/全国平均データ表示
             Route::post('/averagedata', 'App\Http\Controllers\HelperdataController@Averagedata_disp');
         Route::post('/comparison', 'App\Http\Controllers\HelperdataController@comparison');
