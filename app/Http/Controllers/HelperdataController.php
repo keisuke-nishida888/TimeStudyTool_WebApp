@@ -1220,6 +1220,18 @@ class HelperdataController extends Controller
                 ->orderBy('time_study.start')
                 ->get();
             
+            \Log::info('Query details:', [
+                'helpno' => $helpno,
+                'selected_date' => $selectedDate,
+                'query_sql' => \DB::table('time_study')
+                    ->select('time_study.*', 'task_table.task_name', 'task_table.task_type_no', 'task_table.task_category_no')
+                    ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
+                    ->where('time_study.helpno', $helpno)
+                    ->whereDate('time_study.start', $selectedDate)
+                    ->orderBy('time_study.start')
+                    ->toSql()
+            ]);
+            
             \Log::info('Database query executed successfully');
             \Log::info('Query result for helpno=' . $helpno . ' and date=' . $selectedDate . ':', $timeStudyData->toArray());
         } catch (\Exception $e) {
@@ -1259,30 +1271,17 @@ class HelperdataController extends Controller
 
         // データが見つからない場合の処理
         if ($timeStudyData->count() === 0) {
-            \Log::warning('No data found for the specified criteria');
+            \Log::warning('No data found for the specified criteria: helpno=' . $helpno . ', date=' . $selectedDate);
             
-            // helpno=74のデータを直接取得してみる
-            $directQuery = \DB::table('time_study')
-                ->select('time_study.*', 'task_table.task_name', 'task_table.task_type_no', 'task_table.task_category_no')
-                ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
-                ->where('time_study.helpno', 74)
-                ->get();
-            
-            \Log::info('Direct query for helpno=74:', $directQuery->toArray());
-            
-            if ($directQuery->count() > 0) {
-                $timeStudyData = $directQuery;
-                \Log::info('Using direct query data');
-            } else {
-                return response()->json([
-                    'error' => 'No data found',
-                    'message' => '指定された条件に該当するデータが見つかりませんでした。',
-                    'timeSlots' => [],
-                    'taskNames' => [],
-                    'graphData' => [],
-                    'graphType' => $graphType
-                ]);
-            }
+            // 指定された条件に該当するデータがない場合は空のデータを返す
+            return response()->json([
+                'error' => 'No data found',
+                'message' => '指定された条件に該当するデータが見つかりませんでした。',
+                'timeSlots' => [],
+                'taskNames' => [],
+                'graphData' => [],
+                'graphType' => $graphType
+            ]);
         }
 
         // 30分単位の時間軸を作成（48スロット）
@@ -1408,20 +1407,39 @@ class HelperdataController extends Controller
         
         \Log::info('Final graph data structure:', $graphData);
         
-        // 作業時間の計算
+        // 作業時間の計算（合計時間と個別時間範囲）
         $taskDurations = [];
+        $taskIndividualDurations = [];
+        
         foreach ($taskNames as $taskName) {
             $taskRecords = $timeStudyData->where('task_name', $taskName);
             $totalMinutes = 0;
+            $individualDurations = [];
             
             foreach ($taskRecords as $record) {
                 $startTime = strtotime($record->start);
                 $stopTime = strtotime($record->stop);
                 $durationMinutes = round(($stopTime - $startTime) / 60);
                 $totalMinutes += $durationMinutes;
+                
+                // 個別の時間範囲情報を保存（時間範囲を正確に計算）
+                $individualDurations[] = [
+                    'start' => $record->start,
+                    'stop' => $record->stop,
+                    'start_hour' => (int)date('H', $startTime),
+                    'start_minute' => (int)date('i', $startTime),
+                    'stop_hour' => (int)date('H', $stopTime),
+                    'stop_minute' => (int)date('i', $stopTime),
+                    'start_time_decimal' => (float)date('H', $startTime) + ((float)date('i', $startTime) / 60),
+                    'stop_time_decimal' => (float)date('H', $stopTime) + ((float)date('i', $stopTime) / 60),
+                    'duration' => $durationMinutes,
+                    'task_type_no' => $record->task_type_no,
+                    'task_category_no' => $record->task_category_no
+                ];
             }
             
             $taskDurations[$taskName] = $totalMinutes;
+            $taskIndividualDurations[$taskName] = $individualDurations;
         }
         
         // サンプルデータを詳細にログ出力
@@ -1446,7 +1464,8 @@ class HelperdataController extends Controller
             'taskNames' => $taskNames,
             'graphData' => $graphData,
             'graphType' => $graphType,
-            'taskDurations' => $taskDurations
+            'taskDurations' => $taskDurations,
+            'taskIndividualDurations' => $taskIndividualDurations
         ]);
     }
 }

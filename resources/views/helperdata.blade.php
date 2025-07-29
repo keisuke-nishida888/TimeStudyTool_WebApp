@@ -1,21 +1,7 @@
 @extends('layouts.parent')
 
 @section('content')
-<script src="/js/helperdata.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Chart.jsのグローバル設定
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof Chart !== 'undefined') {
-            try {
-                Chart.defaults.font.family = 'Arial, sans-serif';
-                Chart.defaults.font.size = 12;
-            } catch (error) {
-                console.warn('Chart.js configuration error:', error);
-            }
-        }
-    });
-</script>
 
 <div class="allcont">
     <div class="container">
@@ -32,6 +18,9 @@
                             </div>
                             <div class="col-md-6">
                                 <strong>作業者名:</strong> <span id="helper-name">{{ isset($data2[0]) ? $data2[0]['helpername'] : '未選択' }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>作業者ID:</strong> <span id="helper-id">{{ isset($data2[0]) ? $data2[0]['Helper_id'] : '未選択' }}</span>
                             </div>
                         </div>
                     </div>
@@ -65,13 +54,10 @@
                 <!-- グラフ表示エリア -->
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">作業時間グラフ</h5>
+                        <h5 class="card-title">作業時間グラフ（ガントチャート）</h5>
+                        <div id="graph-error" class="alert alert-danger" style="display: none;"></div>
                         <div id="graph-container" style="height: 600px; overflow-x: auto;">
                             <canvas id="timeGraph" width="2400" height="600"></canvas>
-                        </div>
-                        <div id="graph-legend" class="graph-legend" style="display: none;">
-                            <h6>凡例</h6>
-                            <div id="legend-content"></div>
                         </div>
                     </div>
                 </div>
@@ -86,24 +72,25 @@ let timeGraph = null;
 document.getElementById('graph-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    // 既存のグラフとエラーメッセージをクリア
+    if (timeGraph) {
+        timeGraph.destroy();
+        timeGraph = null;
+    }
+    document.getElementById('graph-error').style.display = 'none';
+    document.getElementById('graph-error').textContent = '';
+    
     const selectedDate = document.getElementById('selected-date').value;
     const graphType = document.getElementById('graph-type').value;
-    const helpno = '{{ isset($data2[0]) ? $data2[0]["Helper_id"] : "" }}';
+    const helpno = document.getElementById('helper-id').textContent.trim();
     
     console.log('Form submitted:', {
         selectedDate: selectedDate,
         graphType: graphType,
-        helpno: helpno,
-        helpnoType: typeof helpno,
-        helpnoLength: helpno ? helpno.length : 0
+        helpno: helpno
     });
     
-    // data2の内容をデバッグ出力
-    console.log('data2 from server:', @json($data2));
-    
-    // helpnoが空でないかチェック
-    if (!helpno || helpno.trim() === '') {
-        console.error('helpno is empty or invalid');
+    if (!helpno || helpno === '未選択') {
         alert('作業者IDが取得できません。ページを再読み込みしてください。');
         return;
     }
@@ -113,25 +100,16 @@ document.getElementById('graph-form').addEventListener('submit', function(e) {
         return;
     }
     
-    if (!helpno) {
-        alert('作業者が選択されていません。');
-        return;
-    }
-    
-    // CSRFトークンを取得
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     if (!csrfToken) {
-        console.error('CSRF token not found');
         alert('CSRFトークンが見つかりません。');
         return;
     }
     
-    console.log('Sending request with:', {
-        helpno: helpno,
-        selected_date: selectedDate,
-        graph_type: graphType,
-        csrf_token: csrfToken
-    });
+    // ローディング状態を表示
+    document.getElementById('graph-error').style.display = 'block';
+    document.getElementById('graph-error').textContent = 'データを取得中...';
+    document.getElementById('graph-error').style.color = '#0066cc';
     
     // グラフデータを取得
     fetch('/get_graph_data', {
@@ -147,7 +125,6 @@ document.getElementById('graph-form').addEventListener('submit', function(e) {
         })
     })
     .then(response => {
-        console.log('Response status:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -161,70 +138,39 @@ document.getElementById('graph-form').addEventListener('submit', function(e) {
         console.log('- graphData:', data.graphData);
         console.log('- graphType:', data.graphType);
         
-        // グラフデータの詳細を確認
-        if (data.graphData) {
-            console.log('Graph data keys:', Object.keys(data.graphData));
-            Object.keys(data.graphData).forEach(taskName => {
-                console.log('Task data for ' + taskName + ':', data.graphData[taskName]);
-                console.log('Task data type:', typeof data.graphData[taskName]);
-                if (data.graphData[taskName]) {
-                    console.log('Task data keys:', Object.keys(data.graphData[taskName]));
-                    console.log('Sample values:', {
-                        '09:00': data.graphData[taskName]['09:00'],
-                        '09:30': data.graphData[taskName]['09:30'],
-                        '10:00': data.graphData[taskName]['10:00'],
-                        '10:30': data.graphData[taskName]['10:30']
-                    });
-                }
-            });
-        }
-        
-        // エラーレスポンスの処理
         if (data.error) {
-            alert(data.message || 'エラーが発生しました。');
+            document.getElementById('graph-error').textContent = data.message || 'データの取得に失敗しました。';
+            document.getElementById('graph-error').style.display = 'block';
+            document.getElementById('graph-error').style.color = '#dc3545';
             return;
         }
         
         if (!data || !data.taskNames || data.taskNames.length === 0) {
-            alert('指定された日付にデータが見つかりませんでした。');
+            document.getElementById('graph-error').textContent = '指定された日付にデータが見つかりませんでした。';
+            document.getElementById('graph-error').style.display = 'block';
+            document.getElementById('graph-error').style.color = '#dc3545';
             return;
         }
         
-        console.log('Task names:', data.taskNames);
-        console.log('Graph data:', data.graphData);
-        
-        // 各作業のデータを詳細にログ出力
-        data.taskNames.forEach(taskName => {
-            console.log('Task data for ' + taskName + ':', data.graphData[taskName]);
-        });
+        if (!data.taskIndividualDurations) {
+            document.getElementById('graph-error').textContent = '時間データが取得できませんでした。';
+            document.getElementById('graph-error').style.display = 'block';
+            document.getElementById('graph-error').style.color = '#dc3545';
+            return;
+        }
         
         createTimeGraph(data);
-        createLegend(data);
     })
     .catch(error => {
         console.error('Error:', error);
-        console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
-        
-        // エラーレスポンスの詳細を表示
-        if (error.response) {
-            error.response.json().then(data => {
-                console.error('Server error response:', data);
-                alert('サーバーエラー: ' + (data.message || error.message));
-            }).catch(() => {
-                alert('データの取得に失敗しました。: ' + error.message);
-            });
-        } else {
-            alert('データの取得に失敗しました。: ' + error.message);
-        }
+        document.getElementById('graph-error').textContent = 'データの取得に失敗しました。: ' + error.message;
+        document.getElementById('graph-error').style.display = 'block';
+        document.getElementById('graph-error').style.color = '#dc3545';
     });
 });
 
 function createTimeGraph(data) {
-    console.log('Creating time graph with data:', data);
+    console.log('Creating gantt chart with data:', data);
     
     const canvas = document.getElementById('timeGraph');
     if (!canvas) {
@@ -238,7 +184,6 @@ function createTimeGraph(data) {
         return;
     }
     
-    // Chart.jsが利用可能かチェック
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded');
         alert('Chart.jsライブラリが読み込まれていません。');
@@ -263,93 +208,141 @@ function createTimeGraph(data) {
         2: 'rgba(128, 0, 128, 0.8)' // 紫色
     };
     
-    const colors = data.graphType === 'type' ? typeColors : categoryColors;
-    
-    // 30分単位の時間軸のデータを作成（48スロット）
-    const timeLabels = [];
-    for (let i = 0; i < 24; i++) {
-        timeLabels.push(`${i.toString().padStart(2, '0')}:00`);
-        timeLabels.push(`${i.toString().padStart(2, '0')}:30`);
-    }
-    
-    // 横棒グラフ用のデータセットを作成
+    // ガントチャート用のデータセットを作成（実際の開始・終了時間を表示）
     const datasets = [];
-    console.log('Creating datasets for task names:', data.taskNames);
-    console.log('Graph data structure:', data.graphData);
+    console.log('Creating gantt chart datasets with actual start/stop times');
     
-    data.taskNames.forEach((taskName) => {
-        const taskData = data.graphData[taskName];
-        const taskDuration = data.taskDurations ? data.taskDurations[taskName] : 0;
-        console.log('Task data for ' + taskName + ':', taskData);
-        console.log('Task duration for ' + taskName + ':', taskDuration + ' minutes');
+    // 各作業名について個別のデータセットを作成
+    data.taskNames.forEach((taskName, taskIndex) => {
+        const individualDurations = data.taskIndividualDurations ? data.taskIndividualDurations[taskName] : [];
         
-        // 横棒グラフ用：各作業名に対して1つのデータポイントを作成
-        // 作業時間を分単位で表現
-        const dataPoints = [taskDuration]; // 作業時間を1つの値として設定
-        
-        console.log('Data points for ' + taskName + ':', dataPoints);
-        
-        // データがあるかチェック
-        const hasData = taskDuration > 0;
-        console.log('Has data for ' + taskName + ':', hasData);
-        
-        if (hasData) {
-            // 作業の色を決定（最初の非null値を使用）
-            let taskColor = 'rgba(100, 100, 100, 0.7)'; // デフォルト色
-            for (let timeSlot in taskData) {
-                if (taskData[timeSlot] !== null && taskData[timeSlot] !== undefined) {
-                    taskColor = colors[taskData[timeSlot]] || taskColor;
-                    break;
+        if (individualDurations && individualDurations.length > 0) {
+            // 各時間範囲について個別のデータセットを作成
+            individualDurations.forEach((duration, durationIndex) => {
+                const startTime = duration.start_time_decimal;
+                const stopTime = duration.stop_time_decimal;
+                const durationMinutes = duration.duration;
+                
+                // 色を決定
+                let barColor = 'rgba(100, 100, 100, 0.7)';
+                if (data.graphType === 'type') {
+                    switch(duration.task_type_no) {
+                        case 0: barColor = 'rgba(255, 165, 0, 0.7)'; break; // オレンジ
+                        case 1: barColor = 'rgba(173, 216, 230, 0.7)'; break; // 水色
+                        case 2: barColor = 'rgba(0, 128, 0, 0.7)'; break; // 緑
+                    }
+                } else {
+                    switch(duration.task_category_no) {
+                        case 0: barColor = 'rgba(255, 0, 0, 0.7)'; break; // 赤
+                        case 1: barColor = 'rgba(255, 255, 0, 0.7)'; break; // 黄色
+                        case 2: barColor = 'rgba(147, 112, 219, 0.7)'; break; // 紫
+                    }
                 }
-            }
-            
-            datasets.push({
-                label: taskName,
-                data: dataPoints,
-                backgroundColor: taskColor,
-                borderColor: taskColor.replace('0.7', '1'),
-                borderWidth: 1,
-                barPercentage: 0.8,
-                categoryPercentage: 0.9
+                
+                // 実際の開始・終了時間を直接使用（ガントチャート形式）
+                // 各時間帯での作業時間を計算
+                const dataPoints = [];
+                for (let hour = 0; hour < 24; hour++) {
+                    const hourStart = hour;
+                    const hourEnd = hour + 1;
+                    
+                    // この時間帯が作業時間範囲内かチェック
+                    if (startTime < hourEnd && stopTime > hourStart) {
+                        // 重複部分の時間を計算
+                        const overlapStart = Math.max(startTime, hourStart);
+                        const overlapEnd = Math.min(stopTime, hourEnd);
+                        const overlapDuration = overlapEnd - overlapStart;
+                        
+                        // この時間帯での作業時間（分単位）
+                        dataPoints.push(overlapDuration * 60);
+                    } else {
+                        dataPoints.push(null);
+                    }
+                }
+                
+                datasets.push({
+                    label: `${taskName} (${duration.start_hour}:${duration.start_minute.toString().padStart(2, '0')}-${duration.stop_hour}:${duration.stop_minute.toString().padStart(2, '0')})`,
+                    data: dataPoints,
+                    backgroundColor: barColor,
+                    borderColor: barColor.replace('0.7', '1'),
+                    borderWidth: 1,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.9,
+                    startTime: startTime,
+                    stopTime: stopTime,
+                    duration: durationMinutes,
+                    // 実際の時間範囲情報を追加
+                    actualStartTime: startTime,
+                    actualStopTime: stopTime,
+                    actualDuration: durationMinutes
+                });
             });
-            console.log('Added dataset for ' + taskName + ' with color: ' + taskColor);
-        } else {
-            console.log('No data found for ' + taskName);
         }
     });
     
     console.log('Final datasets:', datasets);
-    console.log('Number of datasets:', datasets.length);
-    console.log('Time labels for chart:', timeLabels);
     
     if (datasets.length === 0) {
         console.error('No datasets created');
-        alert('グラフデータが作成できませんでした。');
+        document.getElementById('graph-error').textContent = 'グラフデータが作成できませんでした。';
+        document.getElementById('graph-error').style.display = 'block';
         return;
+    }
+    
+    // 24時間のラベルを作成
+    const timeLabels = [];
+    for (let hour = 0; hour < 24; hour++) {
+        timeLabels.push(`${hour.toString().padStart(2, '0')}:00`);
     }
     
     timeGraph = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['作業時間'], // 横棒グラフ用のラベル
+            labels: data.taskNames, // 作業名をラベルとして使用
             datasets: datasets
         },
         options: {
-            indexAxis: 'y', // 横棒グラフにする
             responsive: true,
             maintainAspectRatio: false,
+            indexAxis: 'y', // 横棒グラフにする（縦軸に作業名、横軸に時間）
             animation: {
                 duration: 1000
+            },
+            layout: {
+                padding: {
+                    right: 50 // 時間表示のための余白
+                }
+            },
+            plugins: {
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.x;
+                            if (value === null) return 'データなし';
+                            const taskName = context.chart.data.labels[context.dataIndex];
+                            const timeSlot = context.dataset.label;
+                            return `${taskName} (${timeSlot}): ${value}分`;
+                        }
+                    }
+                }
             },
             scales: {
                 x: {
                     title: {
                         display: true,
-                        text: '作業時間（分）'
+                        text: '時間'
+                    },
+                    min: 0,
+                    max: 24, // 24時間表示
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.3)', // 薄いグレーのグリッド線
+                        drawBorder: false
                     },
                     ticks: {
+                        stepSize: 1,
                         callback: function(value, index, values) {
-                            return value + '分';
+                            return `${value.toString().padStart(2, '0')}:00`;
                         }
                     }
                 },
@@ -358,13 +351,17 @@ function createTimeGraph(data) {
                         display: true,
                         text: '作業名'
                     },
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.3)', // 薄いグレーのグリッド線
+                        drawBorder: false
+                    }
                 }
             },
             plugins: {
                 title: {
                     display: true,
-                    text: data.graphType === 'type' ? '介護種別別作業時間（30分単位）' : 'カテゴリ別作業時間（30分単位）'
+                    text: data.graphType === 'type' ? '介護種別別作業時間（ガントチャート）' : 'カテゴリ別作業時間（ガントチャート）'
                 },
                 legend: {
                     display: true,
@@ -375,16 +372,13 @@ function createTimeGraph(data) {
                         label: function(context) {
                             const value = context.parsed.x;
                             if (value === null) return 'データなし';
-                            
-                            const typeLabels = ['種別A', '種別B', '種別C'];
-                            const categoryLabels = ['カテゴリA', 'カテゴリB', 'カテゴリC'];
-                            const labels = data.graphType === 'type' ? typeLabels : categoryLabels;
-                            
-                            return `${context.dataset.label}: ${labels[value] || '未分類'}`;
+                            const taskName = context.chart.data.labels[context.dataIndex];
+                            const timeSlot = context.dataset.label;
+                            return `${taskName} (${timeSlot}): ${value}分`;
                         }
                     }
                 },
-                // カスタムプラグイン：作業時間を表示
+                // カスタムプラグイン：横棒グラフ用の時間表示
                 customDurationPlugin: {
                     id: 'customDurationPlugin',
                     afterDraw: function(chart) {
@@ -392,82 +386,33 @@ function createTimeGraph(data) {
                         const datasets = chart.data.datasets;
                         
                         datasets.forEach((dataset, datasetIndex) => {
-                            const taskName = dataset.label;
-                            const taskDuration = data.taskDurations ? data.taskDurations[taskName] : 0;
-                            
-                            if (taskDuration > 0) {
-                                // バーの終点位置を計算
-                                const xAxis = chart.scales.x;
-                                const yAxis = chart.scales.y;
-                                
-                                const xPos = xAxis.getPixelForValue(taskDuration);
-                                const yPos = yAxis.getPixelForValue(datasetIndex);
-                                
-                                // テキストを描画
-                                ctx.save();
-                                ctx.font = 'bold 12px Arial';
-                                ctx.fillStyle = '#333';
-                                ctx.textAlign = 'left';
-                                ctx.textBaseline = 'middle';
-                                
-                                // バーの終点に少しオフセットを加えて表示
-                                ctx.fillText(`${taskDuration}分`, xPos + 8, yPos);
-                                ctx.restore();
-                            }
+                            // 各データポイントの値を表示
+                            dataset.data.forEach((value, dataIndex) => {
+                                if (value !== null && value > 0) {
+                                    const xAxis = chart.scales.x;
+                                    const yAxis = chart.scales.y;
+                                    
+                                    const xPos = xAxis.getPixelForValue(value);
+                                    const yPos = yAxis.getPixelForValue(dataIndex);
+                                    
+                                    // テキストを描画
+                                    ctx.save();
+                                    ctx.font = 'bold 10px Arial';
+                                    ctx.fillStyle = '#333';
+                                    ctx.textAlign = 'left';
+                                    ctx.textBaseline = 'middle';
+                                    
+                                    // バーの右端に時間を表示
+                                    ctx.fillText(value.toString() + '分', xPos + 5, yPos);
+                                    ctx.restore();
+                                }
+                            });
                         });
                     }
                 }
             }
         }
     });
-}
-
-function createLegend(data) {
-    const legendContainer = document.getElementById('legend-content');
-    const legendDiv = document.getElementById('graph-legend');
-    
-    if (!legendContainer || !legendDiv) return;
-    
-    // 凡例をクリア
-    legendContainer.innerHTML = '';
-    
-    // 色の定義
-    const typeColors = {
-        0: 'rgba(255, 165, 0, 0.8)', // オレンジ色
-        1: 'rgba(135, 206, 235, 0.8)', // 水色
-        2: 'rgba(34, 139, 34, 0.8)' // 緑色
-    };
-    
-    const categoryColors = {
-        0: 'rgba(255, 0, 0, 0.8)', // 赤色
-        1: 'rgba(255, 255, 0, 0.8)', // 黄色
-        2: 'rgba(128, 0, 128, 0.8)' // 紫色
-    };
-    
-    const colors = data.graphType === 'type' ? typeColors : categoryColors;
-    const labels = data.graphType === 'type' 
-        ? ['種別A', '種別B', '種別C']
-        : ['カテゴリA', 'カテゴリB', 'カテゴリC'];
-    
-    // 凡例アイテムを作成
-    Object.keys(colors).forEach(key => {
-        const legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
-        
-        const colorBox = document.createElement('span');
-        colorBox.className = 'legend-color';
-        colorBox.style.backgroundColor = colors[key];
-        
-        const label = document.createElement('span');
-        label.textContent = labels[key] || `未分類(${key})`;
-        
-        legendItem.appendChild(colorBox);
-        legendItem.appendChild(label);
-        legendContainer.appendChild(legendItem);
-    });
-    
-    // 凡例を表示
-    legendDiv.style.display = 'block';
 }
 </script>
 
@@ -496,44 +441,10 @@ function createLegend(data) {
     width: 100% !important;
     height: 100% !important;
 }
-
-.graph-legend {
-    margin-top: 20px;
-    padding: 10px;
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-}
-
-.legend-item {
-    display: inline-block;
-    margin-right: 20px;
-    margin-bottom: 10px;
-}
-
-.legend-color {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    margin-right: 5px;
-    border: 1px solid #ccc;
-}
-
-.form-control {
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-}
-
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-}
-
-.btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
-}
 </style>
 @endsection
+
+
+
 
 
