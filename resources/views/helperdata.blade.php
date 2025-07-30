@@ -251,15 +251,14 @@ function createTimeTable(data) {
             for(const d of intervals) {
                 const s = toDecimalTime(d.start);
                 const e = toDecimalTime(d.stop);
-                // このセル（時間帯）と区間が重なるか
                 if (s < h+1 && e > h) {
                     dTarget = d;
-                    // このセルがstopをまたぐ場合（stopがこのセルに入っている場合）
+                    // stopがこのセル内
                     if (e > h && e <= h+1) {
                         isStopCell = true;
                         minutes = Math.round((e - s) * 60);
                     }
-                    break; // 一区間のみ描画
+                    break;
                 }
             }
             if (dTarget) {
@@ -272,12 +271,24 @@ function createTimeTable(data) {
                 const color = colors[dTarget.task_type_no] || "rgba(150,150,150,0.7)";
                 let minutesHtml = '';
                 if (isStopCell) {
-                    minutesHtml = `<span style="position:absolute;top:2px;right:-4px;font-size:13px;color:#333;background:rgba(255,255,255,0.9);padding:0 2px;">${minutes}</span>`;
+                    // バーの右端ぴったりに、透明で表示
+                    minutesHtml = `<span style="
+                        position:absolute;
+                        top:2px;
+                        left:calc(${left + width}% + 2px);
+                        font-size:13px;
+                        color:#222;
+                        background:transparent;
+                        border:none;
+                        padding:0 2px;
+                        white-space:nowrap;
+                        z-index:2;
+                    ">${minutes}</span>`;
                 }
                 cellContent = `
                     <div style="position:relative;width:100%;height:100%;">
-                      <div style="position:absolute;top:0;left:${left}%;width:${width}%;height:100%;background:${color};border-radius:0;"></div>
-                      ${minutesHtml}
+                        <div style="position:absolute;top:0;left:${left}%;width:${width}%;height:100%;background:${color};border-radius:0;"></div>
+                        ${minutesHtml}
                     </div>
                 `;
             }
@@ -288,6 +299,7 @@ function createTimeTable(data) {
     html += '</tbody></table>';
     document.getElementById('timeTableArea').innerHTML = html;
 }
+
 
 
 
