@@ -245,52 +245,41 @@ function createTimeTable(data) {
         const intervals = data.taskIndividualDurations[task] || [];
         for(let h=0; h<24; h++) {
             let cellContent = '';
+            let isStopCell = false;
+            let minutes = 0;
+            let dTarget = null;
             for(const d of intervals) {
                 const s = toDecimalTime(d.start);
                 const e = toDecimalTime(d.stop);
+                // このセル（時間帯）と区間が重なるか
                 if (s < h+1 && e > h) {
-                    let left = 0, width = 100;
-                    if (s > h) left = (s-h)*100;
-                    if (e < h+1) width = (e-h)*100 - left;
-                    else width = 100 - left;
-                    const color = colors[d.task_type_no] || "rgba(150,150,150,0.7)";
-                    
-                    // 分数計算
-                    const startInCell = Math.max(s, h);
-                    const endInCell = Math.min(e, h+1);
-                    const minutes = Math.round((endInCell - startInCell) * 60);
-
-                    // バーの右端に分数を表示（バー幅が十分な場合のみ表示）
-                    // バー幅が50%以上ならバー内に、狭い場合はバーの外に出す
-                    let minutesHtml = '';
-                    if (width > 30) {
-                        minutesHtml = `<span style="
-                            position:absolute;top:2px;right:4px;font-size:13px;color:#333;
-                            background:rgba(255,255,255,0.75);padding:0 2px;border-radius:0;">
-                            ${minutes}
-                        </span>`;
-                    } else {
-                        // 狭いときでも外側に必ず出す
-                        minutesHtml = `<span style="
-                            position:absolute;top:2px;left:100%;margin-left:2px;font-size:13px;color:#333;
-                            background:rgba(255,255,255,0.7);padding:0 2px;border-radius:0;">
-                            ${minutes}
-                        </span>`;
+                    dTarget = d;
+                    // このセルがstopをまたぐ場合（stopがこのセルに入っている場合）
+                    if (e > h && e <= h+1) {
+                        isStopCell = true;
+                        minutes = Math.round((e - s) * 60);
                     }
-
-                    cellContent = `
-                      <div style="position:relative;width:100%;height:100%;">
-                        <div style="
-                          position:absolute;top:0;left:${left}%;width:${width}%;height:100%;
-                          background:${color};
-                          border-radius:0;
-                        ">
-                          ${minutesHtml}
-                        </div>
-                      </div>
-                    `;
-                    break;
+                    break; // 一区間のみ描画
                 }
+            }
+            if (dTarget) {
+                const s = toDecimalTime(dTarget.start);
+                const e = toDecimalTime(dTarget.stop);
+                let left = 0, width = 100;
+                if (s > h) left = (s-h)*100;
+                if (e < h+1) width = (e-h)*100 - left;
+                else width = 100 - left;
+                const color = colors[dTarget.task_type_no] || "rgba(150,150,150,0.7)";
+                let minutesHtml = '';
+                if (isStopCell) {
+                    minutesHtml = `<span style="position:absolute;top:2px;right:-4px;font-size:13px;color:#333;background:rgba(255,255,255,0.9);padding:0 2px;">${minutes}</span>`;
+                }
+                cellContent = `
+                    <div style="position:relative;width:100%;height:100%;">
+                      <div style="position:absolute;top:0;left:${left}%;width:${width}%;height:100%;background:${color};border-radius:0;"></div>
+                      ${minutesHtml}
+                    </div>
+                `;
             }
             html += `<td style="position:relative;width:32px;height:26px;padding:0;">${cellContent}</td>`;
         }
@@ -299,6 +288,8 @@ function createTimeTable(data) {
     html += '</tbody></table>';
     document.getElementById('timeTableArea').innerHTML = html;
 }
+
+
 
 
 // 既存関数を「createTimeTable」に差し替え
