@@ -16,6 +16,9 @@
     <link rel="shortcut icon" href="{{ asset('/image/img_logo1.ico') }}">
     <script src="{{ asset('/js/jquery-3.3.1.min.js') }}"></script>
     <script src="{{ asset('/js/Chart.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- TimelineプラグインCDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-timeline@4.2.0/dist/chartjs-chart-timeline.umd.min.js"></script>
 </head>
 
 <body>

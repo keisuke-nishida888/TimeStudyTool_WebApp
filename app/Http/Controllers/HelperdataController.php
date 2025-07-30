@@ -1158,10 +1158,82 @@ class HelperdataController extends Controller
          }
     }
 
+    public function getGraphData(Request $request)
+    {
+        $helpno = $request->input('helpno');
+        $selectedDate = $request->input('selected_date');
+        $graphType = $request->input('graph_type'); // 'type' or 'category'
+    
+        $rows = \DB::table('time_study')
+            ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
+            ->where('time_study.helpno', $helpno)
+            ->whereDate('time_study.start', $selectedDate)
+            ->select(
+                'task_table.task_name',
+                'time_study.start',
+                'time_study.stop',
+                'task_table.task_type_no',
+                'task_table.task_category_no'
+            )
+            ->orderBy('time_study.start')
+            ->get();
+    
+        $taskNames = $rows->pluck('task_name')->unique()->values();
+        $taskIndividualDurations = [];
+        $graphData = [];
+        $timeSlots = [];
+        // 24時間を1時間ごとのスロットで生成
+        for ($h = 0; $h < 24; $h++) {
+            $timeSlots[] = sprintf('%02d:00', $h);
+        }
+    
+        // 各作業ごとの個別データ
+        foreach ($taskNames as $taskName) {
+            $taskIndividualDurations[$taskName] = [];
+            $graphData[$taskName] = array_fill(0, 24, null); // 1時間ごとの配列（nullで初期化）
+            foreach ($rows->where('task_name', $taskName) as $rec) {
+                $start = strtotime($rec->start);
+                $stop = strtotime($rec->stop);
+                $startDecimal = (float)date('H', $start) + ((float)date('i', $start) / 60);
+                $stopDecimal = (float)date('H', $stop) + ((float)date('i', $stop) / 60);
+                $taskIndividualDurations[$taskName][] = [
+                    'start' => $rec->start,
+                    'stop' => $rec->stop,
+                    'start_hour' => (int)date('H', $start),
+                    'start_minute' => (int)date('i', $start),
+                    'stop_hour' => (int)date('H', $stop),
+                    'stop_minute' => (int)date('i', $stop),
+                    'start_time_decimal' => $startDecimal,
+                    'stop_time_decimal' => $stopDecimal,
+                    'duration' => round(($stop - $start) / 60),
+                    'task_type_no' => $rec->task_type_no,
+                    'task_category_no' => $rec->task_category_no
+                ];
+                // グラフデータ（横軸：時間帯ごとに該当していたら色用番号を入れる）
+                for ($h = 0; $h < 24; $h++) {
+                    if ($startDecimal < ($h + 1) && $stopDecimal > $h) {
+                        $graphData[$taskName][$h] = ($graphType === 'type') ? $rec->task_type_no : $rec->task_category_no;
+                    }
+                }
+            }
+        }
+    
+        return response()->json([
+            'timeSlots' => $timeSlots,
+            'taskNames' => $taskNames,
+            'graphData' => $graphData,
+            'graphType' => $graphType,
+            'taskIndividualDurations' => $taskIndividualDurations
+        ]);
+    }
+    
+
+
+
     /**
      * グラフデータを取得するメソッド
      */
-    public function getGraphData(Request $request)
+    /*public function getGraphData(Request $request)
     {
         $helpno = $request->input('helpno');
         $selectedDate = $request->input('selected_date');
@@ -1219,19 +1291,18 @@ class HelperdataController extends Controller
                 ->whereDate('time_study.start', $selectedDate)
                 ->orderBy('time_study.start')
                 ->get();
-            
             \Log::info('Query details:', [
-                'helpno' => $helpno,
-                'selected_date' => $selectedDate,
-                'query_sql' => \DB::table('time_study')
-                    ->select('time_study.*', 'task_table.task_name', 'task_table.task_type_no', 'task_table.task_category_no')
-                    ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
-                    ->where('time_study.helpno', $helpno)
-                    ->whereDate('time_study.start', $selectedDate)
-                    ->orderBy('time_study.start')
-                    ->toSql()
-            ]);
-            
+                    'helpno' => $helpno,
+                    'selected_date' => $selectedDate,
+                    'query_sql' => \DB::table('time_study')
+                        ->select('time_study.*', 'task_table.task_name', 'task_table.task_type_no', 'task_table.task_category_no')
+                        ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
+                        ->where('time_study.helpno', $helpno)
+                        ->whereDate('time_study.start', $selectedDate)
+                        ->orderBy('time_study.start')
+                        ->toSql()
+                ]);
+    
             \Log::info('Database query executed successfully');
             \Log::info('Query result for helpno=' . $helpno . ' and date=' . $selectedDate . ':', $timeStudyData->toArray());
         } catch (\Exception $e) {
@@ -1467,5 +1538,5 @@ class HelperdataController extends Controller
             'taskDurations' => $taskDurations,
             'taskIndividualDurations' => $taskIndividualDurations
         ]);
-    }
+    }*/
 }
