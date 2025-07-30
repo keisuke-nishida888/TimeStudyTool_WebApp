@@ -229,10 +229,7 @@ document.getElementById('graph-form').addEventListener('submit', function(e) {
 
 // 作業時間データからセル塗り分け表を生成
 function createTimeTable(data) {
-    // 24時間ラベル
     const hours = Array.from({length:24}, (_,i) => i);
-
-    // 色
     const colors = [
         "rgba(255, 165, 0, 0.8)",    // オレンジ
         "rgba(135, 206, 235, 0.8)",  // 水色
@@ -243,38 +240,56 @@ function createTimeTable(data) {
     for(let h=0; h<24; h++) html += `<th>${h}:00</th>`;
     html += '</tr></thead><tbody>';
 
-    // 各作業名ごとに行生成
     for(const task of data.taskNames) {
         html += `<tr><td>${task}</td>`;
-        // その作業のすべての区間
         const intervals = data.taskIndividualDurations[task] || [];
         for(let h=0; h<24; h++) {
-            // デフォルト：空セル
             let cellContent = '';
-            // その時間帯に重なる区間を検索
             for(const d of intervals) {
-                // 例: "2025-07-30 10:30:00"
                 const s = toDecimalTime(d.start);
                 const e = toDecimalTime(d.stop);
-                // この時間帯と重なるか
                 if (s < h+1 && e > h) {
-                    // 塗る開始・終了割合(%)を計算
                     let left = 0, width = 100;
                     if (s > h) left = (s-h)*100;
                     if (e < h+1) width = (e-h)*100 - left;
                     else width = 100 - left;
-                    // 色
                     const color = colors[d.task_type_no] || "rgba(150,150,150,0.7)";
+                    
+                    // 分数計算
+                    const startInCell = Math.max(s, h);
+                    const endInCell = Math.min(e, h+1);
+                    const minutes = Math.round((endInCell - startInCell) * 60);
+
+                    // バーの右端に分数を表示（バー幅が十分な場合のみ表示）
+                    // バー幅が50%以上ならバー内に、狭い場合はバーの外に出す
+                    let minutesHtml = '';
+                    if (width > 30) {
+                        minutesHtml = `<span style="
+                            position:absolute;top:2px;right:4px;font-size:13px;color:#333;
+                            background:rgba(255,255,255,0.75);padding:0 2px;border-radius:0;">
+                            ${minutes}
+                        </span>`;
+                    } else {
+                        // 狭いときでも外側に必ず出す
+                        minutesHtml = `<span style="
+                            position:absolute;top:2px;left:100%;margin-left:2px;font-size:13px;color:#333;
+                            background:rgba(255,255,255,0.7);padding:0 2px;border-radius:0;">
+                            ${minutes}
+                        </span>`;
+                    }
+
                     cellContent = `
                       <div style="position:relative;width:100%;height:100%;">
                         <div style="
                           position:absolute;top:0;left:${left}%;width:${width}%;height:100%;
                           background:${color};
-                          border-radius:4px;
-                        "></div>
+                          border-radius:0;
+                        ">
+                          ${minutesHtml}
+                        </div>
                       </div>
                     `;
-                    break; // 1つで十分
+                    break;
                 }
             }
             html += `<td style="position:relative;width:32px;height:26px;padding:0;">${cellContent}</td>`;
@@ -282,9 +297,9 @@ function createTimeTable(data) {
         html += '</tr>';
     }
     html += '</tbody></table>';
-
     document.getElementById('timeTableArea').innerHTML = html;
 }
+
 
 // 既存関数を「createTimeTable」に差し替え
 function toDecimalTime(datetimeStr) {
