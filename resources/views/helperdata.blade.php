@@ -51,21 +51,39 @@
                     </div>
                 </div>
                 <!-- グラフ表示エリア -->
-                <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">作業時間表</h5>
-                            <div id="graph-legend" style="margin-bottom:8px;"></div>
-                            <div id="graph-error" class="alert alert-danger" style="display: none;"></div>
-                            <div id="graph-container" style="height: 600px; overflow-x: auto;">
-                                <div id="timeTableArea" style="width:100%;"></div>
-                            </div>
-                            <!-- ↓miniグラフはこの外！ -->
-                            <div id="mini-graph-area" style="min-width:320px; margin-top: 24px;"></div>
+               <div class="allcont">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-12">
+
+                            <!-- 横並びラッパー START -->
+                            <div style="display: flex; align-items: flex-start;">
+
+                                <!-- グラフ表のカード（左） -->
+                                <div style="flex:1;">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">作業時間表</h5>
+                                            <div id="graph-legend" style="margin-bottom:8px;"></div>
+                                            <div id="graph-error" class="alert alert-danger" style="display: none;"></div>
+                                            <div id="graph-container" style="height: 600px; overflow-x: auto;">
+                                                <div id="timeTableArea" style="width:100%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            <!-- ミニグラフを右側に（カード外） -->
+                            <div id="mini-graph-area" style="min-width:320px; margin-left:40px;"></div>
+
                         </div>
+                        <!-- 横並びラッパー END -->
+
                     </div>
+                </div>
             </div>
-        
         </div>
+
     </div>
 </div>
 
@@ -89,6 +107,25 @@ document.getElementById('graph-type').addEventListener('change', function() {
     renderLegend(this.value);
 });
 
+function renderLegend(graphType) {
+    const legendEl = document.getElementById('graph-legend');
+    let html = '';
+    if (graphType === "type") {
+        html = `
+            <span class="legend-box" style="background:rgba(255,165,0,0.8);"></span>直接
+            <span class="legend-box" style="background:rgba(135,206,235,0.8);margin-left:24px;"></span>間接
+            <span class="legend-box" style="background:rgba(200,200,200,0.8);margin-left:24px;"></span>その他
+        `;
+    } else if (graphType === "category") {
+        html = `
+            <span class="legend-box" style="background:rgba(255,70,70,0.8);"></span>肉体的負担
+            <span class="legend-box" style="background:rgba(180,80,255,0.8);margin-left:24px;"></span>精神的負担
+            <span class="legend-box" style="background:rgba(200,200,200,0.8);margin-left:24px;"></span>その他
+        `;
+    }
+    legendEl.innerHTML = html;
+}
+
 
 // グラフ描画
 function createTimeTable(data) {
@@ -105,13 +142,16 @@ function createTimeTable(data) {
         2: "rgba(200,200,200,0.8)"     // グレー
     };
 
+    // ★★「合計」列を追加
     let html = `<table class="time-table"><thead><tr><th>作業名</th>`;
     for(let h=0; h<24; h++) html += `<th>${h}:00</th>`;
-    html += '</tr></thead><tbody>';
+    html += `<th>合計</th></tr></thead><tbody>`; // ←ここで合計列
 
     for(const task of data.taskNames) {
         html += `<tr><td>${task}</td>`;
         const intervals = data.taskIndividualDurations[task] || [];
+        let totalMinutes = 0; // ←合計用
+
         for(let h=0; h<24; h++) {
             let cellContent = '';
             let isStopCell = false;
@@ -164,6 +204,13 @@ function createTimeTable(data) {
             }
             html += `<td style="position:relative;width:32px;height:26px;padding:0;">${cellContent}</td>`;
         }
+
+        // ★★ 合計分数を計算して最後の列に追加
+        for(const d of intervals) {
+            totalMinutes += Math.round((toDecimalTime(d.stop) - toDecimalTime(d.start)) * 60);
+        }
+        html += `<td style="background:#f8f8e9;font-weight:bold;min-width:60px;">${totalMinutes}分</td>`;
+
         html += '</tr>';
     }
     html += '</tbody></table>';
@@ -172,26 +219,6 @@ function createTimeTable(data) {
     drawMiniGraph(data); 
 }
 
-
-function renderLegend(graphType) {
-    const legendEl = document.getElementById('graph-legend');
-    let html = '';
-    if (graphType === "type") {
-        html = `
-            <span class="legend-box" style="background:rgba(255,165,0,0.8);"></span>直接
-            <span class="legend-box" style="background:rgba(135,206,235,0.8);margin-left:24px;"></span>間接
-            <span class="legend-box" style="background:rgba(200,200,200,0.8);margin-left:24px;"></span>その他
-        `;
-    } else if (graphType === "category") {
-        html = `
-            <span class="legend-box" style="background:rgba(255,70,70,0.8);"></span>肉体的負担
-            <span class="legend-box" style="background:rgba(180,80,255,0.8);margin-left:24px;"></span>精神的負担
-            <span class="legend-box" style="background:rgba(200,200,200,0.8);margin-left:24px;"></span>その他
-        `;
-    }
-    console.log(html); // ←デバッグ用
-    legendEl.innerHTML = html;
-}
 
 // 確定ボタンでデータ取得しグラフ描画
 document.getElementById('graph-form').addEventListener('submit', function(e) {
@@ -306,23 +333,22 @@ function drawMiniGraph(data) {
         <div style="border:2px solid #111; border-radius:18px; padding:16px 20px; background:#fff;">
         <div style="font-weight:bold; margin-bottom:16px;">${meta.title}</div>
     `;
-    meta.items.forEach((item, i) => {
-        // 時間表記（例: 2時間35分、0は"00分"とする）
+            meta.items.forEach((item, i) => {
         let min = totalMinutes[item.key] || 0;
         let h = Math.floor(min/60);
         let m = min%60;
-        let timeLabel = (h ? h+"時間" : "") + (("0"+m).slice(-2)) + "分";
+        let timeLabel = (h ? h+"時間" : "") + m + "分";
         let barLen = Math.round((min/maxMinutes)*150); // 150px最大幅
 
         html += `
-        <div style="display:flex;align-items:center;margin-bottom:12px;">
-          <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${item.dot};margin-right:10px;"></span>
-          <span style="width:90px;">${item.label}</span>
-          <span style="width:70px;text-align:right;">${timeLabel}</span>
-          <div style="height:18px;width:${barLen}px;background:${item.color};border-radius:9px;margin-left:20px;"></div>
-        </div>
+            <div style="display:flex;align-items:center;margin-bottom:24px;gap:12px;">
+            <span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${item.dot};margin-right:8px;flex-shrink:0;"></span>
+            <span style="width:110px;white-space:nowrap;font-size:1.15em;color:#6a6d6d;font-weight:600;">${item.label}</span>
+            <span style="width:auto;min-width:100px;white-space:nowrap;font-size:1.2em;font-weight:500;color:#656969;letter-spacing:1px;text-align:right;">${timeLabel}</span>
+            <div style="height:24px;width:${barLen}px;background:${item.color};border-radius:12px;margin-left:16px;flex-shrink:0;"></div>
+            </div>
         `;
-    });
+        });
     html += `</div>`;
 
     target.innerHTML = html;
@@ -413,6 +439,15 @@ function drawMiniGraph(data) {
     margin-right: 4px;
     border: 1px solid #ccc;
     box-sizing: border-box;
+}
+
+#graph-flex-wrap {
+  display: flex;
+  align-items: flex-start;
+}
+#mini-graph-area {
+  min-width: 3200px;
+  margin-left: 40px;
 }
 
 </style>
