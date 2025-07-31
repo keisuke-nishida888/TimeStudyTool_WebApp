@@ -1158,6 +1158,7 @@ class HelperdataController extends Controller
          }
     }
 
+    //TimeStudyのグラフデータを取得するメソッド
     public function getGraphData(Request $request)
     {
         $helpno = $request->input('helpno');

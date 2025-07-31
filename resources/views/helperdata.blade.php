@@ -54,9 +54,11 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">作業時間表</h5>
+                        <!-- ここに凡例を追加 -->
+                        <div id="graph-legend" style="margin-bottom:8px;"></div>
                         <div id="graph-error" class="alert alert-danger" style="display: none;"></div>
                         <div id="graph-container" style="height: 600px; overflow-x: auto;">
-                        <div id="timeTableArea"></div>
+                            <div id="timeTableArea"></div>
                         </div>
                     </div>
                 </div>
@@ -74,99 +76,119 @@ function toDecimalTime(datetimeStr) {
     return parseInt(time[0], 10) + parseInt(time[1], 10) / 60 + parseInt(time[2], 10)/3600;
 }
 
+// ページロード時に初期描画
+window.addEventListener('DOMContentLoaded', function() {
+    const graphType = document.getElementById('graph-type').value;
+    renderLegend(graphType);
+});
+
+// さらに、select（表示タイプ）を変更した瞬間にも反映
+document.getElementById('graph-type').addEventListener('change', function() {
+    renderLegend(this.value);
+});
+
+
 // グラフ描画
-function createTimeGraph(data) {
-    const canvas = document.getElementById('timeGraph');
-    const ctx = canvas.getContext('2d');
-    if (timeGraph && typeof timeGraph.destroy === "function") {
-        timeGraph.destroy();
-        timeGraph = null;
-        canvas.width = canvas.width;
-    }
+function createTimeTable(data) {
+    const graphType = document.getElementById('graph-type').value;
+    renderLegend(graphType);
+    const colorMapType = {
+        0: "rgba(255, 165, 0, 0.8)",   // オレンジ
+        1: "rgba(135, 206, 235, 0.8)", // 水色
+        2: "rgba(200,200,200,0.8)"     // グレー
+    };
+    const colorMapCategory = {
+        0: "rgba(255,70,70,0.8)",      // 赤
+        1: "rgba(180,80,255,0.8)",     // 紫
+        2: "rgba(200,200,200,0.8)"     // グレー
+    };
 
-    const colors = [
-        "rgba(255, 165, 0, 0.8)",
-        "rgba(135, 206, 235, 0.8)",
-        "rgba(34, 139, 34, 0.8)"
-    ];
+    let html = `<table class="time-table"><thead><tr><th>作業名</th>`;
+    for(let h=0; h<24; h++) html += `<th>${h}:00</th>`;
+    html += '</tr></thead><tbody>';
 
-    // 区間ごとラベル方式
-    let labels = [];
-    let dataValues = [];
-    let baseValues = [];
-    let bgColors = [];
-    let borderColors = [];
-    let borderWidths = [];
-
-    data.taskNames.forEach((task, idx) => {
-        const durations = data.taskIndividualDurations[task];
-        if (!durations) return;
-        durations.forEach((d) => {
-            labels.push(task); // ← 各区間ごとにラベル。作業名が重複してOK
-            const start = toDecimalTime(d.start);
-            const stop = toDecimalTime(d.stop);
-            dataValues.push(stop - start);
-            baseValues.push(start);
-            bgColors.push(colors[d.task_type_no] || "rgba(150,150,150,0.7)");
-            borderColors.push(colors[d.task_type_no] || "rgba(150,150,150,1)");
-            borderWidths.push(16);
-        });
-    });
-
-    timeGraph = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "作業",
-                data: dataValues,
-                backgroundColor: bgColors,
-                borderColor: borderColors,
-                borderWidth: borderWidths,
-                base: baseValues, // 棒の開始位置
-                barPercentage: 0.9,
-                categoryPercentage: 1.0,
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: false,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    title: { display: false },
-                    ticks: {
-                        font: { size: 16 },
-                        color: "#222"
+    for(const task of data.taskNames) {
+        html += `<tr><td>${task}</td>`;
+        const intervals = data.taskIndividualDurations[task] || [];
+        for(let h=0; h<24; h++) {
+            let cellContent = '';
+            let isStopCell = false;
+            let minutes = 0;
+            let dTarget = null;
+            for(const d of intervals) {
+                const s = toDecimalTime(d.start);
+                const e = toDecimalTime(d.stop);
+                if (s < h+1 && e > h) {
+                    dTarget = d;
+                    if (e > h && e <= h+1) {
+                        isStopCell = true;
+                        minutes = Math.round((e - s) * 60);
                     }
-                },
-                x: {
-                    min: 0,
-                    max: 24,
-                    title: { display: true, text: "時間", font: { size: 18 } },
-                    ticks: {
-                        stepSize: 1,
-                        font: { size: 16 },
-                        callback: v => `${String(v).padStart(2, '0')}:00`
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => {
-                            const base = ctx.dataset.base[ctx.dataIndex];
-                            const val = ctx.raw;
-                            if (!val || val === 0) return '';
-                            return `${ctx.label}: ${base.toFixed(2)}時～${(base + val).toFixed(2)}時`;
-                        }
-                    }
+                    break;
                 }
             }
+            if (dTarget) {
+                const s = toDecimalTime(dTarget.start);
+                const e = toDecimalTime(dTarget.stop);
+                let left = 0, width = 100;
+                if (s > h) left = (s-h)*100;
+                if (e < h+1) width = (e-h)*100 - left;
+                else width = 100 - left;
+                // ---- 色を切り替え ----
+                let color = "rgba(200,200,200,0.7)";
+                if (graphType === "type") color = colorMapType[dTarget.task_type_no] || color;
+                if (graphType === "category") color = colorMapCategory[dTarget.task_category_no] || color;
+                let minutesHtml = '';
+                if (isStopCell) {
+                    minutesHtml = `<span style="
+                        position:absolute;
+                        top:2px;
+                        left:calc(${left + width}% + 2px);
+                        font-size:13px;
+                        color:#222;
+                        background:transparent;
+                        border:none;
+                        padding:0 2px;
+                        white-space:nowrap;
+                        z-index:2;
+                    ">${minutes}</span>`;
+                }
+                cellContent = `
+                    <div style="position:relative;width:100%;height:100%;">
+                        <div style="position:absolute;top:0;left:${left}%;width:${width}%;height:100%;background:${color};border-radius:0;"></div>
+                        ${minutesHtml}
+                    </div>
+                `;
+            }
+            html += `<td style="position:relative;width:32px;height:26px;padding:0;">${cellContent}</td>`;
         }
-    });
+        html += '</tr>';
+    }
+    html += '</tbody></table>';
+    document.getElementById('timeTableArea').innerHTML = html;
 }
+
+
+function renderLegend(graphType) {
+    const legendEl = document.getElementById('graph-legend');
+    let html = '';
+    if (graphType === "type") {
+        html = `
+            <span class="legend-box" style="background:rgba(255,165,0,0.8);"></span>直接
+            <span class="legend-box" style="background:rgba(135,206,235,0.8);margin-left:24px;"></span>間接
+            <span class="legend-box" style="background:rgba(200,200,200,0.8);margin-left:24px;"></span>その他
+        `;
+    } else if (graphType === "category") {
+        html = `
+            <span class="legend-box" style="background:rgba(255,70,70,0.8);"></span>肉体的負担
+            <span class="legend-box" style="background:rgba(180,80,255,0.8);margin-left:24px;"></span>精神的負担
+            <span class="legend-box" style="background:rgba(200,200,200,0.8);margin-left:24px;"></span>その他
+        `;
+    }
+    console.log(html); // ←デバッグ用
+    legendEl.innerHTML = html;
+}
+
 
 
 
@@ -229,12 +251,17 @@ document.getElementById('graph-form').addEventListener('submit', function(e) {
 
 // 作業時間データからセル塗り分け表を生成
 function createTimeTable(data) {
-    const hours = Array.from({length:24}, (_,i) => i);
-    const colors = [
-        "rgba(255, 165, 0, 0.8)",    // オレンジ
-        "rgba(135, 206, 235, 0.8)",  // 水色
-        "rgba(34, 139, 34, 0.8)",    // 緑
-    ];
+    const graphType = document.getElementById('graph-type').value;
+    const colorMapType = {
+        0: "rgba(255, 165, 0, 0.8)",   // オレンジ
+        1: "rgba(135, 206, 235, 0.8)", // 水色
+        2: "rgba(200,200,200,0.8)"     // グレー
+    };
+    const colorMapCategory = {
+        0: "rgba(255,70,70,0.8)",      // 赤
+        1: "rgba(180,80,255,0.8)",     // 紫
+        2: "rgba(200,200,200,0.8)"     // グレー
+    };
 
     let html = `<table class="time-table"><thead><tr><th>作業名</th>`;
     for(let h=0; h<24; h++) html += `<th>${h}:00</th>`;
@@ -253,7 +280,6 @@ function createTimeTable(data) {
                 const e = toDecimalTime(d.stop);
                 if (s < h+1 && e > h) {
                     dTarget = d;
-                    // stopがこのセル内
                     if (e > h && e <= h+1) {
                         isStopCell = true;
                         minutes = Math.round((e - s) * 60);
@@ -268,10 +294,12 @@ function createTimeTable(data) {
                 if (s > h) left = (s-h)*100;
                 if (e < h+1) width = (e-h)*100 - left;
                 else width = 100 - left;
-                const color = colors[dTarget.task_type_no] || "rgba(150,150,150,0.7)";
+                // ---- 色を切り替え ----
+                let color = "rgba(200,200,200,0.7)";
+                if (graphType === "type") color = colorMapType[dTarget.task_type_no] || color;
+                if (graphType === "category") color = colorMapCategory[dTarget.task_category_no] || color;
                 let minutesHtml = '';
                 if (isStopCell) {
-                    // バーの右端ぴったりに、透明で表示
                     minutesHtml = `<span style="
                         position:absolute;
                         top:2px;
@@ -299,6 +327,7 @@ function createTimeTable(data) {
     html += '</tbody></table>';
     document.getElementById('timeTableArea').innerHTML = html;
 }
+
 
 
 
@@ -386,7 +415,16 @@ function toDecimalTime(datetimeStr) {
   border-radius: 0 !important;
 }
 
-
+.legend-box {
+    display: inline-block;
+    width: 40px;
+    height: 16px;
+    border-radius: 0;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
 
 </style>
 @endsection
