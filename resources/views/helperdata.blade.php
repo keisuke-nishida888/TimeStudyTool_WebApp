@@ -52,17 +52,19 @@
                 </div>
                 <!-- グラフ表示エリア -->
                 <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">作業時間表</h5>
-                        <!-- ここに凡例を追加 -->
-                        <div id="graph-legend" style="margin-bottom:8px;"></div>
-                        <div id="graph-error" class="alert alert-danger" style="display: none;"></div>
-                        <div id="graph-container" style="height: 600px; overflow-x: auto;">
-                            <div id="timeTableArea"></div>
+                        <div class="card-body">
+                            <h5 class="card-title">作業時間表</h5>
+                            <div id="graph-legend" style="margin-bottom:8px;"></div>
+                            <div id="graph-error" class="alert alert-danger" style="display: none;"></div>
+                            <div id="graph-container" style="height: 600px; overflow-x: auto;">
+                                <div id="timeTableArea" style="width:100%;"></div>
+                            </div>
+                            <!-- ↓miniグラフはこの外！ -->
+                            <div id="mini-graph-area" style="min-width:320px; margin-top: 24px;"></div>
                         </div>
                     </div>
-                </div>
             </div>
+        
         </div>
     </div>
 </div>
@@ -166,6 +168,8 @@ function createTimeTable(data) {
     }
     html += '</tbody></table>';
     document.getElementById('timeTableArea').innerHTML = html;
+    console.log('drawMiniGraph呼び出し', data);
+    drawMiniGraph(data); 
 }
 
 
@@ -188,11 +192,6 @@ function renderLegend(graphType) {
     console.log(html); // ←デバッグ用
     legendEl.innerHTML = html;
 }
-
-
-
-
-
 
 // 確定ボタンでデータ取得しグラフ描画
 document.getElementById('graph-form').addEventListener('submit', function(e) {
@@ -249,88 +248,6 @@ document.getElementById('graph-form').addEventListener('submit', function(e) {
     });
 });
 
-// 作業時間データからセル塗り分け表を生成
-function createTimeTable(data) {
-    const graphType = document.getElementById('graph-type').value;
-    const colorMapType = {
-        0: "rgba(255, 165, 0, 0.8)",   // オレンジ
-        1: "rgba(135, 206, 235, 0.8)", // 水色
-        2: "rgba(200,200,200,0.8)"     // グレー
-    };
-    const colorMapCategory = {
-        0: "rgba(255,70,70,0.8)",      // 赤
-        1: "rgba(180,80,255,0.8)",     // 紫
-        2: "rgba(200,200,200,0.8)"     // グレー
-    };
-
-    let html = `<table class="time-table"><thead><tr><th>作業名</th>`;
-    for(let h=0; h<24; h++) html += `<th>${h}:00</th>`;
-    html += '</tr></thead><tbody>';
-
-    for(const task of data.taskNames) {
-        html += `<tr><td>${task}</td>`;
-        const intervals = data.taskIndividualDurations[task] || [];
-        for(let h=0; h<24; h++) {
-            let cellContent = '';
-            let isStopCell = false;
-            let minutes = 0;
-            let dTarget = null;
-            for(const d of intervals) {
-                const s = toDecimalTime(d.start);
-                const e = toDecimalTime(d.stop);
-                if (s < h+1 && e > h) {
-                    dTarget = d;
-                    if (e > h && e <= h+1) {
-                        isStopCell = true;
-                        minutes = Math.round((e - s) * 60);
-                    }
-                    break;
-                }
-            }
-            if (dTarget) {
-                const s = toDecimalTime(dTarget.start);
-                const e = toDecimalTime(dTarget.stop);
-                let left = 0, width = 100;
-                if (s > h) left = (s-h)*100;
-                if (e < h+1) width = (e-h)*100 - left;
-                else width = 100 - left;
-                // ---- 色を切り替え ----
-                let color = "rgba(200,200,200,0.7)";
-                if (graphType === "type") color = colorMapType[dTarget.task_type_no] || color;
-                if (graphType === "category") color = colorMapCategory[dTarget.task_category_no] || color;
-                let minutesHtml = '';
-                if (isStopCell) {
-                    minutesHtml = `<span style="
-                        position:absolute;
-                        top:2px;
-                        left:calc(${left + width}% + 2px);
-                        font-size:13px;
-                        color:#222;
-                        background:transparent;
-                        border:none;
-                        padding:0 2px;
-                        white-space:nowrap;
-                        z-index:2;
-                    ">${minutes}</span>`;
-                }
-                cellContent = `
-                    <div style="position:relative;width:100%;height:100%;">
-                        <div style="position:absolute;top:0;left:${left}%;width:${width}%;height:100%;background:${color};border-radius:0;"></div>
-                        ${minutesHtml}
-                    </div>
-                `;
-            }
-            html += `<td style="position:relative;width:32px;height:26px;padding:0;">${cellContent}</td>`;
-        }
-        html += '</tr>';
-    }
-    html += '</tbody></table>';
-    document.getElementById('timeTableArea').innerHTML = html;
-}
-
-
-
-
 
 
 // 既存関数を「createTimeTable」に差し替え
@@ -339,6 +256,78 @@ function toDecimalTime(datetimeStr) {
     const time = datetimeStr.split(' ')[1].split(':');
     return parseInt(time[0], 10) + parseInt(time[1], 10) / 60 + parseInt(time[2], 10)/3600;
 }
+
+// ミニグラフ描画
+function drawMiniGraph(data) {
+    const graphType = document.getElementById('graph-type').value;
+    const target = document.getElementById('mini-graph-area');
+    if (!target) {
+        alert('mini-graph-areaが見つかりません！');
+        return;
+    }
+    // 色・ラベル設定
+    let meta = {};
+    if (graphType === "type") {
+        meta = {
+            title: "介護種別別勤務時間",
+            items: [
+                { key: 0, color: "#f7b98b", dot: "#f19545", label: "直接業務" },
+                { key: 1, color: "#8ed6f6", dot: "#55b5ec", label: "間接業務" },
+                { key: 2, color: "#bcbcbc", dot: "#888", label: "その他業務" },
+            ]
+        };
+    } else {
+        meta = {
+            title: "カテゴリ別勤務時間",
+            items: [
+                { key: 0, color: "#f6999a", dot: "#e45757", label: "肉体的負担業務" },
+                { key: 1, color: "#cfb0f7", dot: "#a15be7", label: "精神的負担業務" },
+                { key: 2, color: "#bcbcbc", dot: "#888", label: "その他業務" },
+            ]
+        };
+    }
+
+    // 合計計算
+    const totalMinutes = [0,0,0];
+    for (const task of data.taskNames) {
+        const intervals = data.taskIndividualDurations[task] || [];
+        for (const d of intervals) {
+            let no = graphType === "type" ? d.task_type_no : d.task_category_no;
+            let min = Math.round((toDecimalTime(d.stop) - toDecimalTime(d.start)) * 60);
+            totalMinutes[no] += min;
+        }
+    }
+
+    // 最大値で横棒長さを決定
+    const maxMinutes = Math.max(...totalMinutes, 1);
+
+    // HTML組み立て
+    let html = `
+        <div style="border:2px solid #111; border-radius:18px; padding:16px 20px; background:#fff;">
+        <div style="font-weight:bold; margin-bottom:16px;">${meta.title}</div>
+    `;
+    meta.items.forEach((item, i) => {
+        // 時間表記（例: 2時間35分、0は"00分"とする）
+        let min = totalMinutes[item.key] || 0;
+        let h = Math.floor(min/60);
+        let m = min%60;
+        let timeLabel = (h ? h+"時間" : "") + (("0"+m).slice(-2)) + "分";
+        let barLen = Math.round((min/maxMinutes)*150); // 150px最大幅
+
+        html += `
+        <div style="display:flex;align-items:center;margin-bottom:12px;">
+          <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${item.dot};margin-right:10px;"></span>
+          <span style="width:90px;">${item.label}</span>
+          <span style="width:70px;text-align:right;">${timeLabel}</span>
+          <div style="height:18px;width:${barLen}px;background:${item.color};border-radius:9px;margin-left:20px;"></div>
+        </div>
+        `;
+    });
+    html += `</div>`;
+
+    target.innerHTML = html;
+}
+
 
 
 </script>
