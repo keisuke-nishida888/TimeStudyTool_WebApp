@@ -58,9 +58,9 @@
                     </td>
                 </tr>
                     
-                <!-- 介助者名 -->
+                <!-- 作業者名 -->
                 <tr>
-                    <td><label for="helpername">{{ __('介助者名') }}</label></td>
+                    <td><label for="helpername">{{ __('作業者名') }}</label></td>
                     <td>
                         <input id="helpername" type="text" maxlength="20" name="helpername" value="{{old('helpername')}}">
 

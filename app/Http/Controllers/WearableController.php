@@ -112,7 +112,7 @@ class WearableController extends Controller
     {
         if($request->isMethod('POST'))
         {
-            //介助者管理マスタのウェアラブルデバイスが一致するレコードから介助者名と施設Noを取得する
+            //作業者管理マスタのウェアラブルデバイスが一致するレコードから作業者名と施設Noを取得する
             //施設Noは施設管理マスタのNoから取得
             // $getdata = Wearable::select()        
             //     ->whereIn('wearable.id',[$_POST["id"]])

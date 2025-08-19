@@ -111,10 +111,10 @@ Breadcrumbs::for('risksensor_fix', function ($trail) {
     });
 
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧
+    // 　メインメニュー > 施設一覧 >  作業者一覧
     // Breadcrumbs::for('helper', function ($trail) {
     //     $trail->parent('facility');
-    //     $trail->push('介助者一覧',url('helper'));
+    //     $trail->push('作業者一覧',url('helper'));
     // });
 
     Breadcrumbs::for('helper', function ($trail, $facilityno=null) // <-- Implicit binding(auto injection)  
@@ -143,34 +143,34 @@ Breadcrumbs::for('risksensor_fix', function ($trail) {
         else $facilityno = "?facilityno=".$facilityno; 
             
         $trail->parent('facility');
-        $trail->push('介助者一覧', route('helper', ['id' => $facilityno]));
+        $trail->push('作業者一覧', route('helper', ['id' => $facilityno]));
     });
 
 
 // ------------------------------------------->
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者追加
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者追加
     Breadcrumbs::for('helper_add', function ($trail, $facilityno=null) {
         $trail->parent('helper', $facilityno);
-        $trail->push('介助者追加',url('helper_add'));
+        $trail->push('作業者追加',url('helper_add'));
     });
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者修正
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者修正
     Breadcrumbs::for('helper_fix', function ($trail, $facilityno=null) {
         $trail->parent('helper', $facilityno);
-        $trail->push('介助者修正',url('helper_fix'));
+        $trail->push('作業者修正',url('helper_fix'));
     });
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者データ表示
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者データ表示
     Breadcrumbs::for('helperdata', function ($trail, $facilityno=null) {
         $trail->parent('helper', $facilityno);
-        $trail->push('介助者データ表示',url('helperdata'));
+        $trail->push('作業者データ表示',url('helperdata'));
     });
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者データ表示 >  介助者データ表示
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者データ表示 >  作業者データ表示
     Breadcrumbs::for('comparison', function ($trail, $facilityno=null) {
 
         $trail->parent('helperdata', $facilityno);
-        $trail->push('介助者データ比較',url('comparison'));
+        $trail->push('作業者データ比較',url('comparison'));
     });
 // ----------------------------------------------------------------------------------->
 
@@ -201,7 +201,7 @@ Breadcrumbs::for('risksensor_fix', function ($trail) {
 // 施設ユーザでログイン
 // ----------------------------------------------------------------------------------->
 
-// 　メインメニュー >  介助者一覧
+// 　メインメニュー >  作業者一覧
     Breadcrumbs::for('helper_facil', function ($trail, $facilityno=null) {
         if(!isset($facilityno))
         {
@@ -228,31 +228,31 @@ Breadcrumbs::for('risksensor_fix', function ($trail) {
         else $facilityno = "?facilityno=".$facilityno; 
 
         $trail->parent('mainmenu');
-        $trail->push('介助者一覧', route('helper', ['id' => $facilityno]));
+        $trail->push('作業者一覧', route('helper', ['id' => $facilityno]));
     });
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者追加
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者追加
     Breadcrumbs::for('helper_add_facil', function ($trail, $facilityno=null) {
         $trail->parent('helper_facil', $facilityno);
-        $trail->push('介助者追加',url('helper_add'));
+        $trail->push('作業者追加',url('helper_add'));
     });
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者修正
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者修正
     Breadcrumbs::for('helper_fix_facil', function ($trail, $facilityno=null) {
         $trail->parent('helper_facil', $facilityno);
-        $trail->push('介助者修正',url('helper_fix'));
+        $trail->push('作業者修正',url('helper_fix'));
     });
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者データ表示
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者データ表示
     Breadcrumbs::for('helperdata_facil', function ($trail, $facilityno=null) {
         $trail->parent('helper_facil',$facilityno);
-        $trail->push('介助者データ表示',url('helperdata'));
+        $trail->push('作業者データ表示',url('helperdata'));
     });
 
-    // 　メインメニュー > 施設一覧 >  介助者一覧 >  介助者データ表示 >  介助者データ表示
+    // 　メインメニュー > 施設一覧 >  作業者一覧 >  作業者データ表示 >  作業者データ表示
     Breadcrumbs::for('comparison_facil', function ($trail, $facilityno=null) {
         $trail->parent('helperdata_facil' ,$facilityno);
-        $trail->push('介助者データ比較',url('comparison'));
+        $trail->push('作業者データ比較',url('comparison'));
     });
 // ----------------------------------------------------------------------------------->
 

@@ -60,7 +60,7 @@ class LoginuserController extends Controller
         $title = Common::$title[$page];
         $group = Common::$group[$page];
 
-        //施設名と介助者名
+        //施設名と作業者名
         $data = "";
         return view($page, compact('title' ,'page','group','data'));
     }

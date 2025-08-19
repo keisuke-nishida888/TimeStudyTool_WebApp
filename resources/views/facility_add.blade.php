@@ -907,7 +907,7 @@
                             <td rowspan="2">通院</td>
                             <td>年間発生件数</td>
                             <td>一件あたり通院介助時間</td>
-                            <td>一件あたり介助者数</td>
+                            <td>一件あたり作業者数</td>
                         </tr>
                         <tr>
                             <td>
@@ -936,7 +936,7 @@
                                 </span>
                             </td>
                             <td>
-                            <!-- ※通院 - １件あたり介助者数 -->
+                            <!-- ※通院 - １件あたり作業者数 -->
                                 <input id="item50" type="text" maxlength="10" name="item50" value="{{ old('item50') }}">人
 
                                 <!-- @if($errors->has('item50'))
@@ -1089,7 +1089,7 @@
                                 </span>
                             </td>
                             <td>
-                            <!-- 排泄介助コスト - 利用者一人あたりの介助回数 -->
+                            <!-- 排泄介助コスト - 作業者一人あたりの介助回数 -->
                                 <input id="item59" type="text" maxlength="10" name="item59" value="{{ old('item59') }}">回
 
                                 <!-- @if($errors->has('item59'))
@@ -1104,14 +1104,14 @@
                         </tr>
 
                         <tr class="cs_hidden">
-                            <td>要全介助者</td>
+                            <td>要全作業者</td>
                             <td>うち二人介助を要する<br>対象者数</td>
                             <td>一人あたり介助所要時間</td>
-                            <td>利用者一人あたりの<br>介助回数</td>
+                            <td>作業者一人あたりの<br>介助回数</td>
                         </tr>
                         <tr class="cs_hidden">
                             <td>
-                            <!-- 排泄介助コスト - 要全介助者 -->
+                            <!-- 排泄介助コスト - 要全作業者 -->
                                 <input id="item69" type="text" maxlength="10" name="item69" value="{{ old('item69') }}">人
 
                                 <!-- @if($errors->has('item56'))
@@ -1149,7 +1149,7 @@
                                 </span>
                             </td>
                             <td>
-                            <!-- 排泄介助コスト - 利用者一人あたりの介助回数 -->
+                            <!-- 排泄介助コスト - 作業者一人あたりの介助回数 -->
                                 <input id="item72" type="text" maxlength="10" name="item72" value="{{ old('item72') }}">回
 
                                 <!-- @if($errors->has('item59'))
@@ -1174,7 +1174,7 @@
                         </tr>
                         <tr>
                         <td>
-                            <!-- 食事介助コスト - 要食事介助者 -->
+                            <!-- 食事介助コスト - 要食事作業者 -->
                                 <input id="item60" type="text" maxlength="10" name="item60" value="{{ old('item60') }}">人
 
                                 <!-- @if($errors->has('item60'))
@@ -1187,7 +1187,7 @@
                                 </span>
                             </td>
                             <td>
-                            <!-- 食事介助コスト - 1日あたりのべ介助者数 -->
+                            <!-- 食事介助コスト - 1日あたりのべ作業者数 -->
                                 <input id="item61" type="text" maxlength="10" name="item61" value="{{ old('item61') }}">人
 
 
@@ -1234,7 +1234,7 @@
                         <tr class="cs_hidden">
                                 <td rowspan="2">座位修正介助コスト</td>
                                 <td>対象者</td>
-                                <td>一日あたりのべ介助者数</td>
+                                <td>一日あたりのべ作業者数</td>
                                 <td>一人あたり介助所要時間</td>
                                 <td>一日あたり総介助回数</td>
                         </tr>
@@ -1252,7 +1252,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                <!-- 座位修正介助コスト - 一日あたりのべ介助者数 -->
+                                <!-- 座位修正介助コスト - 一日あたりのべ作業者数 -->
                                     <input id="item65" type="text" maxlength="10" name="item65" value="{{ old('item65') }}">人
                                     <!-- @if($errors->has('item65'))
                                         <span class="invalid-feedback validate" role="alert">

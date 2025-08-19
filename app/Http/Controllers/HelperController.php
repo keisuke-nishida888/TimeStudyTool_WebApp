@@ -57,7 +57,7 @@ class HelperController extends Controller
     {
         $facilityname = "";
 
-            //選択している施設の利用者を探す
+            //選択している施設の作業者を探す
             //requestは施設No(facilityno)が送られてくる
             if(isset($_POST["id"]))
             {
@@ -398,7 +398,7 @@ class HelperController extends Controller
     {
         if($request->isMethod('POST'))
         {
-            //介助者情報
+            //作業者情報
             $getdata = Helper::whereIn('id',[$_POST["id"]])
                 ->get();
             $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
@@ -456,9 +456,9 @@ class HelperController extends Controller
     public function HelperAdd(Request $request)
     {
         //**既に登録されているか調べる***********************************************************/
-        // 介助者登録時の重複確認
+        // 作業者登録時の重複確認
         $exists =  Helper::select('helper.helpername','helper.facilityno')
-        // 削除されていない介助者の中での重複チェックの処理を追加
+        // 削除されていない作業者の中での重複チェックの処理を追加
         ->where('delflag', '=', 0)
         ->get();
         $exist_mes = array();
@@ -551,7 +551,7 @@ class HelperController extends Controller
 
 
 
-            //介助者情報
+            //作業者情報
             $getdata = Helper::whereIn('id',[$insertid])->get();
             $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
 
@@ -581,7 +581,7 @@ class HelperController extends Controller
 
     public function HelperFix(Request $request)
     {
-        // 削除されていない介助者の中での重複チェックの処理を追加
+        // 削除されていない作業者の中での重複チェックの処理を追加
         $exist = Helper::select()
         ->whereIn('helpername',[$_POST["helpername"]])
         ->whereNotIn('id',[$_POST["id"]])
@@ -590,7 +590,7 @@ class HelperController extends Controller
         ->exists();
         //修正中のuserno以外で該当する名前があるか調べる
         //**既に登録されているか調べる***********************************************************/
-        // 介助者修正時の重複確認
+        // 作業者修正時の重複確認
 
         $exist_mes = array();
         $exist_mes['helpername'] = Common::$erralr_helper;
@@ -755,7 +755,7 @@ class HelperController extends Controller
                 //腰痛デバイスアップデート
                 // BackPain::whereIn('id',[$_POST["backpainno"]])->update(['helperno'=>$insertid]);
 
-                //介助者情報
+                //作業者情報
                 $getdata = Helper::whereIn('id',[$insertid])->get();
                 $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
 
@@ -778,7 +778,7 @@ class HelperController extends Controller
         {
             if($request->isMethod('POST'))
             {
-                //介助者情報
+                //作業者情報
                 $getdata = Helper::whereIn('id',[$_POST["id"]])
                     ->get();
                 $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
@@ -852,11 +852,11 @@ class HelperController extends Controller
         else return 0;
     }
 
-    // 介助者一覧のCSV出力
+    // 作業者一覧のCSV出力
     public function HelperListCsvOutput(Request $request)
     {
         if ($request->has('facilityno')) {
-            // 施設に属している介助者を取得
+            // 施設に属している作業者を取得
             $getdata = Helper::select('id', 'helpername')
             ->whereIn('facilityno', [$request->facilityno])
                 ->orderBy('helper.id', 'asc')
@@ -868,10 +868,10 @@ class HelperController extends Controller
             $sheet = $spreadsheet->getActiveSheet();
 
             // ヘッダ(項目名書き込み)
-            $header = array("利用者ID", "利用者名");
+            $header = array("作業者ID", "作業者名");
             $sheet->fromArray($header, null, 'A1');
 
-            $num = 2; // 2行目から介助者情報のデータ書き込み
+            $num = 2; // 2行目から作業者情報のデータ書き込み
 
             foreach ($getdata->toArray() as $value) {
                 $sheet->setCellValue("A" . $num, $value['id']);
@@ -905,13 +905,13 @@ class HelperController extends Controller
         }
     }
 
-    // 介助者データのCSV出力
+    // 作業者データのCSV出力
     public function HelperDataCsvOutput(Request $request)
     {
         // CSVのHeaderを定義
         $header1 = array("腰痛デバイス名");
         $header2 = array(
-           "利用者名", "年月日", "時分秒", "前傾回数合計", "前傾時間合計", "前傾平均合計", "ひねり回数合計",
+           "作業者名", "年月日", "時分秒", "前傾回数合計", "前傾時間合計", "前傾平均合計", "ひねり回数合計",
             "ひねり時間合計", "ひねり平均時間合計", "腰痛リスク", "開始時間", "終了時間", "総合時間", "前傾閾値", "ひねり閾値＋", "ひねり閾値ー"
         );
         // $header3 = array("時", "分", "前傾回数", "ひねり回数");
@@ -923,9 +923,9 @@ class HelperController extends Controller
             $startDate = str_replace('/', '', $_POST["st_ymd"]);   // 開始日
             $endDate = str_replace('/', '', $_POST["ed_ymd"]);     // 終了日
         }
-        // 選択している施設の介助者を探す
+        // 選択している施設の作業者を探す
         if (isset($_POST['facilityno'])) {
-            // 介助者
+            // 作業者
             $getdata = Helper::whereIn('facilityno', [$_POST['facilityno']])
                 ->orderBy('id', 'asc')
                 ->whereNotIn('delflag', [1])
@@ -963,7 +963,7 @@ class HelperController extends Controller
             foreach ($data as $key => $tmpval) {
                 foreach ($tmpval as $key2 => $tmpval2) {
                     if ($key2 > 0) {
-                        // 同じ介助者で、2個目以降のデータの場合、介助者名を空文字にする
+                        // 同じ作業者で、2個目以降のデータの場合、作業者名を空文字にする
                         $tmpval2['helpername'] = "";
                         $tmp_array[$key][$rowCnt] = $tmpval2;
                         $rowCnt++;
@@ -975,7 +975,7 @@ class HelperController extends Controller
                 $rowCnt = 0;
             }
 
-            $num = 3; // 3行目から介助者データの書き込み
+            $num = 3; // 3行目から作業者データの書き込み
             foreach($tmp_array as $datas) {
                 foreach($datas as $data) {
                     $sheet->fromArray($data, null, 'A' . $num);
@@ -1030,7 +1030,7 @@ class HelperController extends Controller
             }
 
             $helperId = $request->input('helpername');
-            \Log::info('選択された介助者ID: ' . $helperId);
+            \Log::info('選択された作業者ID: ' . $helperId);
 
             // CSVファイルを読み込み
             $path = $file->getRealPath();
@@ -1114,8 +1114,8 @@ class HelperController extends Controller
                 // helperテーブルでCSVのhelpnoに対応するidが存在するかチェック
                 $helper = \App\Models\Helper::where('id', $csvHelpno)->where('delflag', 0)->first();
                 if (!$helper) {
-                    \Log::warning('介助者が存在しません: helpno=' . $csvHelpno);
-                    continue; // 該当する介助者が存在しない場合はスキップ
+                    \Log::warning('作業者が存在しません: helpno=' . $csvHelpno);
+                    continue; // 該当する作業者が存在しない場合はスキップ
                 }
 
                 // TimeStudyテーブルに登録（helper.idを使用）

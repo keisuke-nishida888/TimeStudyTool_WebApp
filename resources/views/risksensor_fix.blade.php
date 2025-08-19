@@ -70,8 +70,8 @@
                         </td>
                 </tr>
                 <tr>       
-                        <!-- 介助者名 -->
-                        <td><label for="helpername">{{ __('介助者名') }}</label></td>
+                        <!-- 作業者名 -->
+                        <td><label for="helpername">{{ __('作業者名') }}</label></td>
                         <td>
                             @if(isset($data[0]['helpername']))
                                 <input  type="text" value={{$data[0]['helpername']}} disabled>

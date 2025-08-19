@@ -42,7 +42,7 @@ class RisksensorController extends Controller
         //whereNotInは配列型で
         //削除フラグdelflagが0の値のみ取得(昇順)
         $value = BackPain::orderBy('id','asc')->whereNotIn('delflag',[1])->get();
-        //介助者管理マスタの腰痛デバイスが一致するレコードから介助者名と施設Noを取得する
+        //作業者管理マスタの腰痛デバイスが一致するレコードから作業者名と施設Noを取得する
         //施設Noは施設管理マスタのNoから取得
         // $getdata = BackPain::select()
         //     ->orderBy('backpain.id','asc')
@@ -309,7 +309,7 @@ class RisksensorController extends Controller
 
                 $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
 
-                //介助者情報
+                //作業者情報
                 //施設情報
                 // $tmp = Helper::select('helper.id as Helper_id','helper.helpername','helper.facilityno','helper.delflag','facility.facility')
                 //     ->whereIn('helper.id',[$data[0]["helperno"]])

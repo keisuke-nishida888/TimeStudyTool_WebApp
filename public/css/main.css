@@ -1419,7 +1419,7 @@ html, body {
                 width:calc(322px / var(--coef));
             }
 
-            /* 利用者ID選択 */
+            /* 作業者ID選択 */
             #table1
             {
                 position: absolute;
@@ -1474,8 +1474,8 @@ html, body {
             }
 
 
-            /* 介助者 */
-            /* 利用者ID選択 */
+            /* 作業者 */
+            /* 作業者ID選択 */
             #table2
             {
                 position: absolute;
@@ -1527,8 +1527,8 @@ html, body {
             } */
 
 
-            /* 介助者 */
-            /* 利用者ID選択 */
+            /* 作業者 */
+            /* 作業者ID選択 */
             #table3
             {
                 position: absolute;
@@ -1596,7 +1596,7 @@ html, body {
                 width:calc(279px / var(--coef));
             } */
 
-            /* 利用者ID選択 */
+            /* 作業者ID選択 */
             #table4,
             #table_task
             {
@@ -2180,7 +2180,7 @@ html, body {
                 left:calc(1210px / var(--coef));
             }
 
-            /* 介助者データ表示　平均値表示時のデータ表示 */
+            /* 作業者データ表示　平均値表示時のデータ表示 */
             #average_total_disp
             {
                 position: absolute;
@@ -2243,7 +2243,7 @@ html, body {
                 visibility: hidden;
             }
 
-            /* 介助者データ表示　施設平均値 */
+            /* 作業者データ表示　施設平均値 */
             #facility_average_disp
             {
                 position: absolute;
@@ -2372,7 +2372,7 @@ html, body {
                 left: calc(-60px / var(--coef));
             }
 
-            /* 介助者データ表示　全国平均値 */
+            /* 作業者データ表示　全国平均値 */
             #all_average_disp {
                 position: absolute;
                 top: calc(1300px / var(--coef));

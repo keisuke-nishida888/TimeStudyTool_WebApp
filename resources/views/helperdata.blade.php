@@ -9,7 +9,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h2>介助者データ表示</h2>
+                <h2>作業者データ表示</h2>
                 <!-- 基本情報表示 -->
                 <div class="card mb-4">
                     <div class="card-body">

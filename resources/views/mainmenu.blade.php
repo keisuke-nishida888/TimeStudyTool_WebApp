@@ -67,13 +67,13 @@
     @if(Auth::user()->authority == $code[8]['value'])
         <!-- 施設情報登録されている場合 -->
         @if(Auth::user()->facilityno != 0 && Auth::user()->facilityno != "" && isset($facilityno) && $facilityno!="")
-            <!-- 介助者一覧 -->
+            <!-- 作業者一覧 -->
             <!-- 施設情報入力 -->
             <a href="{{ url('/facilityinput') }}"> <img id="btn_facilityinput" src="image/img_facilityinput.png" alt="施設情報入力" border="0"> </a>
             <form id="a_helper" action = '/helper'  method = "post">
                 @csrf
                 <input id="targetid" type="hidden" name="id" value="{{Auth::user()->facilityno}}">
-                <input type="image" id="btn_helpermain" src="image/img_helpermain.png" alt="介助者一覧" border="0">
+                <input type="image" id="btn_helpermain" src="image/img_helpermain.png" alt="作業者一覧" border="0">
             </form>
 
             <!-- アンケートサイトへのリンク -->

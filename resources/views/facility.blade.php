@@ -12,7 +12,7 @@
 <form id="a_helper" action = '/helper'  method = "post" onsubmit = "return Idcheck(targetID)">
     @csrf
     <input id="targetid" type="hidden" name="id" value="">
-    <input type="image" class="img_style2" src="image/img_helper.png" alt="介助者一覧" border="0">
+    <input type="image" class="img_style2" src="image/img_helper.png" alt="作業者一覧" border="0">
 </form>
 
 

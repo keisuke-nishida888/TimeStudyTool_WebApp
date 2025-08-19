@@ -544,7 +544,7 @@ function ini_img() {
                 document.getElementById('btn_csvoutput').style.visibility = 'Visible';
                 break;
 
-            // 介助者データCSV出力
+            // 作業者データCSV出力
             case "btn_helperdata_csvoutput_pre":
                 document.getElementById('btn_yes').style.visibility = 'hidden';
                 disp = 'btn_helperdata_csvout';
@@ -552,7 +552,7 @@ function ini_img() {
                 // document.getElementById('btn_csvoutput').style.top = y + "px";
                 // document.getElementById('btn_csvoutput').style.visibility = 'Visible';
                 break;
-            // CSV出力　介助者データポップアップ内のCSV出力
+            // CSV出力　作業者データポップアップ内のCSV出力
             case "btn_helperdata_csvout":
                 document.getElementById('btn_yes').style.visibility = 'hidden';
                 disp = 'btn_csvoutput';
@@ -731,14 +731,14 @@ function ini_img() {
 
         if(popname == "cover_pop_alert")
         {
-            //　「CSV出力　介助者データ」で日付選択POPの上に表示するPOP
+            //　「CSV出力　作業者データ」で日付選択POPの上に表示するPOP
             document.getElementById('cover_lb_alert').innerHTML = @json($errdata[37]['error']);
             document.getElementById('pop_alert_back').style.visibility = 'Visible';
             document.getElementById('cover_pop_alert').style.visibility = 'Visible';
             return;
         } else if (popname == "cover_pop_alert_no")
         {
-            //　「CSV出力　介助者データ」で日付選択POPの上に表示するPOPを非表示
+            //　「CSV出力　作業者データ」で日付選択POPの上に表示するPOPを非表示
             document.getElementById('cover_pop_alert').style.visibility = 'collapse';
             return;
         }
@@ -830,7 +830,7 @@ function ini_img() {
             return ;
         }
 
-        //介助者名が入っている場合、「介助者からウェアラブルデバイスを削除してから削除処理を行ってください」を表示して、処理終了。
+        //作業者名が入っている場合、「作業者からウェアラブルデバイスを削除してから削除処理を行ってください」を表示して、処理終了。
         if(url == "wearable_del")
         {
 
@@ -5168,7 +5168,7 @@ function ini_img() {
             var tbname = "#table4 tr";
             tr_default("#table4");
         }
-        else if(@json($title) == "介助者一覧")
+        else if(@json($title) == "作業者一覧")
         {
             var tbname = "#table3 tr";
             tr_default("#table3");
@@ -5193,7 +5193,7 @@ function ini_img() {
         $(tbname).click(function()
         {
             if(@json($title) == "施設一覧") tr_default("#table4");
-            else if(@json($title) == "介助者一覧") tr_default("#table3");
+            else if(@json($title) == "作業者一覧") tr_default("#table3");
             else if(@json($title) == "心拍センサー一覧" || @json($title) == "リスクデバイス一覧") tr_default("#table2");
             else tr_default("#table1");
             tr_click($(this));
@@ -5231,7 +5231,7 @@ function ini_img() {
     function getCELL()
     {
         if(@json($title) == "施設一覧") var myTbl = document.getElementById('table4');
-        else if(@json($title) == "介助者一覧") var myTbl = document.getElementById('table3');
+        else if(@json($title) == "作業者一覧") var myTbl = document.getElementById('table3');
         else if(@json($title) == "心拍センサー一覧" || @json($title) == "リスクデバイス一覧") var myTbl = document.getElementById('table2');
         else var myTbl = document.getElementById('table1');
         // trをループ。rowsコレクションで,行位置取得。
@@ -5260,7 +5260,7 @@ function ini_img() {
         var cellVal = 'セルの内容：'+ Cell.innerHTML;
         // document.getElementById("login_no").style.backgroundColor = "#D2DAEF";
         if(@json($title) == "施設一覧") targetID = document.getElementById('table4').rows[targetNo].cells[0].innerHTML;
-        else if(@json($title) == "介助者一覧") targetID = document.getElementById('table3').rows[targetNo].cells[0].innerHTML;
+        else if(@json($title) == "作業者一覧") targetID = document.getElementById('table3').rows[targetNo].cells[0].innerHTML;
         else if(@json($title) == "心拍センサー一覧" || @json($title) == "リスクデバイス一覧") targetID = document.getElementById('table2').rows[targetNo].cells[0].innerHTML;
         else targetID = document.getElementById('table1').rows[targetNo].cells[0].innerHTML;
 
@@ -7113,7 +7113,7 @@ function ini_img() {
     //グラフ
     Chart.defaults.global.defaultFontFamily = "Meiryo";
 
-    if(@json($title)  == "介助者データ表示")
+    if(@json($title)  == "作業者データ表示")
     {
         var ctx = document.getElementById("myChart").getContext("2d");
         var myChart = new Chart(ctx, {
@@ -7336,7 +7336,7 @@ function ini_img() {
         });
     }
 
-    if(@json($title) == "介助者データ比較")
+    if(@json($title) == "作業者データ比較")
     {
         var ctx2 = document.getElementById("myChart2").getContext("2d");
         var myChart2 = new Chart(ctx2, {

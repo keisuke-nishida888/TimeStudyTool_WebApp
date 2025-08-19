@@ -132,7 +132,7 @@ Route::group(['middleware' => ['auth','authroot']], function(){
             //CSV取り込み
             Route::post('/task_csv_import', 'App\Http\Controllers\HelperController@csvImport');
 
-        //介助者データ表示 ※※介助者一覧と順番入れ替えないこと※※
+        //作業者データ表示 ※※作業者一覧と順番入れ替えないこと※※
         Route::get('/helperdata', 'App\Http\Controllers\HelperdataController@index');
         Route::post('/helperdata', 'App\Http\Controllers\HelperdataController@index');
             //データ表示
@@ -148,27 +148,27 @@ Route::group(['middleware' => ['auth','authroot']], function(){
             Route::post('/averagedata', 'App\Http\Controllers\HelperdataController@Averagedata_disp');
         Route::post('/comparison', 'App\Http\Controllers\HelperdataController@comparison');
 
-        //介助者一覧
+        //作業者一覧
         // Route::get('/helper', 'App\Http\Controllers\HelperController@index');
         Route::post('/helper', 'App\Http\Controllers\HelperController@index');
             //削除
             Route::post('/helper_del','App\Http\Controllers\HelperController@del');
-            //介助者追加
+            //作業者追加
             Route::get('/helper_add', 'App\Http\Controllers\HelperController@add_index');
             Route::post('/helper_add', 'App\Http\Controllers\HelperController@add_index');
                 //追加処理
                 Route::post('/helper_addctrl','App\Http\Controllers\HelperController@HelperAdd');
                 Route::get('/helper_addctrl','App\Http\Controllers\HelperController@fix_index');
-            //介助者修正
+            //作業者修正
             Route::get('/helper_fix', 'App\Http\Controllers\HelperController@fix_index');
             Route::post('/helper_fix', 'App\Http\Controllers\HelperController@fix_index');
                 //フォームリセット
                 Route::post('/cxl_helperfix', 'App\Http\Controllers\HelperController@cxl_HelperFix');
                 //修正処理
                 Route::post('/helper_fixctrl', 'App\Http\Controllers\HelperController@HelperFix');
-            // 介助者一覧CSV出力
+            // 作業者一覧CSV出力
             Route::post('/helper_list_csvoutput', 'App\Http\Controllers\HelperController@HelperListCsvOutput');
-            // 介助者データCSV出力
+            // 作業者データCSV出力
             Route::post('/helper_data_csvoutput', 'App\Http\Controllers\HelperController@HelperDataCsvOutput');
 
 

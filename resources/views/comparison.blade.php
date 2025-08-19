@@ -212,9 +212,9 @@
                                 @endif
                             </div>
                         </div>
-                        <!-- 介助者名 -->
+                        <!-- 作業者名 -->
                         <div class="form-group row">
-                            <label for="helpername">{{ __('介助者名') }}</label>
+                            <label for="helpername">{{ __('作業者名') }}</label>
 
                             <div>
                                 @if(isset($data2))

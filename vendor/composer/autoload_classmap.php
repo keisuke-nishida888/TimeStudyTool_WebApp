@@ -207,6 +207,7 @@ return array(
     'Database\\Factories\\UserFactory' => $baseDir . '/database/factories/UserFactory.php',
     'Database\\Seeders\\DatabaseSeeder' => $baseDir . '/database/seeders/DatabaseSeeder.php',
     'Database\\Seeders\\TaskTableSeeder' => $baseDir . '/database/seeders/TaskTableSeeder.php',
+    'Database\\Seeders\\TimeStudySeeder' => $baseDir . '/database/seeders/TimeStudySeeder.php',
     'DaveJamesMiller\\Breadcrumbs\\BreadcrumbsException' => $vendorDir . '/davejamesmiller/laravel-breadcrumbs/src/BreadcrumbsException.php',
     'DaveJamesMiller\\Breadcrumbs\\BreadcrumbsGenerator' => $vendorDir . '/davejamesmiller/laravel-breadcrumbs/src/BreadcrumbsGenerator.php',
     'DaveJamesMiller\\Breadcrumbs\\BreadcrumbsManager' => $vendorDir . '/davejamesmiller/laravel-breadcrumbs/src/BreadcrumbsManager.php',

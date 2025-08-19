@@ -25,9 +25,9 @@ class HelperdataController extends Controller
     public function index(Request $request)
     {
 
-        //対象介助者の腰痛データと心拍データ
-        //requestは介助者No(id)が送られてくる
-        //対象介助者のデータを検索する
+        //対象作業者の腰痛データと心拍データ
+        //requestは作業者No(id)が送られてくる
+        //対象作業者のデータを検索する
         if(isset($_POST["id"]))
         {
             $getdata = bpainhed::select()
@@ -172,10 +172,10 @@ class HelperdataController extends Controller
     //比較画面
     public function comparison(Request $request)
     {
-        //対象介助者の腰痛データと心拍データ
-        //requestは介助者No(id)が送られてくる
+        //対象作業者の腰痛データと心拍データ
+        //requestは作業者No(id)が送られてくる
 
-        //対象介助者のデータを検索する
+        //対象作業者のデータを検索する
         if(isset($_POST["id"]))
         {
             $getdata = bpainhed::select()
@@ -214,8 +214,8 @@ class HelperdataController extends Controller
     {
 
         // file_put_contents($debug_path,$request.PHP_EOL,FILE_APPEND);
-        //対象介助者の腰痛データと心拍データ
-        //requestは介助者名()と時間が送られてくる
+        //対象作業者の腰痛データと心拍データ
+        //requestは作業者名()と時間が送られてくる
         //開始時刻から対象のテーブルを選択
         if(isset($_POST["helpername"]))
         {
@@ -296,8 +296,8 @@ class HelperdataController extends Controller
     public function Wearabledata_disp_old(Request $request)
     {
         // file_put_contents($debug_path,$request.PHP_EOL,FILE_APPEND);
-        //対象介助者の腰痛データと心拍データ
-        //requestは介助者名()と時間が送られてくる
+        //対象作業者の腰痛データと心拍データ
+        //requestは作業者名()と時間が送られてくる
         //開始時刻から対象のテーブルを選択
         if(isset($_POST["helpername"]))
         {
@@ -388,8 +388,8 @@ class HelperdataController extends Controller
 
     public function Wearabledata_disp(Request $request)
     {
-        //対象介助者の腰痛データと心拍データ
-        //requestは介助者名()と時間が送られてくる
+        //対象作業者の腰痛データと心拍データ
+        //requestは作業者名()と時間が送られてくる
         //開始時刻から対象のテーブルを選択
         try
         {
@@ -491,8 +491,8 @@ class HelperdataController extends Controller
     public function Helperdata_disp2(Request $request)
     {
         // file_put_contents($debug_path,$request.PHP_EOL,FILE_APPEND);
-        //対象介助者の腰痛データと心拍データ
-        //requestは介助者名()と時間が送られてくる
+        //対象作業者の腰痛データと心拍データ
+        //requestは作業者名()と時間が送られてくる
         //開始時刻から対象のテーブルを選択
         if(isset($_POST["helpername"]))
         {
@@ -572,8 +572,8 @@ class HelperdataController extends Controller
     public function Wearabledata_disp2(Request $request)
     {
         // file_put_contents($debug_path,$request.PHP_EOL,FILE_APPEND);
-        //対象介助者の腰痛データと心拍データ
-        //requestは介助者名()と時間が送られてくる
+        //対象作業者の腰痛データと心拍データ
+        //requestは作業者名()と時間が送られてくる
         //開始時刻から対象のテーブルを選択
         try
         {
@@ -677,7 +677,7 @@ class HelperdataController extends Controller
     public function Averagedata_disp(Request $request)
     {
         if ($request->filled('facilityno')) {
-            // 施設に属している介助者のIDを取得
+            // 施設に属している作業者のIDを取得
             $helperIds = Helper::query()
                 ->where('facilityno', $request->facilityno)
                 ->where('delflag', '<>', 1)
@@ -1007,7 +1007,7 @@ class HelperdataController extends Controller
     {
         //$request['helpername']はHelper_idが送信される
 
-         //対象介助者のデータを検索する
+         //対象作業者のデータを検索する
          if(isset($_POST["helpername"]))
          {
             //結果データ

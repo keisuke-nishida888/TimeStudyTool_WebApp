@@ -26,7 +26,7 @@ class FacilityController extends Controller
                     //save() ->updated_atのカラムが更新されない
                     //update() ->updated_atのカラムが更新される
 
-                    //介助者のデータがあるか調べる
+                    //作業者のデータがあるか調べる
 
                    
                     $helper_exist = Helper::select()
@@ -205,7 +205,7 @@ class FacilityController extends Controller
             {
                 $insertid = Common::create_facility($request->all());
 
-                //介助者管理マスタNO_番号で登録
+                //作業者管理マスタNO_番号で登録
                 //ファイルが存在しているかを判定
                 //チェック入っている場合は削除する
                 for($i=1;$i<21;$i++)

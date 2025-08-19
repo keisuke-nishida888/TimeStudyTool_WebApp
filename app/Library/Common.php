@@ -55,7 +55,7 @@ class Common
     static public $erralr_user = "このユーザ名は既に登録されています";
     static public $erralr_device = "このセンサー名は既に登録されています";
     static public $erralr_faci = "この施設名は既に登録されています";
-    static public $erralr_helper = "この介助者名は既に登録されています";
+    static public $erralr_helper = "この作業者名は既に登録されています";
 
     static public $title = array(
         "login" => "ログイン画面",
@@ -76,11 +76,11 @@ class Common
         "task"=> "作業内容一覧",
         "task_add"=> "作業内容追加",
         "task_fix"=> "作業内容修正",
-        "helper"=> "介助者一覧",
-        "helper_add"=> "介助者追加",
-        "helper_fix"=> "介助者修正",
-        "helperdata"=> "介助者データ表示",
-        "comparison"=> "介助者データ比較",
+        "helper"=> "作業者一覧",
+        "helper_add"=> "作業者追加",
+        "helper_fix"=> "作業者修正",
+        "helperdata"=> "作業者データ表示",
+        "comparison"=> "作業者データ比較",
         "averdata"=> "平均データ表示",
         "facilityinput"=> "施設情報入力",
         "costregist"=> "現状コスト/導入コスト登録",
@@ -469,8 +469,8 @@ class Common
 
 
 
-        //介助者
-        'helpername.required' => '介助者名を入力してください',
+        //作業者
+        'helpername.required' => '作業者名を入力してください',
         'helpername.string' => '英数字で名前を入力してください',
         'helpername.max' => '20文字以内で入力してください',
         // 'helpername.alpha_num' => '全角半角英数字もしくは日本語で入力してください',

@@ -94,7 +94,7 @@ class FacilityinputController extends Controller
                 $insertid = Common::create_facility($request->all());
                 $userid = Auth::user()->id;
                 User::where('id',$userid)->update(['facilityno'=> $insertid]);
-                //介助者管理マスタNO_番号で登録
+                //作業者管理マスタNO_番号で登録
                 //ファイルが存在しているかを判定
                 //チェック入っている場合は削除する
                 for($i=1;$i<21;$i++)

@@ -1,4 +1,4 @@
-// helperdata.js - 介助者データ表示用のJavaScript
+// helperdata.js - 作業者データ表示用のJavaScript
 
 // ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', function() {

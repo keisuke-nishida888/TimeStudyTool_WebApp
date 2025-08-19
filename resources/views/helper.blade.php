@@ -13,7 +13,7 @@
 @endif
         @csrf
             <input id="facilityno" type="hidden" name="facilityno" value={{$facilityno}}>
-            <input type="image" class="img_style" src="image/img_add.png" alt="介助者追加" border="0">
+            <input type="image" class="img_style" src="image/img_add.png" alt="作業者追加" border="0">
     </form>
 
 
@@ -25,20 +25,20 @@
 @endif
         @csrf
             <input id="targetid" type="hidden" name="id" value="">
-            <input type="image" class="img_style" src="image/img_fix.png" alt="介助者修正" border="0">
+            <input type="image" class="img_style" src="image/img_fix.png" alt="作業者修正" border="0">
     </form>
 
 
-<input type="image" id="btn_delhelper"  src="image/img_del.png" alt="介助者削除" onclick="del_check(targetID,this.id)" border="0">
+<input type="image" id="btn_delhelper"  src="image/img_del.png" alt="作業者削除" onclick="del_check(targetID,this.id)" border="0">
 
 {{-- CSV取込--}}
 <div id="a_csvoutput_helper_list">
     <button id="btn_csvoutput_helper_list" class="csvoutput_helper_list" onclick="console.log('CSV取込ボタンがクリックされました'); showTaskCsvImportModal()">CSV取込</button>
 </div>
 
-{{-- CSV出力　利用者データ --}}
+{{-- CSV出力　作業者データ --}}
 <div>
-    <button id="btn_helperdata_csvoutput_pre" class="csvout_helper_data" onclick="VisibleChange(this.id)">CSV出力　介助者データ</button>
+    <button id="btn_helperdata_csvoutput_pre" class="csvout_helper_data" onclick="VisibleChange(this.id)">CSV出力　作業者データ</button>
 </div>
 
 
@@ -50,7 +50,7 @@
 
 @csrf
     <input id="targetid2" type="hidden" name="id" value="">
-    <input type="image" class="img_style4" src="image/img_helperdata.png" alt="介助者データ表示" border="0">
+    <input type="image" class="img_style4" src="image/img_helperdata.png" alt="作業者データ表示" border="0">
 </form>
 
 
@@ -183,7 +183,7 @@
     <form id="form_timestudytool" method="POST" enctype="multipart/form-data" onsubmit="return false;">
         @csrf
         <div style="margin:10px 0;">
-            <label for="timestudy_helpername" style="display:inline-block; margin-right:8px;">介助者</label>
+            <label for="timestudy_helpername" style="display:inline-block; margin-right:8px;">作業者</label>
             <select id="timestudy_helpername" name="helpername" required style="min-width:120px;">
                 @foreach($data as $val)
                     <option value="{{ $val['helper_id'] }}">{{ $val['helpername'] }}</option>
@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {{-- 日付選択できるポップ用 --}}
 <span id="pop_custom_alert">
     <div id="pop_custom_alert_text">
-        <nobr id="lb_custom_alert_title">利用者データ出力</nobr>
+        <nobr id="lb_custom_alert_title">作業者データ出力</nobr>
         <nobr id="lb_custom_alert">出力期間</nobr>
         <div id="pop_custom_alert_content">
             <input type="text" name="st_ymd" id="st_ymd" readonly=”readonly” max="{{\Carbon\Carbon::now()->format('Y')}}-12-31">
@@ -471,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 beforeShowDay: function(date) {
                     const dateString = $.datepicker.formatDate("yymmdd", date);
                     if (targetDates.indexOf(dateString) !== -1) {
-                        // 介助者データがある箇所のマーキング
+                        // 作業者データがある箇所のマーキング
                         return [true, "custom-calendar-data", ""];
                     } else if (date.getDay() === 0){
                         // 日曜日の場合
@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
             beforeShowDay: function(date) {
                 const dateString = $.datepicker.formatDate("yymmdd", date);
                     if (targetDates.indexOf(dateString) !== -1) {
-                        // 介助者データがある箇所のマーキング
+                        // 作業者データがある箇所のマーキング
                         return [true, "custom-calendar-data", ""];
                     } else if (date.getDay() === 0){
                         // 日曜日の場合
@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
           yearSuffix: '年'};
         $.datepicker.setDefaults($.datepicker.regional['ja']);
     });
-    //介助者一覧csv出力
+    //作業者一覧csv出力
     function helperListCsvOutput(facilityno)
     {
         // XMLHttpRequestによるアップロード処理
@@ -572,9 +572,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     var downloadData = new Blob([uint8_array], {type: "text/csv;"});
 
                     //ファイル名用のデータ取得
-                    //ファイル名は、「施設名_介助者データ.csv」
+                    //ファイル名は、「施設名_作業者データ.csv」
                     var facilityname = @json($facilityname);
-                    var filelastname = "介助者データ";
+                    var filelastname = "作業者データ";
                     var separator = "_";
                     var extension = ".csv"
                     var filename = facilityname + separator +  filelastname + extension;
@@ -640,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
         VisibleChange("btn_helperdata_csvout");
     }
 
-    //介助者データcsv出力
+    //作業者データcsv出力
     function helperDataCsvOutput(facilityno)
     {
         // 出力期間開始日、終了日を取得
@@ -694,9 +694,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     var downloadData = new Blob([uint8_array], {type: "text/csv;"});
 
                     //ファイル名用のデータ取得
-                    //ファイル名は、「施設名_介助者データ.csv」
+                    //ファイル名は、「施設名_作業者データ.csv」
                     var facilityname = @json($facilityname);
-                    var filelastname = "介助者データ";
+                    var filelastname = "作業者データ";
                     var separator = "_";
                     var extension = ".csv"
                     var filename = facilityname + separator +  filelastname + extension;
