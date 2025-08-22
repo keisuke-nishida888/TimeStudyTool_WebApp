@@ -104,7 +104,17 @@
                             </td>
                          </tr>
 
-
+                        <!-- グループ -->
+                        <tr>
+                            <td><label for="group_name">{{ __('グループ') }}</label></td>
+                            <td>
+                                <input id="group_name" type="text" name="group_name" maxlength="100"
+                                    value="{{ old('group_name', isset($groupName) ? $groupName : '') }}">
+                                <span class="invalid-feedback validate" role="alert">
+                                    <nobr id="err_group_name"></nobr>
+                                </span>
+                            </td>
+                        </tr>
 
                         <!-- ウェアラブルデバイス名 -->
                         {{-- 

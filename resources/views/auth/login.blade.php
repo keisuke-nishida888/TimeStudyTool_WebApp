@@ -13,7 +13,7 @@
     <p><img id="img_login_logo" src="image/img_logo1.png" alt=""></p>
     <!-- </p> -->
 
-    <p><label id="login_title">Malpos Major</label></p>
+    <p><label id="login_title">Time Study Tool</label></p>
 
     @if(Session::has('message'))
         <p class = "mess">{{session('message')}}</P>

@@ -708,6 +708,12 @@ html, body {
                 top:calc(223px / var(--coef));
                 left:calc(1400px / var(--coef));
             }
+            #a_group
+            {
+                position: absolute;
+                top:calc(223px / var(--coef));
+                left:calc(1400px / var(--coef));
+            }
 
             #btn_no
             {

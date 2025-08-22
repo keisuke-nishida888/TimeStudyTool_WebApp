@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
     <head>
-        <title>Malpos Major</title>
+        <title>Time Study Tool</title>
         <meta charset="utf-8">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -2048,18 +2048,18 @@ function ini_img() {
     //jquery + ajax フォーム内の値を送信
     $('#form_facilityadd').submit(function(event)
     {
-        event.preventDefault();
-        document.getElementById("err_facility").innerText = "";
-        document.getElementById("err_pass").innerText = "";
-        document.getElementById("err_address").innerText = "";
-        document.getElementById("err_tel").innerText = "";
-        document.getElementById("err_mail").innerText = "";
-        document.getElementById("err_url").innerText = "";
+            // 安全クリア関数
+        const clear = (id) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = '';
+        };
 
-        for(var i=1;i<73;i++)
-        {
-            var errid = "err_item"+i;
-            document.getElementById(errid).innerText = "";
+        // よく使う基本IDだけ個別に
+        ['facility','pass','address','tel','mail','url'].forEach(k => clear('err_' + k));
+
+        // item系は存在するものだけ消す
+        for (let i = 1; i <= 72; i++) {
+            clear('err_item' + i);
         }
 
         // フォームデータを取得
@@ -2828,18 +2828,18 @@ function ini_img() {
     $('#form_facilityfix').submit(function(event)
     {
         event.preventDefault();
-        document.getElementById("err_facility").innerText = "";
-        document.getElementById("err_pass").innerText = "";
-        document.getElementById("err_address").innerText = "";
-        document.getElementById("err_tel").innerText = "";
-        document.getElementById("err_mail").innerText = "";
-        document.getElementById("err_url").innerText = "";
 
-        for(var i=1;i<73;i++)
-        {
-            var errid = "err_item"+i;
-            document.getElementById(errid).innerText = "";
-        }
+        const clear = (id) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = '';
+        };
+
+        // 個別のエラー
+        ['err_facility','err_pass','err_address','err_tel','err_mail','err_url']
+            .forEach(clear);
+
+        // item系は存在するものだけ
+        for (let i = 1; i <= 72; i++) clear(`err_item${i}`);
 
         // フォームデータを取得
         var formData = new FormData($(this)[0]);

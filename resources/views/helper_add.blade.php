@@ -69,6 +69,19 @@
                         </span>
                         </td>
                 </tr>
+                <!-- グループ -->
+                <tr>
+                <td><label for="group_name">{{ __('グループ') }}</label></td>
+                <td>
+                    <input id="group_name" type="text" maxlength="100" name="group_name"
+                            value="{{ old('group_name') }}" placeholder="例）2階">
+                    <span class="invalid-feedback validate" role="alert">
+                        <nobr id="err_group_name">
+                            @error('group_name') {{ $message }} @enderror
+                        </nobr>
+                    </span>
+                </td>
+                </tr>
 
                 <!-- ウェアラブルデバイス名 -->
                 {{-- 

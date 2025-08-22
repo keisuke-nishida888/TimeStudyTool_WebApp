@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TimeStudyController;
+use App\Http\Controllers\GroupController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -19,7 +21,8 @@ Route::get('/', function () {
 });
 
  //time study tool　連携
-            Route::post('/time_study_csv_upload', [TimeStudyController::class, 'upload']);
+Route::post('/time_study_csv_upload', [TimeStudyController::class, 'upload']);
+
 
 //ログインしていないユーザはログイン画面へ
 //下記のように書いておくとauthの後にauthrootが行われる
@@ -101,6 +104,9 @@ Route::group(['middleware' => ['auth','authroot']], function(){
             //修正処理
             Route::post('/facility_fixctrl', 'App\Http\Controllers\FacilityController@FacilityFix');
             Route::get('/facility_fixctrl','App\Http\Controllers\FacilityController@fix_index');
+            Route::get('/groups', [GroupController::class, 'index'])
+            ->name('groups.index')
+            ->withoutMiddleware('authroot');
 
         //コストデータ管理
         Route::get('/cost_ctrl', 'App\Http\Controllers\CostController@index');

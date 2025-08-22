@@ -8,12 +8,36 @@
 <form id="a_task" action = '/task'  method = "get">
     <input type="image" class="img_style2" src="image/img_task.png" alt="作業名内容一覧" border="0">
 </form>
-
-<form id="a_helper" action = '/helper'  method = "post" onsubmit = "return Idcheck(targetID)">
+<!-- 作業者一覧 
+<form id="a_helper" action="/helper" method="post" onsubmit="return Idcheck(targetID)">
     @csrf
     <input id="targetid" type="hidden" name="id" value="">
     <input type="image" class="img_style2" src="image/img_helper.png" alt="作業者一覧" border="0">
+</form> -->
+
+<!-- ★グループ一覧（専用フォーム） -->
+<form id="a_group" action="/groups" method="get">
+  <!-- 実際に送るパラメータ -->
+  <input id="facilityno_for_group" type="hidden" name="facilityno" value="">
+  <!-- 互換: facility.js が入れる想定の選択施設ID -->
+  <input id="targetid" type="hidden" value="">
+  <input type="image" class="img_style2" src="image/img_group.png"
+         alt="グループ一覧" onclick="return submitGroupList();" border="0">
 </form>
+<script>
+function submitGroupList() {
+  // facility.js が #targetid に入れる or window.targetID をフォールバック
+  var selected = (document.getElementById('targetid') && document.getElementById('targetid').value
+                  ? document.getElementById('targetid').value
+                  : (window.targetID || '')).toString().trim();
+  if (!selected) {
+    alert('施設を選択してください。');
+    return false;
+  }
+  document.getElementById('facilityno_for_group').value = selected;
+  return true; // 送信
+}
+</script>
 
 
 <a id="a_facility_add" href="{{ url('/facility_add') }}"> <img src="image/img_add.png" class="img_style" alt="施設情報追加"  border="0"> </a>
@@ -88,3 +112,18 @@
 </table>
 </div>
 @endsection
+
+<script>
+
+function submitGroupList() {
+    // facility.js が入れてくれる値を最優先で参照。なければ window.targetID を使用
+    var selected = (document.getElementById('targetid')?.value || window.targetID || '').toString().trim();
+    if (!selected) {
+        alert('施設を選択してください。');
+        return false; // 送信中止
+    }
+    document.getElementById('facilityno_for_group').value = selected;
+    // input type="image" は onclick の戻り値 true で通常送信される
+    return true;
+}
+</script>

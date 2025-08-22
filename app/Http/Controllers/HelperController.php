@@ -23,6 +23,10 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
+// 既存の use 群の下あたりに追加
+use App\Models\Group;                 // ★ 追加
+use Illuminate\Support\Facades\DB;     // ★ 追加（トランザクションに使用）
+
 
 class HelperController extends Controller
 {
@@ -51,294 +55,107 @@ class HelperController extends Controller
         }
     }
 
+    // 作業者一覧の共通クエリ（施設必須／groupnoは任意）
+    private function helperListQuery($facilityno, $groupno = null)
+    {
+        $q = Helper::select('helper.id as helper_id', 'helper.*')
+            ->where('helper.facilityno', $facilityno)
+            ->where('helper.delflag', '!=', 1)
+            ->orderBy('helper.id', 'asc');
 
-    //
+        if (!empty($groupno)) {
+            $q->where('helper.groupno', $groupno);
+        }
+        return $q;
+    }
+
+
+
+    // 作業者一覧
     public function index(Request $request)
     {
-        $facilityname = "";
+        $facilityname = '';
+        $wearable     = [];
+        $data         = [];
+        $ymdData      = collect();
 
-            //選択している施設の作業者を探す
-            //requestは施設No(facilityno)が送られてくる
-            if(isset($_POST["id"]))
-            {
-                $getdata = Helper::select('helper.id as helper_id','helper.*')
-                // $getdata = Helper::select('helper.id as helper_id','helper.*','wearable.devicename')
-                ->whereIn('facilityno',[$_POST["id"]])
-                // ->leftjoin('wearable','wearable.id','=','helper.wearableno')
-                ->orderBy('helper.id','asc')
-                ->whereNotIn('helper.delflag',[1])
-                ->get();
+        // ★ 追加: グループ番号（施設内のグループ）を受け取る
+        $groupno = $request->input('groupno') ?? $request->query('groupno');
 
+        // 施設番号の優先順位:
+        // 1) POST:id（施設一覧からの遷移）
+        // 2) GET:facilityno（URLパラメータ）
+        // 3) 施設ユーザの場合はログインユーザに紐づくfacilityno
+        // 4) リファラのクエリから facilityno（パンくず等）
+        $facilityno =
+            $request->input('id') ??
+            $request->query('facilityno') ??
+            ((Auth::user()->authority ?? null) == 3 ? (Auth::user()->facilityno ?? null) : null);
 
-                $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-                $facilityno = $_POST["id"];
-
-                //ウェアラブルデバイス
-                $wearable = Wearable::orderBy('id','asc')
-                ->whereNotIn('delflag',[1])->get();
-                $wearable = json_decode(json_encode($wearable,JSON_PRETTY_PRINT),true);
+        if (empty($facilityno)) {
+            // 4) リファラからfacilitynoを拾う（なければ mainmenu へ）
+            $ref = $_SERVER['HTTP_REFERER'] ?? '';
+            if ($ref) {
+                parse_str(parse_url($ref, PHP_URL_QUERY) ?? '', $q);
+                if (!empty($q['facilityno'])) {
+                    $facilityno = $q['facilityno'];
+                }
             }
-            else if(isset($_GET["facilityno"]))
-            {
-                //施設ユーザのとき
-                if(Auth::user()->authority == 3)
-                {
-                    if(isset(Auth::user()->facilityno))
-                    {
-                        $getdata = Helper::select('helper.id as helper_id','helper.*')
-                        // $getdata = Helper::select('helper.id as helper_id','helper.*','wearable.devicename')
-                        ->whereIn('facilityno',[Auth::user()->facilityno])
-                        // ->leftjoin('wearable','wearable.id','=','helper.wearableno')
-                        ->orderBy('helper.id','asc')
-                        ->whereNotIn('helper.delflag',[1])
-                        ->get();
-
-                        $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-                        // if(isset($getdata[0]['id'])) $facilityno = $getdata[0]['id'];
-                        if(isset($getdata[0]['facilityno'])) $facilityno = $getdata[0]['facilityno'];
-                        else $facilityno = "";
-                    }
-                    else $facilityno = "";
-                }
-                if(!isset($facilityno))
-                {
-                    $getdata = Helper::select('helper.id as helper_id','helper.*')
-                    // $getdata = Helper::select('helper.id as helper_id','helper.*','wearable.devicename')
-                    ->whereIn('facilityno',[$_GET["facilityno"]])
-                    // ->leftjoin('wearable','wearable.id','=','helper.wearableno')
-                    ->orderBy('helper.id','asc')
-                    ->whereNotIn('helper.delflag',[1])
-                    ->get();
-
-                    $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-
-                    $facilityno = $_GET["facilityno"];
-                }
-
-                //ウェアラブルデバイス
-                $wearable = Wearable::orderBy('id','asc')
-                ->whereNotIn('delflag',[1])->get();
-                $wearable = json_decode(json_encode($wearable,JSON_PRETTY_PRINT),true);
+            // まだ無ければ mainmenu へ（従来動作を踏襲）
+            if (empty($facilityno)) {
+                $page  = 'mainmenu';
+                $title = Common::$title[$page];
+                $group = Common::$group[$page];
+                $data  = '';
+                return view($page, compact('title', 'page', 'group', 'data', 'facilityno'));
             }
-            else
-            {
-                $data ="";
-                $facilityno = "";
-                //パンくずリストからの遷移
-                // URLパラメータの部分だけを変数に格納
-                $param = $_SERVER['HTTP_REFERER'] ?? '';
-                $tmp = [];
-                if(isset($param))
-                {
-                    //parse_url でURLを分解してパラメータのみ取得する
-                    parse_str(parse_url($param, PHP_URL_QUERY), $query);
-                    if(isset($query))
-                    {
-                        if(isset($query['facilityno'])) $facilityno = $query['facilityno'];
-                    }
-                    else
-                    {
-                    //施設ユーザでログインする場合に使用する
-                        //施設情報
-                        //施設ユーザのとき
-                        if(Auth::user()->authority == 3)
-                        {
-                            if(isset(Auth::user()->facilityno))
-                            {
-                                $getdata = Facility::select()
-                                ->whereIn('facility.id',[Auth::user()->facilityno])
-                                ->whereNotIn('facility.delflag',[1])
-                                ->get();
-                                $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-                                // if(isset($getdata[0]['id'])) $facilityno = $getdata[0]['id'];
-                                if (isset($getdata[0]['facilityno'])) $facilityno = $getdata[0]['facilityno'];
-                                else $facilityno = "";
-                            }
-                            else $facilityno = "";
-                        }
-                        else $facilityno = "";
-
-                        if ($facilityno != "") {
-                            //施設情報
-                            $getdata = Facility::select()
-                                ->whereIn('facility.id', [$facilityno])
-                                ->whereNotIn('facility.delflag', [1])
-                                ->first();
-
-                            $facilityname = $getdata->facility;
-                        }
-
-                        $data = "";
-                        $page = 'mainmenu';
-                        $title = Common::$title[$page];
-                        $group = Common::$group[$page];
-                        return view($page, compact('title' ,'page','group','data','facilityno'));
-                    }
-                    if(isset($query['facilityno']))
-                    {
-                        if($query['facilityno'] != 0)
-                        {
-                            $getdata = Helper::select('helper.id as helper_id','helper.*')
-                            ->whereIn('facilityno',[$facilityno])
-                            ->orderBy('helper.id','asc')
-                            ->whereNotIn('helper.delflag',[1])
-                            ->get();
-
-                            $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-
-                            //ウェアラブルデバイス
-                            $wearable = Wearable::orderBy('id','asc')
-                            ->whereNotIn('delflag',[1])->get();
-                            $wearable = json_decode(json_encode($wearable,JSON_PRETTY_PRINT),true);
-                        }
-                        else
-                        {
-                            //施設ユーザでログインする場合に使用する
-                            //施設情報
-                            //施設ユーザのとき
-                            if(Auth::user()->authority == 3)
-                            {
-                                if(isset(Auth::user()->facilityno))
-                                {
-                                    $getdata = Facility::select()
-                                    ->whereIn('facility.id',[Auth::user()->facilityno])
-                                    ->whereNotIn('facility.delflag',[1])
-                                    ->get();
-                                    $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-                                    // if(isset($getdata[0]['id'])) $facilityno = $getdata[0]['id'];
-                                    if (isset($getdata[0]['facilityno'])) $facilityno = $getdata[0]['facilityno'];
-                                    else $facilityno = "";
-                                }
-                                else $facilityno = "";
-                            }
-                            else $facilityno = "";
-
-                            if ($facilityno != "") {
-                                //施設情報
-                                $getdata = Facility::select()
-                                ->whereIn('facility.id', [$facilityno])
-                                ->whereNotIn('facility.delflag', [1])
-                                    ->first();
-
-                                $facilityname = $getdata->facility;
-                            }
-
-                            $data = "";
-                            $page = 'mainmenu';
-                            $title = Common::$title[$page];
-                            $group = Common::$group[$page];
-                            return view($page, compact('title' ,'page','group','data','facilityno'));
-                        }
-
-                    }
-                    else
-                    {
-                        //施設ユーザでログインする場合に使用する
-                        //施設情報
-                        //施設ユーザのとき
-                        if(Auth::user()->authority == 3)
-                        {
-                            if(isset(Auth::user()->facilityno))
-                            {
-                                $getdata = Facility::select()
-                                ->whereIn('facility.id',[Auth::user()->facilityno])
-                                ->whereNotIn('facility.delflag',[1])
-                                ->get();
-                                $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-                                // if(isset($getdata[0]['id'])) $facilityno = $getdata[0]['id'];
-                                if (isset($getdata[0]['facilityno'])) $facilityno = $getdata[0]['facilityno'];
-                                else $facilityno = "";
-                            }
-                            else $facilityno = "";
-                        }
-                        else $facilityno = "";
-
-                        if ($facilityno != "") {
-                            //施設情報
-                            $getdata = Facility::select()
-                            ->whereIn('facility.id', [$facilityno])
-                            ->whereNotIn('facility.delflag', [1])
-                            ->first();
-
-                            $facilityname = $getdata->facility;
-                        }
-
-                        $data = "";
-                        $page = 'mainmenu';
-                        $title = Common::$title[$page];
-                        $group = Common::$group[$page];
-                        return view($page, compact('title' ,'page','group','data','facilityno'));
-                    }
-                }
-                else
-                {
-                    //施設ユーザでログインする場合に使用する
-                    //施設情報
-                    //施設ユーザのとき
-                    if(Auth::user()->authority == 3)
-                    {
-                        if(isset(Auth::user()->facilityno))
-                        {
-                            $getdata = Facility::select()
-                            ->whereIn('facility.id',[Auth::user()->facilityno])
-                            ->whereNotIn('facility.delflag',[1])
-                            ->get();
-                            $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-                            // if(isset($getdata[0]['id'])) $facilityno = $getdata[0]['id'];
-                            if(isset($getdata[0]['facilityno'])) $facilityno = $getdata[0]['facilityno'];
-                            else $facilityno = "";
-                        }
-                        else $facilityno = "";
-                    }
-                    else $facilityno = "";
-
-                    if ($facilityno != "") {
-                        //施設情報
-                        $getdata = Facility::select()
-                            ->whereIn('facility.id', [$facilityno])
-                            ->whereNotIn('facility.delflag', [1])
-                            ->first();
-
-                        $facilityname = $getdata->facility;
-                    }
-
-                    $data = "";
-                    $page = 'mainmenu';
-                    $title = Common::$title[$page];
-                    $group = Common::$group[$page];
-                    return view($page, compact('title' ,'page','group','data','facilityno', 'facilityname'));
-                }
-
-
-            }
-
-        if ($facilityno != "") {
-            //施設情報
-            $getdata = Facility::select()
-                ->whereIn('facility.id', [$facilityno])
-                ->whereNotIn('facility.delflag', [1])
-                ->first();
-
-            $facilityname = $getdata->facility;
         }
 
-        $allHelperData = Helper::select()
-            ->orderBy('id', 'asc')
-            ->whereNotIn('delflag', [1])
-            ->pluck('id')
-            ->toArray();
+        // 施設名の取得（存在チェックと削除フラグ考慮）
+        $facility = Facility::where('id', $facilityno)
+            ->where('delflag', '!=', 1)
+            ->first();
+        if ($facility) {
+            $facilityname = $facility->facility;
+        }
 
-        $ymdData = bpainhed::join('helper', 'bpainhed.helperno', 'helper.id')
-            ->select('bpainhed.ymd')
-            ->whereIn('helperno', $allHelperData)
-            ->where('facilityno',$facilityno)
+        // 作業者一覧（★groupnoで絞り込み対応）
+        $getdata = $this->helperListQuery($facilityno, $groupno)->get();
+        $data    = json_decode(json_encode($getdata, JSON_PRETTY_PRINT), true);
+
+        // ウェアラブル（従来どおりビューに渡す）
+        $wearable = Wearable::orderBy('id', 'asc')
+            ->where('delflag', '!=', 1)
             ->get();
+        $wearable = json_decode(json_encode($wearable, JSON_PRETTY_PRINT), true);
 
-        $page = 'helper';
+        // カレンダーマーキング用（日付一覧）
+        // → 画面に出している作業者のみを対象（施設＋必要ならグループで絞り込んだ helper のみ）
+        $helperIds = $getdata->pluck('helper_id')->all(); // selectでaliasにしているため helper_id を使う
+        if (!empty($helperIds)) {
+            $ymdData = bpainhed::join('helper', 'bpainhed.helperno', '=', 'helper.id')
+                ->select('bpainhed.ymd')
+                ->whereIn('bpainhed.helperno', $helperIds)
+                ->get();
+        }
+
+        // 画面描画
+        $page  = 'helper';
         $title = Common::$title[$page];
         $group = Common::$group[$page];
-        return view($page, compact('title' ,'page','group' ,'data' ,'facilityno' , 'wearable', 'facilityname','ymdData'));
+
+        return view($page, compact(
+            'title',
+            'page',
+            'group',
+            'data',
+            'facilityno',
+            'wearable',
+            'facilityname',
+            'ymdData'
+        ));
     }
+
 
     public function add_index(Request $request)
     {
@@ -394,60 +211,53 @@ class HelperController extends Controller
         return view($page, compact('title' ,'page','group','data2','data','facilityno' ));
     }
 
-    public function fix_index(Request $request)
+        public function fix_index(Request $request)
     {
-        if($request->isMethod('POST'))
-        {
-            //作業者情報
-            $getdata = Helper::whereIn('id',[$_POST["id"]])
-                ->get();
-            $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
+        // 既定値
+        $data = "";
+        $data2 = "";
+        $facilityno = $request->query('facilityno') ?? old('facilityno') ?? "";
+        $groupName = ''; // ★ 表示用のグループ名
 
-            //ウェアラブルデバイス
-            // $wearable = Wearable::orderBy('id','asc')
-            //     ->whereNotIn('delflag',[1])->get();
-            //腰痛デバイス
-            // $backPain = BackPain::orderBy('id','asc')
-            //     ->whereNotIn('delflag',[1])->get();
+        if ($request->isMethod('POST')) {
+            // 作業者情報
+            $getdata = Helper::whereIn('id', [$request->input('id')])->get();
+            $data = json_decode(json_encode($getdata, JSON_PRETTY_PRINT), true);
 
-            //施設情報
+            // 施設情報
             $getdata2 = Facility::select()
-                ->whereIn('facility.id',[$data[0]["facilityno"]])
-                ->whereNotIn('facility.delflag',[1])
+                ->whereIn('facility.id', [$data[0]["facilityno"]])
+                ->whereNotIn('facility.delflag', [1])
                 ->get();
-            $data2 = json_decode(json_encode($getdata2,JSON_PRETTY_PRINT),true);
-            $facilityno = $data[0]["facilityno"];
-        }
-        else if($request->isMethod('GET'))
-        {
-            $data = "";
-            $data2 = "";
-            //ウェアラブルデバイス
-            // $wearable = Wearable::orderBy('id','asc')
-            //     ->whereNotIn('delflag',[1])->get();
-            //腰痛デバイス
-            // $backPain = BackPain::orderBy('id','asc')
-            //     ->whereNotIn('delflag',[1])->get();
-        }
-        else
-        {
-            $data = "";
-            $data2 = "";
+            $data2 = json_decode(json_encode($getdata2, JSON_PRETTY_PRINT), true);
 
+            $facilityno = $data[0]["facilityno"];
+
+            // ★ 追加：現在のグループ名を取得（helper.groupno → groups.group_name）
+            if (!empty($data[0]['groupno'])) {
+                $grp = Group::where('group_id', $data[0]['groupno'])->first();
+                if ($grp) {
+                    $groupName = $grp->group_name;
+                }
+            }
+        } elseif ($request->isMethod('GET')) {
+            // 何も取得しない（空のまま表示）
+        } else {
+            // 何もしない
         }
 
         $page = 'helper_fix';
         $title = Common::$title[$page];
         $group = Common::$group[$page];
-        if(isset($_POST["addmess"]))
-        {
+
+        if (isset($_POST["addmess"])) {
             $addmess = $_POST["addmess"];
-            // return view($page, compact('title' ,'page','group','data' ,'data2','wearable','backPain','addmess'));
-            return view($page, compact('title' ,'page','group','data' ,'data2','addmess','facilityno'));
+            return view($page, compact('title', 'page', 'group', 'data', 'data2', 'addmess', 'facilityno', 'groupName'));
+        } else {
+            return view($page, compact('title', 'page', 'group', 'data', 'data2', 'facilityno', 'groupName'));
         }
-        // else return view($page, compact('title' ,'page','group','data' ,'data2','wearable','backPain'));
-        else return view($page, compact('title' ,'page','group','data' ,'data2','facilityno'));
     }
+
 
 
 
@@ -480,7 +290,8 @@ class HelperController extends Controller
         $tmp1 = $rulus['helpername'];
         array_push($tmp1,new space);
         $rulus['helpername'] = $tmp1;
-
+        // ★ 追加：グループ名のバリデーション
+        $rulus['group_name'] = ['required','string','max:100'];
         $validator = Validator::make($request->all(),$rulus, Common::$message_);
         if($validator->fails())
         {
@@ -490,8 +301,26 @@ class HelperController extends Controller
         {
             if($request->isMethod('POST'))
             {
-                $insertid = Common::create_helper($request->all());
-            }
+                // ★ 追加：トランザクション開始
+            $insertid = DB::transaction(function () use ($request) {
+
+                // ★ 1) 施設 × グループ名 で groups を find-or-create
+                $group = Group::firstOrCreate(
+                    [
+                        'facilityno' => $request->input('facilityno'),
+                        'group_name' => $request->input('group_name'),
+                    ]
+                );
+
+                // ★ 2) helper に保存するため request に groupno を合流
+                //     Common::create_helper() が $request->all() を使っている前提
+                //     （もし create_helper が個別フィールド指定なら、そちらにも 'groupno' を追加してください）
+                $request->merge(['groupno' => $group->group_id]);
+
+                // ★ 3) 既存の作成ロジックをそのまま呼ぶ
+                return Common::create_helper($request->all());
+            });
+        }
 
             //Meauserアップデート
             //期間の入れ違い対策はjavascriptで行う
@@ -624,7 +453,17 @@ class HelperController extends Controller
                 // else $wearableno = 0;
                 // if(isset($_POST["backpainno"]) && $_POST["backpainno"]!="") $backpainno = $_POST["backpainno"];
                 // else $backpainno = 0;
-
+                // ★ 追加：group_name が送られてくる場合のみ処理
+                if ($request->filled('group_name') && $request->filled('facilityno')) {
+                    $group = Group::firstOrCreate(
+                        [
+                            'facilityno' => $request->input('facilityno'),
+                            'group_name' => $request->input('group_name'),
+                        ]
+                    );
+                    // Update_helper に渡すため合流
+                    $request->merge(['groupno' => $group->group_id]);
+                }
 
                 //アップデート
                 Common::Update_helper($request->all());

@@ -254,5 +254,17 @@ Breadcrumbs::for('risksensor_fix', function ($trail) {
         $trail->parent('helperdata_facil' ,$facilityno);
         $trail->push('作業者データ比較',url('comparison'));
     });
+    // 　メインメニュー > 施設一覧 > グループ一覧
+Breadcrumbs::for('group', function ($trail, $facilityno = null) {
+    $trail->parent('facility');
+
+    // 施設IDをクエリに付けたURL（表示だけなら url('groups') でもOK）
+    $url = url('groups');
+    if (!empty($facilityno)) {
+        $url .= '?facilityno=' . $facilityno;
+    }
+
+    $trail->push('グループ一覧', $url);
+});
 // ----------------------------------------------------------------------------------->
 

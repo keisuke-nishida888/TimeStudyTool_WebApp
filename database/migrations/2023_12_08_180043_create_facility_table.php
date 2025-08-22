@@ -6,20 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateFacilityTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::create('facility', function (Blueprint $table) {
             $table->id()->unique()->nullable(false);
-            $table->char('facility',20)->nullable(false);
-            $table->char('pass',2)->nullable(true)->default(null);
-            $table->char('address',100)->nullable(true);
-            $table->char('tel',16)->nullable(true);
-            $table->char('mail',40)->nullable(true);
+            $table->char('facility', 20)->nullable(false);
+
+            // ← groupno は削除（持たない）
+
+            $table->char('pass', 2)->nullable()->default(null);
+            $table->char('address', 100)->nullable();
+            $table->char('tel', 16)->nullable();
+            $table->char('mail', 40)->nullable();
+
             $table->integer('item1')->default(0);
             $table->integer('item2')->default(0);
             $table->integer('item3')->default(0);
@@ -87,47 +86,47 @@ class CreateFacilityTable extends Migration
             $table->integer('item65')->default(0);
             $table->float('item66')->default(0);
             $table->integer('item67')->default(0);
-            $table->char('currentfile',50)->nullable(true)->default(null);
-            $table->char('introfile',50)->nullable(true)->default(null);
-            $table->char('delflag',1)->default('0');
-            $table->char('pic1',1)->nullable(true)->default(null);
-            $table->char('pic2',1)->nullable(true)->default(null);
-            $table->char('pic3',1)->nullable(true)->default(null);
-            $table->char('pic4',1)->nullable(true)->default(null);
-            $table->char('pic5',1)->nullable(true)->default(null);
-            $table->char('pic6',1)->nullable(true)->default(null);
-            $table->char('pic7',1)->nullable(true)->default(null);
-            $table->char('pic8',1)->nullable(true)->default(null);
-            $table->char('pic9',1)->nullable(true)->default(null);
-            $table->char('pic10',1)->nullable(true)->default(null);
-            $table->char('pic11',1)->nullable(true)->default(null);
-            $table->char('pic12',1)->nullable(true)->default(null);
-            $table->char('pic13',1)->nullable(true)->default(null);
-            $table->char('pic14',1)->nullable(true)->default(null);
-            $table->char('pic15',1)->nullable(true)->default(null);
-            $table->char('pic16',1)->nullable(true)->default(null);
-            $table->char('pic17',1)->nullable(true)->default(null);
-            $table->char('pic18',1)->nullable(true)->default(null);
-            $table->char('pic19',1)->nullable(true)->default(null);
-            $table->char('pic20',1)->nullable(true)->default(null);
+
+            $table->char('currentfile', 50)->nullable()->default(null);
+            $table->char('introfile', 50)->nullable()->default(null);
+            $table->char('delflag', 1)->default('0');
+
+            $table->char('pic1', 1)->nullable()->default(null);
+            $table->char('pic2', 1)->nullable()->default(null);
+            $table->char('pic3', 1)->nullable()->default(null);
+            $table->char('pic4', 1)->nullable()->default(null);
+            $table->char('pic5', 1)->nullable()->default(null);
+            $table->char('pic6', 1)->nullable()->default(null);
+            $table->char('pic7', 1)->nullable()->default(null);
+            $table->char('pic8', 1)->nullable()->default(null);
+            $table->char('pic9', 1)->nullable()->default(null);
+            $table->char('pic10', 1)->nullable()->default(null);
+            $table->char('pic11', 1)->nullable()->default(null);
+            $table->char('pic12', 1)->nullable()->default(null);
+            $table->char('pic13', 1)->nullable()->default(null);
+            $table->char('pic14', 1)->nullable()->default(null);
+            $table->char('pic15', 1)->nullable()->default(null);
+            $table->char('pic16', 1)->nullable()->default(null);
+            $table->char('pic17', 1)->nullable()->default(null);
+            $table->char('pic18', 1)->nullable()->default(null);
+            $table->char('pic19', 1)->nullable()->default(null);
+            $table->char('pic20', 1)->nullable()->default(null);
+
             $table->timestamp('insdatetime')->nullable()->useCurrent();
-            $table->integer('insuserno')->nullable(true);
-           $table->timestamp('upddatetime')->nullable()->useCurrentOnUpdate();
-            $table->integer('upduserno')->nullable(true);
+            $table->integer('insuserno')->nullable();
+            $table->timestamp('upddatetime')->nullable()->useCurrentOnUpdate();
+            $table->integer('upduserno')->nullable();
+
             $table->integer('item68');
             $table->integer('item69');
             $table->integer('item70');
             $table->integer('item71');
             $table->integer('item72');
-            $table->text('questurl',255)->nullable(true);
+
+            $table->text('questurl', 255)->nullable();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::dropIfExists('facility');
