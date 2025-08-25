@@ -51,76 +51,98 @@ function ini_img() {
         </form>
 
         <!-- パンくずリスト -->
-        @yield('breadcrumbs')
+        @php
+            $__facilityno =
+                ($facilityno ?? null)
+                ?? data_get($data2 ?? [], '0.facilityno')
+                ?? data_get($data2 ?? [], '0.id')
+                ?? data_get($data ?? [],  '0.facilityno')
+                ?? old('facilityno')
+                ?? request('facilityno');
+
+            $__groupno =
+                request('groupno')
+                ?? data_get($data ?? [], '0.groupno')
+                ?? (isset($selectedGroup) ? ($selectedGroup->group_id ?? null) : null);
+        @endphp
+
         <div id="breadcrumbs">
-            @if(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno != 0 && Auth::user()->facilityno != "" && $page == "helper")
-                @if(isset($facilityno)){{ Breadcrumbs::render("helper_facil",$facilityno) }}
-                @else {{ Breadcrumbs::render("helper_facil") }}
-                @endif
-            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno != 0 && Auth::user()->facilityno != "" && $page == "helper_add")
-                @if(isset($facilityno)){{ Breadcrumbs::render("helper_add_facil",$facilityno) }}
-                @else {{ Breadcrumbs::render("helper_add_facil") }}
-                @endif
-            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno != 0 && Auth::user()->facilityno != "" && $page == "helper_fix")
-                @if(isset($facilityno)){{ Breadcrumbs::render("helper_fix_facil",$facilityno) }}
-                @else {{ Breadcrumbs::render("helper_fix_facil") }}
-                @endif
-            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno != 0 && Auth::user()->facilityno != "" && $page == "helperdata")
-                @if(isset($facilityno)){{ Breadcrumbs::render("helperdata_facil",$facilityno) }}
-                @else {{ Breadcrumbs::render("helperdata_facil") }}
-                @endif
-            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno != 0 && Auth::user()->facilityno != "" && $page == "comparison")
-                @if(isset($facilityno)){{ Breadcrumbs::render("comparison_facil",$facilityno) }}
-                @else {{ Breadcrumbs::render("comparison_facil") }}
-                @endif
+            @if(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helper")
+                {{ Breadcrumbs::render("helper_facil", $__facilityno, $__groupno) }}
+            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helper_add")
+                {{ Breadcrumbs::render("helper_add_facil", $__facilityno, $__groupno) }}
+            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helper_fix")
+                {{ Breadcrumbs::render("helper_fix_facil", $__facilityno, $__groupno) }}
+            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helperdata")
+                {{ Breadcrumbs::render("helperdata_facil", $__facilityno, $__groupno) }}
             @else
-                @if(isset($facilityno)){{ Breadcrumbs::render($page,$facilityno) }}
-                @else {{ Breadcrumbs::render($page) }}
+                {{-- 既存その他のページ --}}
+                @if(isset($__facilityno))
+                    {{ Breadcrumbs::render($page, $__facilityno, $__groupno) }}
+                @else
+                    {{ Breadcrumbs::render($page) }}
                 @endif
             @endif
         </div>
 
-        <!-- 戻る -->
-        @if($group == "helper")
-            <form action = "{{$group}}" method="get">
-                <!-- <button id="btn_back" type="submit" value = "">戻る</button> -->
-                <input type="image" id="btn_back" src="image/img_back.png" alt="戻る" border="0">
+        {{-- 戻る --}}
+@php
+    // 可能な限り facilityno / groupno を拾う
+    $__facilityno =
+        ($facilityno ?? null)
+        ?? data_get($data2 ?? [], '0.facilityno')
+        ?? data_get($data2 ?? [], '0.id')
+        ?? data_get($data ?? [],  '0.facilityno')
+        ?? old('facilityno')
+        ?? request('facilityno');
 
-                @if(isset($data2[0]['facilityno']))
-                    @foreach($data2 as $val)
-                        @if(isset($val['facilityno']))
-                            <input type="hidden" name="facilityno" value={{$val['facilityno']}}>
-                        @else <input type="hidden" name="facilityno" value={{$val['id']}}>
-                        @endif
-                    @endforeach
-                @elseif(isset($data2[0]))
-                        @if($data2[0]['id'])
-                        <input type="hidden" name="facilityno" value={{$data2[0]['id']}}>
-                        @endif
-                @else <input type="hidden" name="facilityno" value="{{old('facilityno')}}">
-                @endif
-            </form>
-        @elseif($group == "helperdata")
-            <form action = "{{$group}}" method="get">
-                <input type="image" id="btn_back" src="image/img_back.png" alt="戻る" border="0">
-                @if(isset($data2))
-                    @foreach($data2 as $val)
-                        @if(isset($val['facilityno']))
-                            <input type="hidden" name="facilityno" value={{$val['facilityno']}}>
-                            <input type="hidden" name="helperno" value={{$val['Helper_id']}}>
-                        @else
-                            <input type="hidden" name="facilityno" value={{$val['id']}}>
-                        @endif
-                    @endforeach
-                @endif
-            </form>
-        @else
-            @if($title != "メニュー")
-                <form action = "{{$group}}" method="get">
-                    <input type="image" id="btn_back"  src="image/img_back.png" alt="戻る" border="0">
-                </form>
-            @endif
+    $__groupno =
+        request('groupno')
+        ?? data_get($data ?? [], '0.groupno')
+        ?? (isset($selectedGroup) ? ($selectedGroup->group_id ?? null) : null);
+@endphp
+
+@if ($group === 'helper')
+    {{-- 絶対URL + GET で一覧へ戻す --}}
+    <form action="{{ url('/helper') }}" method="get">
+        <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
+        @if(!empty($__facilityno))
+            <input type="hidden" name="facilityno" value="{{ $__facilityno }}">
         @endif
+        @if(!empty($__groupno))
+            <input type="hidden" name="groupno" value="{{ $__groupno }}">
+        @endif
+    </form>
+
+@elseif ($group === 'helperdata')
+    <form action="{{ url('/helperdata') }}" method="get">
+        <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
+        @if(!empty($__facilityno))
+            <input type="hidden" name="facilityno" value="{{ $__facilityno }}">
+        @endif
+        @if(!empty($__groupno))
+            <input type="hidden" name="groupno" value="{{ $__groupno }}">
+        @endif
+        {{-- helperdata で必要なら --}}
+        @if(isset($data[0]['id']))
+            <input type="hidden" name="helperno" value="{{ $data[0]['id'] }}">
+        @endif
+    </form>
+
+@else
+    @if ($title !== 'メニュー')
+        {{-- 他画面も絶対URLに統一 --}}
+        <form action="{{ url('/'.$group) }}" method="get">
+            <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
+            @if(!empty($__facilityno))
+                <input type="hidden" name="facilityno" value="{{ $__facilityno }}">
+            @endif
+            @if(!empty($__groupno))
+                <input type="hidden" name="groupno" value="{{ $__groupno }}">
+            @endif
+        </form>
+    @endif
+@endif
     </div>
 
 
