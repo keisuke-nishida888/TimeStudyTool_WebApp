@@ -4,19 +4,19 @@
 
 
 @section('content')
+    
+    <div class="allcont">
+  <form id="a_helper_add" action="/helper_add" method="post">
+      @csrf
+      {{-- 画像ボタンは先頭のまま（child index を変えない） --}}
+      <input type="image" class="img_style" src="image/img_add.png" alt="作業者追加" border="0">
 
-<div class="allcont">
-@if($facilityno != "")
-    <form id="a_helper_add" action = '/helper_add?facilityno={{$facilityno}}' method = "post">
-@else
-    <form id="a_helper_add" action = '/helper_add'  method = "post">
-@endif
-        @csrf
-            <input id="facilityno" type="hidden" name="facilityno" value={{$facilityno}}>
-            <input type="image" class="img_style" src="image/img_add.png" alt="作業者追加" border="0">
-    </form>
+      {{-- hidden は後ろへ移動（順番だけ変更） --}}
+      <input id="facilityno" type="hidden" name="facilityno" value="{{ $facilityno }}">
+      <input id="groupno"    type="hidden" name="groupno"    value="{{ $groupno ?? request('groupno') }}">
+  </form>
 
-
+    
 
 @if($facilityno != "")
     <form id="a_helper_fix" action = '/helper_fix?facilityno={{$facilityno}}' method = "post" onsubmit = "return Idcheck(targetID)">

@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TimeStudyController;
 use App\Http\Controllers\GroupController;
-
+use App\Http\Controllers\HelperController;
 
 /*
 |--------------------------------------------------------------------------
@@ -160,11 +160,12 @@ Route::group(['middleware' => ['auth','authroot']], function(){
             //削除
             Route::post('/helper_del','App\Http\Controllers\HelperController@del');
             //作業者追加
-            Route::get('/helper_add', 'App\Http\Controllers\HelperController@add_index');
-            Route::post('/helper_add', 'App\Http\Controllers\HelperController@add_index');
-                //追加処理
-                Route::post('/helper_addctrl','App\Http\Controllers\HelperController@HelperAdd');
-                Route::get('/helper_addctrl','App\Http\Controllers\HelperController@fix_index');
+            // 作業者追加画面（表示）
+            Route::match(['get','post'], '/helper', [HelperController::class, 'index'])->name('helper.index');
+            // 作業者追加 画面表示・登録
+            Route::match(['get','post'], '/helper_add', [HelperController::class, 'add_index'])->name('helper.add.index');
+            Route::post('/helper_addctrl', [HelperController::class, 'HelperAdd'])->name('helper.add.store');
+
             //作業者修正
             Route::get('/helper_fix', 'App\Http\Controllers\HelperController@fix_index');
             Route::post('/helper_fix', 'App\Http\Controllers\HelperController@fix_index');

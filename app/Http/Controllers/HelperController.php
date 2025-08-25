@@ -79,29 +79,30 @@ class HelperController extends Controller
         $data         = [];
         $ymdData      = collect();
 
-        // ★ 追加: グループ番号（施設内のグループ）を受け取る
-        $groupno = $request->input('groupno') ?? $request->query('groupno');
+        // --- 必須: グループ番号（施設内のグループ）
+        $groupno = (int)($request->input('groupno') ?? $request->query('groupno'));
 
-        // 施設番号の優先順位:
-        // 1) POST:id（施設一覧からの遷移）
-        // 2) GET:facilityno（URLパラメータ）
-        // 3) 施設ユーザの場合はログインユーザに紐づくfacilityno
-        // 4) リファラのクエリから facilityno（パンくず等）
-        $facilityno =
-            $request->input('id') ??
-            $request->query('facilityno') ??
-            ((Auth::user()->authority ?? null) == 3 ? (Auth::user()->facilityno ?? null) : null);
+        // --- 施設番号の決定（従来の優先順位 + リファラ）
+        $facilityno = (int)(
+            $request->input('id')
+            ?? $request->input('facilityno')
+            ?? $request->query('facilityno')
+            ?? ((Auth::user()->authority ?? null) == 3 ? (Auth::user()->facilityno ?? null) : null)
+        );
 
         if (empty($facilityno)) {
-            // 4) リファラからfacilitynoを拾う（なければ mainmenu へ）
+            // リファラから facilityno / groupno を補完（あれば）
             $ref = $_SERVER['HTTP_REFERER'] ?? '';
             if ($ref) {
                 parse_str(parse_url($ref, PHP_URL_QUERY) ?? '', $q);
-                if (!empty($q['facilityno'])) {
-                    $facilityno = $q['facilityno'];
-                }
+                if (!empty($q['facilityno'])) $facilityno = (int)$q['facilityno'];
+                if (empty($groupno) && !empty($q['groupno'])) $groupno = (int)$q['groupno'];
             }
-            // まだ無ければ mainmenu へ（従来動作を踏襲）
+        }
+
+        // ここで facilityno と groupno が両方そろっていることを保証
+        if (empty($facilityno) || empty($groupno)) {
+            // 施設未指定は従来どおり mainmenu に戻す
             if (empty($facilityno)) {
                 $page  = 'mainmenu';
                 $title = Common::$title[$page];
@@ -109,29 +110,50 @@ class HelperController extends Controller
                 $data  = '';
                 return view($page, compact('title', 'page', 'group', 'data', 'facilityno'));
             }
+            // groupno が無いのはフロー上ありえないので 400
+            abort(400, 'groupno is required');
         }
 
-        // 施設名の取得（存在チェックと削除フラグ考慮）
-        $facility = Facility::where('id', $facilityno)
-            ->where('delflag', '!=', 1)
-            ->first();
+        // --- 施設の存在確認（未削除）
+        $facility = Facility::where('id', $facilityno)->where('delflag', '!=', 1)->first();
         if ($facility) {
             $facilityname = $facility->facility;
+        } else {
+            // 存在しない場合は従来どおり mainmenu へ
+            $page  = 'mainmenu';
+            $title = Common::$title[$page];
+            $group = Common::$group[$page];
+            $data  = '';
+            return view($page, compact('title', 'page', 'group', 'data', 'facilityno'));
         }
 
-        // 作業者一覧（★groupnoで絞り込み対応）
-        $getdata = $this->helperListQuery($facilityno, $groupno)->get();
-        $data    = json_decode(json_encode($getdata, JSON_PRETTY_PRINT), true);
+        // --- グループ存在保証（この施設の中にあること）
+        $selectedGroup = Group::where('facilityno', $facilityno)
+            ->where('group_id', $groupno)
+            ->firstOrFail();
 
-        // ウェアラブル（従来どおりビューに渡す）
+        // --- 作業者一覧（施設 + グループで絞り込み）
+        if (method_exists($this, 'helperListQuery')) {
+            $getdata = $this->helperListQuery($facilityno, $groupno)->get();
+        } else {
+            // 念のためのフォールバック
+            $getdata = Helper::select('helper.id as helper_id', 'helper.*')
+                ->where('helper.facilityno', $facilityno)
+                ->where('helper.delflag', '!=', 1)
+                ->where('helper.groupno', $groupno)
+                ->orderBy('helper.id', 'asc')
+                ->get();
+        }
+        $data = json_decode(json_encode($getdata, JSON_PRETTY_PRINT), true);
+
+        // --- ウェアラブル（従来どおりビューに渡す）
         $wearable = Wearable::orderBy('id', 'asc')
             ->where('delflag', '!=', 1)
             ->get();
         $wearable = json_decode(json_encode($wearable, JSON_PRETTY_PRINT), true);
 
-        // カレンダーマーキング用（日付一覧）
-        // → 画面に出している作業者のみを対象（施設＋必要ならグループで絞り込んだ helper のみ）
-        $helperIds = $getdata->pluck('helper_id')->all(); // selectでaliasにしているため helper_id を使う
+        // --- カレンダーのマーキング用（日付）: 表示している作業者のみ対象
+        $helperIds = $getdata->pluck('helper_id')->all(); // select で alias を付けている想定
         if (!empty($helperIds)) {
             $ymdData = bpainhed::join('helper', 'bpainhed.helperno', '=', 'helper.id')
                 ->select('bpainhed.ymd')
@@ -144,71 +166,50 @@ class HelperController extends Controller
         $title = Common::$title[$page];
         $group = Common::$group[$page];
 
-        return view($page, compact(
+        return view('helper', compact(
             'title',
             'page',
             'group',
             'data',
             'facilityno',
+            'groupno',        // ← 追加: ビュー側(hiddenなどで使う)
             'wearable',
             'facilityname',
-            'ymdData'
+            'ymdData',
+            'selectedGroup'   // ← 必要なら追加画面等で利用
         ));
     }
 
-
     public function add_index(Request $request)
     {
-        if(isset($_POST["facilityno"]))
-        {
-            //ウェアラブルデバイス
-            // $wearable = Wearable::orderBy('id','asc')
-            // ->whereNotIn('delflag',[1])->get();
-            //腰痛デバイス
-            // $backPain = BackPain::orderBy('id','asc')
-            // ->whereNotIn('delflag',[1])->get();
+    // facilityno / groupno を受け取る（POST/GET 両対応）
+    $facilityno = $request->input('facilityno') ?? $request->query('facilityno')
+        ?? ((Auth::user()->authority ?? null) == 3 ? (Auth::user()->facilityno ?? null) : null);
+    $groupno    = $request->input('groupno') ?? $request->query('groupno');
 
-            //施設情報
-            $getdata2 = Facility::select()
-            ->whereIn('facility.id',[$_POST["facilityno"]])
-            ->whereNotIn('facility.delflag',[1])
-            ->get();
-            $data2 = json_decode(json_encode($getdata2,JSON_PRETTY_PRINT),true);
-            $facilityno = $_POST["facilityno"];
-        }
-        else
-        {
+    // 施設情報（従来と同じ data2 構造で渡す）
+    $getdata2 = Facility::where('id', $facilityno)
+        ->where('delflag', '!=', 1)
+        ->get();
+    $data2 = json_decode(json_encode($getdata2, JSON_PRETTY_PRINT), true);
 
-            // URLパラメータの部分だけを変数に格納
-            $param = $_SERVER['HTTP_REFERER'];
-            $tmp = [];
-            // parse_strで分解処理
-            //parse_url でURLを分解してパラメータのみ取得する
-            parse_str(parse_url($param, PHP_URL_QUERY), $query);
-            if (isset($query))
-            {
-                $facilityno = $query['facilityno'];
-            }
+    // 選択中グループ（存在すれば取得）
+    $selectedGroup = null;
+    if (!empty($facilityno) && !empty($groupno)) {
+        $selectedGroup = Group::where('facilityno', $facilityno)
+            ->where('group_id', (int)$groupno)
+            ->first();
+    }
 
-            //ウェアラブルデバイス
-            // $wearable = Wearable::orderBy('id','asc')
-            // ->whereNotIn('delflag',[1])->get();
-            //腰痛デバイス
-            // $backPain = Wearable::orderBy('id','asc')
-            // ->whereNotIn('delflag',[1])->get();
-            //施設情報
-            $getdata2 = Facility::select()
-            ->whereIn('facility.id',[$facilityno])
-            ->whereNotIn('facility.delflag',[1])
-            ->get();
-            $data2 = json_decode(json_encode($getdata2,JSON_PRETTY_PRINT),true);
-        }
-        $data = "";
-        $page = 'helper_add';
-        $title = Common::$title[$page];
-        $group = Common::$group[$page];
-        // return view($page, compact('title' ,'page','group','data2','wearable','backPain','data'));
-        return view($page, compact('title' ,'page','group','data2','data','facilityno' ));
+    $page   = 'helper_add';
+    $title  = \App\Library\Common::$title[$page];
+    $group  = \App\Library\Common::$group[$page];
+    $data   = "";
+
+    return view($page, compact(
+        'title', 'page', 'group', 'data', 'data2',
+        'facilityno', 'groupno', 'selectedGroup'
+    ));
     }
 
         public function fix_index(Request $request)
@@ -259,152 +260,80 @@ class HelperController extends Controller
     }
 
 
-
-
-
-    //追加
+    // 追加
     public function HelperAdd(Request $request)
     {
-        //**既に登録されているか調べる***********************************************************/
-        // 作業者登録時の重複確認
-        $exists =  Helper::select('helper.helpername','helper.facilityno')
-        // 削除されていない作業者の中での重複チェックの処理を追加
-        ->where('delflag', '=', 0)
-        ->get();
-        $exist_mes = array();
-        $exist_mes['helpername'] = Common::$erralr_helper;
-        foreach ($exists as $exist) {
-            // 同じ名前で同じ施設内の場合エラーメッセージを表示
-            if($exist['helpername'] == $request['helpername'] && $exist['facilityno'] == $request['facilityno'])
-            {
-                return json_encode(array('errors' => $exist_mes),JSON_UNESCAPED_UNICODE);
-            };
-        };
+        // ① 重複チェック（同一施設内で同名）
+        $exists = Helper::where('delflag', 0)
+            ->where('helpername', $request->input('helpername'))
+            ->where('facilityno', $request->input('facilityno'))
+            ->exists();
 
-        //************************************************************************************/
+        if ($exists) {
+            return response()->json(
+                ['errors' => ['helpername' => Common::$erralr_helper]],
+                200, [], JSON_UNESCAPED_UNICODE
+            );
+        }
 
-        //->validate();をつけたら元のページへリダイレクトする
+        // ② バリデーション（従来ルール + 空白禁止）
         $rulus_obj = Common::helper_rulus();
         $rulus = json_decode(json_encode($rulus_obj), true);
 
         $tmp1 = $rulus['helpername'];
-        array_push($tmp1,new space);
+        array_push($tmp1, new \App\Rules\space);
         $rulus['helpername'] = $tmp1;
-        // ★ 追加：グループ名のバリデーション
-        $rulus['group_name'] = ['required','string','max:100'];
-        $validator = Validator::make($request->all(),$rulus, Common::$message_);
-        if($validator->fails())
-        {
-            return json_encode(array('errors' => $validator->getMessageBag()->toArray()),JSON_UNESCAPED_UNICODE);
-        }
-        try
-        {
-            if($request->isMethod('POST'))
-            {
-                // ★ 追加：トランザクション開始
-            $insertid = DB::transaction(function () use ($request) {
 
-                // ★ 1) 施設 × グループ名 で groups を find-or-create
-                $group = Group::firstOrCreate(
-                    [
-                        'facilityno' => $request->input('facilityno'),
-                        'group_name' => $request->input('group_name'),
-                    ]
-                );
-
-                // ★ 2) helper に保存するため request に groupno を合流
-                //     Common::create_helper() が $request->all() を使っている前提
-                //     （もし create_helper が個別フィールド指定なら、そちらにも 'groupno' を追加してください）
-                $request->merge(['groupno' => $group->group_id]);
-
-                // ★ 3) 既存の作成ロジックをそのまま呼ぶ
-                return Common::create_helper($request->all());
-            });
+        // 互換: groupno が無ければ group_name を必須に
+        if (!$request->filled('groupno')) {
+            $rulus['group_name'] = ['required', 'string', 'max:100'];
         }
 
-            //Meauserアップデート
-            //期間の入れ違い対策はjavascriptで行う
-        /*
-            if(isset($_POST["measufrom"]) && isset($_POST["measuto"]))
-            {
-                if(mb_strlen($_POST["measufrom"])==10 &&  mb_strlen($_POST["measuto"])==10)
-                {
-                    $time1 = strtotime($_POST["measufrom"]);
-                    $time2 = strtotime($_POST["measuto"]);
+        $validator = Validator::make($request->all(), $rulus, Common::$message_);
+        if ($validator->fails()) {
+            return response()->json(
+                ['errors' => $validator->getMessageBag()->toArray()],
+                200, [], JSON_UNESCAPED_UNICODE
+            );
+        }
 
-                    $from = array();
-                    $from = explode("-",$_POST["measufrom"]);
-                    $to = array();
-                    $to = explode("-",$_POST["measuto"]);
-                    $span = ($time2 - $time1) / (60 * 60 * 24);
-                    $y = 0;
-                    $m = 0;
-                    $d = 0;
-                    for($i= 0; $i < $span+1; $i++)
-                    {
-                        $last_day = date("t", mktime(0, 0, 0, $m+1, 0,sprintf("%04d",$y)));
-                        if($i == 0)
-                        {
-                            $y = intval($from[0]);
-                            $m = intval($from[1]);
-                            $d = intval($from[2]);
+        try {
+            if ($request->isMethod('POST')) {
+                $insertid = DB::transaction(function () use ($request) {
+                    $facilityno = (int)$request->input('facilityno');
+
+                    // ③ グループ決定（groupno 優先、無ければ group_name から作成）
+                    if ($request->filled('groupno')) {
+                        $group = Group::where('facilityno', $facilityno)
+                            ->where('group_id', (int)$request->input('groupno'))
+                            ->first();
+
+                        if (!$group) {
+                            // 施設と不整合な groupno は弾く
+                            throw new \RuntimeException('選択されたグループが施設に属していません。');
                         }
-                        else
-                        {
-                            $d = $d + 1;
-                        }
-                        if($d > $last_day)
-                        {
-                            $m = $m + 1;
-                            $d = 1;
-                            if($m > 12)
-                            {
-                                $m = 1;
-                                $y = $y + 1;
-                            }
-                        }
-                        if(sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d) >= $to[0].$to[1].$to[2])
-                        {
-                            //デバイスNoとも紐づける
-                            if(sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d) == $to[0].$to[1].$to[2])
-                            {
-                                Common::create_measure($request->all(),sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d),$insertid);
-                            }
-                            break;
-                        }
-                        Common::create_measure($request->all(),sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d),$insertid);
+                    } else {
+                        $group = Group::firstOrCreate([
+                            'facilityno' => $facilityno,
+                            'group_name' => trim((string)$request->input('group_name')),
+                        ]);
                     }
-                }
+
+                    // ④ helper 登録に使うため groupno を合流
+                    $request->merge(['groupno' => $group->group_id]);
+
+                    // ⑤ 既存の作成ロジックに委譲（groupno を保存する実装であること）
+                    return Common::create_helper($request->all());
+                });
+
+                // ⑥ 成功時は従来どおり insertid を返す
+                return $insertid;
             }
-        */
-
-
-
-            //作業者情報
-            $getdata = Helper::whereIn('id',[$insertid])->get();
-            $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-
-            //ウェアラブルデバイス
-            // $wearable = Wearable::orderBy('id','asc')
-            //     ->whereNotIn('delflag',[1])->get();
-            //腰痛デバイス
-            // $backPain = BackPain::orderBy('id','asc')
-            //     ->whereNotIn('delflag',[1])->get();
-
-            //施設情報
-            $getdata2 = Facility::select()
-                ->whereIn('facility.id',[$data[0]["facilityno"]])
-                ->whereNotIn('facility.delflag',[1])
-                ->get();
-            $data2 = json_decode(json_encode($getdata2,JSON_PRETTY_PRINT),true);
-        }
-        catch(\Throwable $e)
-        {
+        } catch (\Throwable $e) {
+            // 必要ならログ
+            // \Log::error('HelperAdd error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return json_encode("error");
-
         }
-        return $insertid;
-
     }
 
 

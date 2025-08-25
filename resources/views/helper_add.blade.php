@@ -73,16 +73,20 @@
                 <tr>
                 <td><label for="group_name">{{ __('グループ') }}</label></td>
                 <td>
+                    @if(!empty($groupno) && !empty($selectedGroup))
+                    {{-- 選択中のグループを固定表示 --}}
+                    <input type="text" value="{{ $selectedGroup->group_name }}" disabled>
+                    <input type="hidden" name="groupno" value="{{ $groupno }}">
+                    @else
+                    {{-- 互換: グループ未選択時は手入力で作成可 --}}
                     <input id="group_name" type="text" maxlength="100" name="group_name"
                             value="{{ old('group_name') }}" placeholder="例）2階">
                     <span class="invalid-feedback validate" role="alert">
-                        <nobr id="err_group_name">
-                            @error('group_name') {{ $message }} @enderror
-                        </nobr>
+                        <nobr id="err_group_name">@error('group_name') {{ $message }} @enderror</nobr>
                     </span>
+                    @endif
                 </td>
                 </tr>
-
                 <!-- ウェアラブルデバイス名 -->
                 {{-- 
                 <tr>
