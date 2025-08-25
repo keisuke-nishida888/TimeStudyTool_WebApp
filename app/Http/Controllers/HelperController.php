@@ -263,7 +263,24 @@ class HelperController extends Controller
     // 追加
     public function HelperAdd(Request $request)
     {
-        // ① 重複チェック（同一施設内で同名）
+        // 1) バリデーション（facilityno / helpername は必須、group は groupno か group_name のどちらか必須）
+        $rules = [
+            'facilityno' => ['required','integer'],
+            'helpername' => ['required','string','max:20'],
+        ];
+        if (!$request->filled('groupno')) {
+            $rules['group_name'] = ['required','string','max:100'];
+        }
+
+        $validator = Validator::make($request->all(), $rules, Common::$message_ ?? []);
+        if ($validator->fails()) {
+            return response()->json(
+                ['errors' => $validator->errors()->toArray()],
+                200, [], JSON_UNESCAPED_UNICODE
+            );
+        }
+
+        // 2) 同一施設内の重複チェック（必要なら従来通り）
         $exists = Helper::where('delflag', 0)
             ->where('helpername', $request->input('helpername'))
             ->where('facilityno', $request->input('facilityno'))
@@ -271,67 +288,69 @@ class HelperController extends Controller
 
         if ($exists) {
             return response()->json(
-                ['errors' => ['helpername' => Common::$erralr_helper]],
+                ['errors' => ['helpername' => Common::$erralr_helper ?? '同名の作業者が存在します。']],
                 200, [], JSON_UNESCAPED_UNICODE
             );
         }
 
-        // ② バリデーション（従来ルール + 空白禁止）
-        $rulus_obj = Common::helper_rulus();
-        $rulus = json_decode(json_encode($rulus_obj), true);
-
-        $tmp1 = $rulus['helpername'];
-        array_push($tmp1, new \App\Rules\space);
-        $rulus['helpername'] = $tmp1;
-
-        // 互換: groupno が無ければ group_name を必須に
-        if (!$request->filled('groupno')) {
-            $rulus['group_name'] = ['required', 'string', 'max:100'];
-        }
-
-        $validator = Validator::make($request->all(), $rulus, Common::$message_);
-        if ($validator->fails()) {
-            return response()->json(
-                ['errors' => $validator->getMessageBag()->toArray()],
-                200, [], JSON_UNESCAPED_UNICODE
-            );
-        }
-
+        // 3) 登録処理（group_name → group_id 解決を含む）
         try {
-            if ($request->isMethod('POST')) {
-                $insertid = DB::transaction(function () use ($request) {
-                    $facilityno = (int)$request->input('facilityno');
+            $insertId = DB::transaction(function () use ($request) {
+                $facilityno = (int)$request->input('facilityno');
 
-                    // ③ グループ決定（groupno 優先、無ければ group_name から作成）
-                    if ($request->filled('groupno')) {
-                        $group = Group::where('facilityno', $facilityno)
-                            ->where('group_id', (int)$request->input('groupno'))
-                            ->first();
+                // (A) まず対象グループを特定
+                if ($request->filled('groupno')) {
+                    // 既存 group_id を検証
+                    $group = Group::where('facilityno', $facilityno)
+                        ->where('group_id', (int)$request->input('groupno'))
+                        ->first();
+                    if (!$group) {
+                        throw new \RuntimeException('不正なグループが指定されています。');
+                    }
+                } else {
+                    // group_name から施設内で作成/再利用
+                    $name  = trim((string)$request->input('group_name'));
+                    $group = Group::firstOrCreate(
+                        ['facilityno' => $facilityno, 'group_name' => $name],
+                        ['delflag' => 0]
+                    );
+                }
 
-                        if (!$group) {
-                            // 施設と不整合な groupno は弾く
-                            throw new \RuntimeException('選択されたグループが施設に属していません。');
-                        }
-                    } else {
-                        $group = Group::firstOrCreate([
-                            'facilityno' => $facilityno,
-                            'group_name' => trim((string)$request->input('group_name')),
-                        ]);
+                // (B) Payload を整備（必ず groupno をセット）
+                $payload = $request->all();
+                $payload['groupno']    = (int)$group->group_id; // <- ここが重要
+                $payload['group_name'] = $group->group_name;    // 互換用途で同時に渡しておく
+
+                // (C) 既存の共通ロジックがあれば利用、なければ直接保存
+                if (is_callable([Common::class, 'create_helper'])) {
+                    $newId = Common::create_helper($payload);
+
+                    // 念のため、共通ロジックが groupno を無視しても確実に反映させる
+                    if (is_numeric($newId)) {
+                        Helper::where('id', (int)$newId)->update(['groupno' => (int)$group->group_id]);
                     }
 
-                    // ④ helper 登録に使うため groupno を合流
-                    $request->merge(['groupno' => $group->group_id]);
+                    return $newId;
+                }
 
-                    // ⑤ 既存の作成ロジックに委譲（groupno を保存する実装であること）
-                    return Common::create_helper($request->all());
-                });
+                // フォールバック：直接保存
+                $helper = new Helper();
+                $helper->facilityno = $facilityno;
+                $helper->helpername = $payload['helpername'];
+                $helper->groupno    = (int)$group->group_id;
+                $helper->position   = $payload['position'] ?? null;
+                $helper->age        = $payload['age'] ?? null;
+                $helper->sex        = $payload['sex'] ?? null;
+                $helper->delflag    = 0;
+                $helper->save();
 
-                // ⑥ 成功時は従来どおり insertid を返す
-                return $insertid;
-            }
+                return $helper->id;
+            });
+
+            // 従来どおり insertId を返す（フロントの既存JSに合わせる）
+            return $insertId;
         } catch (\Throwable $e) {
-            // 必要ならログ
-            // \Log::error('HelperAdd error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            \Log::error('[HelperAdd] failed: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return json_encode("error");
         }
     }
