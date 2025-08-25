@@ -78,18 +78,18 @@ class HelperController extends Controller
         $wearable     = [];
         $data         = [];
         $ymdData      = collect();
-
+    
         // --- 必須: グループ番号（施設内のグループ）
         $groupno = (int)($request->input('groupno') ?? $request->query('groupno'));
-
+    
         // --- 施設番号の決定（従来の優先順位 + リファラ）
         $facilityno = (int)(
             $request->input('id')
             ?? $request->input('facilityno')
             ?? $request->query('facilityno')
-            ?? ((Auth::user()->authority ?? null) == 3 ? (Auth::user()->facilityno ?? null) : null)
+            ?? ((\Auth::user()->authority ?? null) == 3 ? (\Auth::user()->facilityno ?? null) : null)
         );
-
+    
         if (empty($facilityno)) {
             // リファラから facilityno / groupno を補完（あれば）
             $ref = $_SERVER['HTTP_REFERER'] ?? '';
@@ -99,87 +99,96 @@ class HelperController extends Controller
                 if (empty($groupno) && !empty($q['groupno'])) $groupno = (int)$q['groupno'];
             }
         }
-
+    
         // ここで facilityno と groupno が両方そろっていることを保証
         if (empty($facilityno) || empty($groupno)) {
-            // 施設未指定は従来どおり mainmenu に戻す
             if (empty($facilityno)) {
                 $page  = 'mainmenu';
-                $title = Common::$title[$page];
-                $group = Common::$group[$page];
+                $title = \App\Library\Common::$title[$page];
+                $group = \App\Library\Common::$group[$page];
                 $data  = '';
                 return view($page, compact('title', 'page', 'group', 'data', 'facilityno'));
             }
-            // groupno が無いのはフロー上ありえないので 400
             abort(400, 'groupno is required');
         }
-
+    
         // --- 施設の存在確認（未削除）
-        $facility = Facility::where('id', $facilityno)->where('delflag', '!=', 1)->first();
+        $facility = \App\Models\Facility::where('id', $facilityno)->where('delflag', '!=', 1)->first();
         if ($facility) {
             $facilityname = $facility->facility;
         } else {
-            // 存在しない場合は従来どおり mainmenu へ
             $page  = 'mainmenu';
-            $title = Common::$title[$page];
-            $group = Common::$group[$page];
+            $title = \App\Library\Common::$title[$page];
+            $group = \App\Library\Common::$group[$page];
             $data  = '';
             return view($page, compact('title', 'page', 'group', 'data', 'facilityno'));
         }
-
+    
         // --- グループ存在保証（この施設の中にあること）
-        $selectedGroup = Group::where('facilityno', $facilityno)
+        $selectedGroup = \App\Models\Group::where('facilityno', $facilityno)
             ->where('group_id', $groupno)
             ->firstOrFail();
-
-        // --- 作業者一覧（施設 + グループで絞り込み）
-        if (method_exists($this, 'helperListQuery')) {
-            $getdata = $this->helperListQuery($facilityno, $groupno)->get();
-        } else {
-            // 念のためのフォールバック
-            $getdata = Helper::select('helper.id as helper_id', 'helper.*')
-                ->where('helper.facilityno', $facilityno)
-                ->where('helper.delflag', '!=', 1)
-                ->where('helper.groupno', $groupno)
-                ->orderBy('helper.id', 'asc')
-                ->get();
-        }
+    
+        // --- 作業者一覧（施設 + グループで絞り込み）※ groups を JOIN して group_name を取得
+        $getdata = \DB::table('helper as h')
+            ->leftJoin('groups as g', function ($join) {
+                $join->on('h.groupno', '=', 'g.group_id')
+                     ->on('h.facilityno', '=', 'g.facilityno'); // 施設内ユニーク想定
+            })
+            ->select([
+                'h.id as helper_id',
+                'h.helpername',
+                'h.position',
+                'h.age',
+                'h.sex',
+                'h.groupno',
+                'g.group_name', // ← これを一覧で使う
+            ])
+            ->where('h.facilityno', $facilityno)
+            ->where('h.delflag', '!=', 1)
+            ->where('h.groupno', $groupno)   // 選択グループのみ表示
+            ->orderBy('h.id', 'asc')
+            ->get();
+    
         $data = json_decode(json_encode($getdata, JSON_PRETTY_PRINT), true);
-
+    
+        // --- コード表（職種/性別の名称表示に使用している場合）
+        $code = \App\Models\CodeTbl::orderBy('codeno')->orderBy('value')->get()->toArray();
+    
         // --- ウェアラブル（従来どおりビューに渡す）
-        $wearable = Wearable::orderBy('id', 'asc')
+        $wearable = \App\Models\Wearable::orderBy('id', 'asc')
             ->where('delflag', '!=', 1)
             ->get();
         $wearable = json_decode(json_encode($wearable, JSON_PRETTY_PRINT), true);
-
+    
         // --- カレンダーのマーキング用（日付）: 表示している作業者のみ対象
-        $helperIds = $getdata->pluck('helper_id')->all(); // select で alias を付けている想定
+        $helperIds = $getdata->pluck('helper_id')->all();
         if (!empty($helperIds)) {
-            $ymdData = bpainhed::join('helper', 'bpainhed.helperno', '=', 'helper.id')
+            $ymdData = \App\Models\bpainhed::join('helper', 'bpainhed.helperno', '=', 'helper.id')
                 ->select('bpainhed.ymd')
                 ->whereIn('bpainhed.helperno', $helperIds)
                 ->get();
         }
-
+    
         // 画面描画
         $page  = 'helper';
-        $title = Common::$title[$page];
-        $group = Common::$group[$page];
-
+        $title = \App\Library\Common::$title[$page];
+        $group = \App\Library\Common::$group[$page];
+    
         return view('helper', compact(
             'title',
             'page',
             'group',
             'data',
             'facilityno',
-            'groupno',        // ← 追加: ビュー側(hiddenなどで使う)
+            'groupno',
             'wearable',
             'facilityname',
             'ymdData',
-            'selectedGroup'   // ← 必要なら追加画面等で利用
+            'selectedGroup',
+            'code' // ← Blade で使っているなら忘れずに
         ));
     }
-
     public function add_index(Request $request)
     {
     // facilityno / groupno を受け取る（POST/GET 両対応）

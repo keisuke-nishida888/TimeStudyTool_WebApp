@@ -59,113 +59,78 @@
 
 
 <table id="table3">
-    <tbody class="scrollBody">
-    @if(isset($data))
-        @if(count($data)<=0)
-        <!--  配列の総アイテム数が10未満 -->
-            @for($i=0;$i<12;$i++)
-                <tr>
-                    <td class="id"></td>
-                    <td class="helpername"></td>
-                    {{-- <td class="wearableno"></td> --}}
-                    <td class="position"></td>
-                    <td class="age"></td>
-                    <td class="sex"></td>
-                    {{-- <td class="JobTime"></td> --}}
-                </tr>
-            @endfor
+  <tbody class="scrollBody">
+  @if(isset($data) && count($data) > 0)
+    @foreach($data as $val)
+      <tr>
+        <td class="id">{{ $val['helper_id'] }}</td>
+        <td class="helpername">{{ $val['helpername'] }}</td>
+
+        {{-- 追加：グループ名 --}}
+        <td class="group_name">{{ $val['group_name'] ?? '' }}</td>
+
+        {{-- 職種 --}}
+        @if(isset($val['position']))
+          @php $__printed = false; @endphp
+          @foreach($code as $valcode)
+            @if($valcode['codeno']==3 && $valcode['value'] == ($val['position'] ?? null))
+              <td class="position">{{ $valcode['selectname'] }}</td>
+              @php $__printed = true; @endphp
+              @break
+            @endif
+          @endforeach
+          @if (!$__printed) <td class="position"></td> @endif
         @else
-            @foreach($data as $val)
-                    <td class="id">{{$val['helper_id']}}</td>
-                    <td class="helpername">{{$val['helpername']}}</td>
-                    {{-- <td class="wearableno">{{$val['devicename']}}</td>                  --}}
-
-
-                    @if(isset($val['position']))
-                        @foreach($code as $valcode)
-                            @if($valcode['codeno']==3)
-                                    @if($valcode['value'] == $val['position'])
-                                        <td class="position">{{$valcode['selectname']}}</td>
-                                        @break
-                                    @endif
-                            @endif
-                            @if(($loop->last)) <td class="position"></td>
-                            @endif
-                        @endforeach
-                    @else <td class="position"></td>
-                    @endif
-
-                    @if(isset($val['age']))
-                        <td class="age">{{$val['age']}}</td>
-                    @else
-                        <td class="age"></td>
-                    @endif
-
-                    @if(isset($val['sex']))
-                        @foreach($code as $valcode)
-                            @if($valcode['codeno']==4)
-                                @if($valcode['value'] == $val['sex'])
-                                    <td class="sex">{{$valcode['selectname']}}</td>
-                                    @break
-                                @endif
-                            @endif
-                            @if(($loop->last)) <td class="sex"></td>
-                            @endif
-                        @endforeach
-                    @else <td class="sex"></td>
-                    @endif
-
-                    {{--
-                    @if(isset($val['jobfrom']) && isset($val['jobto']))
-                        <td class="JobTime">
-                            <?php
-
-                                $jobfrom1 = substr($val['jobfrom'], 0, 2);
-                                $jobfrom2 = substr($val['jobfrom'], 2, 2);
-                                $jobto1 = substr($val['jobto'], 0, 2);
-                                $jobto2 = substr($val['jobto'], 2, 2);
-                                echo $jobfrom1.":".$jobfrom2."-".$jobto1.":".$jobto2;
-
-                            ?>
-                        </td>
-                    @else <td class="JobTime"></td>
-                    @endif
-                    --}}
-                </tr>
-
-                <!--  最後のループ -->
-                @if ($loop->last)
-                    @if ($loop->count < 12)
-                        <!--  配列の総アイテム数が10未満 -->
-                        @for($i=$loop->count;$i<12;$i++)
-                        <tr>
-                            <td class="id"></td>
-                            <td class="helpername"></td>
-                            {{-- <td class="wearableno"></td> --}}
-                            <td class="position"></td>
-                            <td class="age"></td>
-                            <td class="sex"></td>
-                            {{-- <td class="JobTime"></td> --}}
-                        </tr>
-                        @endfor
-                    @endif
-                @endif
-            @endforeach
+          <td class="position"></td>
         @endif
-    @else
-        <!--  配列の総アイテム数が10未満 -->
-        @for($i=0;$i<12;$i++)
-                <tr class="id"></td>
-                <td class="helpername"></td>
-                {{-- <td class="wearableno"></td> --}}
-                <td class="position"></td>
-                <td class="age"></td>
-                <td class="sex"></td>
-                {{-- <td class="JobTime"></td> --}}
-                </tr>
+
+        {{-- 年齢 --}}
+        <td class="age">{{ $val['age'] ?? '' }}</td>
+
+        {{-- 性別 --}}
+        @if(isset($val['sex']))
+          @php $__printed = false; @endphp
+          @foreach($code as $valcode)
+            @if($valcode['codeno']==4 && $valcode['value'] == ($val['sex'] ?? null))
+              <td class="sex">{{ $valcode['selectname'] }}</td>
+              @php $__printed = true; @endphp
+              @break
+            @endif
+          @endforeach
+          @if (!$__printed) <td class="sex"></td> @endif
+        @else
+          <td class="sex"></td>
+        @endif
+      </tr>
+
+      {{-- 足りない分の空行埋め --}}
+      @if ($loop->last && $loop->count < 12)
+        @for ($i=$loop->count; $i<12; $i++)
+          <tr>
+            <td class="id"></td>
+            <td class="helpername"></td>
+            <td class="group_name"></td>
+            <td class="position"></td>
+            <td class="age"></td>
+            <td class="sex"></td>
+          </tr>
         @endfor
-    @endif
-    </tbody>
+      @endif
+    @endforeach
+  @else
+    {{-- データ0件時の空行 --}}
+    @for ($i=0; $i<12; $i++)
+      <tr>
+        <td class="id"></td>
+        <td class="helpername"></td>
+        <td class="group_name"></td> {{-- ここに $val は使わない --}}
+        <td class="position"></td>
+        <td class="age"></td>
+        <td class="sex"></td>
+      </tr>
+    @endfor
+  @endif
+  </tbody>
 </table>
 </div>
 
@@ -775,3 +740,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 </script>
+
+<style>
+  /* 性別カラムを横書きに強制 */
+  #table3 td.sex,
+  #table3 th.sex {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed;
+    white-space: nowrap;        /* 1文字ずつの折返しを防ぐ */
+    word-break: keep-all;       /* 日本語の任意改行を抑制 */
+  }
+
+  /* 念のため、回転指定があれば無効化 */
+  #table3 td.sex, 
+  #table3 td.sex * {
+    transform: none !important;
+  }
+</style>
