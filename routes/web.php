@@ -207,18 +207,25 @@ Route::group(['middleware' => ['auth','authroot']], function(){
         Route::post('/costregist_regist', 'App\Http\Controllers\CostregistController@regist');
 
 
-    //戻るボタン、後で削除するかも
-    // Route::post('/loginuser','App\Http\Controllers\BackController@index');
-    // Route::post('/mainmenu','App\Http\Controllers\BackController@index');
-    // Route::post('/wearable','App\Http\Controllers\BackController@index');
-    // Route::post('/risksensor','App\Http\Controllers\BackController@index');
-    // Route::post('/facility','App\Http\Controllers\BackController@index');
-    // Route::post('/averdata','App\Http\Controllers\BackController@index');
-    // Route::post('/facilityinput','App\Http\Controllers\BackController@index');
-    // Route::post('/costregist','App\Http\Controllers\BackController@index');
-    // Route::post('/helper','App\Http\Controllers\BackController@index');
+    //グループ追加
+    Route::get('/groups',        [GroupController::class, 'index'])->name('groups.index');
+    Route::get('/group_add',     [GroupController::class, 'add_index'])->name('groups.add');
+    Route::post('/group_addctrl',[GroupController::class, 'store'])->name('groups.store');
+    
+    // ← 編集画面表示
+    Route::get('/group_fix',     [GroupController::class, 'fix_index'])->name('groups.edit');
+    Route::post('/group_fixctrl',[GroupController::class, 'update'])->name('groups.update');
 
+    
+    // グループ一覧（既存）
+    Route::get('/groups', [App\Http\Controllers\GroupController::class, 'index'])
+    ->name('groups.index');
 
+    // グループ削除（新規）
+    Route::post('/group_del', [App\Http\Controllers\GroupController::class, 'del'])
+    ->name('groups.delete');
+
+    
 
 });
 

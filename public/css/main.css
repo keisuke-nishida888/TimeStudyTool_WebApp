@@ -481,7 +481,8 @@ html, body {
             #btn_deluser,
             #btn_delfacility,
             #btn_delwearable,
-            #btn_delrisksensor
+            #btn_delrisksensor,
+            #a_group_del
             {
                 position: absolute;
                 top:calc(634.2px / var(--coef));
@@ -796,7 +797,8 @@ html, body {
             #a_wearable_add,
             #a_risksensor_add,
             #a_facility_add,
-            #a_task_add
+            #a_task_add,
+            #a_group_add
             {
                 position: absolute;
                 top:calc(356.2px / var(--coef));
@@ -816,7 +818,8 @@ html, body {
             #a_wearable_fix,
             #a_risksensor_fix,
             #a_facility_fix,
-            #a_task_fix
+            #a_task_fix,
+            #a_group_fix
             {
                 position: absolute;
                 top:calc(495.2px / var(--coef));
@@ -892,7 +895,9 @@ html, body {
             #btn_addfacility_input_pre,
             #btn_fixfacility_input_pre,
             #btn_addfacility_pre,
-            #btn_fixfacility_pre
+            #btn_fixfacility_pre,
+            #btn_addgroup_pre,
+            #btn_fixgroup_pre
             {
 		    /*
                 position: relative;

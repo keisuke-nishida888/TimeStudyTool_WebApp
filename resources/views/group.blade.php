@@ -10,6 +10,24 @@
         <input type="image" class="img_style2" src="{{ asset('image/img_helper.png') }}" alt="作業者一覧" border="0">
     </form>
 
+    <a id="a_group_add" a href="{{ route('groups.add', ['facilityno' => $facilityno]) }}">
+        <img src="{{ asset('image/img_add.png') }}" class="img_style" alt="グループ追加" border="0">
+    </a>
+
+    {{-- 削除：POSTで /group_del へ facilityno と選択 groupno を送る --}}
+    <form id="a_group_del" action="{{ url('/group_del') }}" method="post" onsubmit="return setGroupDelTarget()">
+        @csrf
+        <input type="hidden" name="facilityno" value="{{ $facilityno }}">
+        <input type="hidden" id="del_groupno" name="groupno" value="">
+        <input type="image" class="img_style" src="{{ asset('image/img_del.png') }}" alt="グループ削除" border="0">
+    </form>
+    {{-- GET で /group_fix へ、facilityno と選択 groupno を送る --}}
+    <form id="a_group_fix" action="/group_fix" method="get" onsubmit="return setGroupFixTarget()">
+    <input type="hidden" name="facilityno" value="{{ $facilityno }}">
+    <input type="hidden" id="fix_groupno" name="groupno" value="">
+    <input type="image" class="img_style" src="{{ asset('image/img_fix.png') }}" alt="グループ修正" border="0">
+</form>
+
     {{-- テーブルヘッダ（task と同じ ID を使う） --}}
     <img id="img_task_tb" src="{{ asset('image/img_group_tb.png') }}" alt="">
 
@@ -77,6 +95,22 @@
             tr.addEventListener('click', function() { selectRow(tr); });
         });
     });
+    
+    // ★ 修正ボタン送信用
+    window.setGroupFixTarget = function() {
+        const sel = document.getElementById('groupno').value;
+        if (!sel) { alert('グループを選択してください。'); return false; }
+        document.getElementById('fix_groupno').value = sel;
+        return true;
+    };
+    // ★ 削除ボタン送信用
+    window.setGroupDelTarget = function() {
+    const sel = document.getElementById('groupno').value;
+    if (!sel) { alert('グループを選択してください。'); return false; }
+    if (!confirm('選択したグループを削除します。よろしいですか？')) return false;
+    document.getElementById('del_groupno').value = sel;
+    return true;
+};
 
     // フォーム用に関数をグローバルへ（onsubmit から呼ぶため）
     window.submitToHelper = submitToHelper;

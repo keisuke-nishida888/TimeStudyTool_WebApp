@@ -510,6 +510,15 @@ function ini_img() {
                 document.getElementById('btn_addfacility').style.top = y + "px";
                 document.getElementById('btn_addfacility').style.visibility = 'Visible';
                 break;
+            
+            case "btn_addgroup_pre":
+                document.getElementById('btn_yes').style.visibility = 'hidden';
+                disp = 'btn_addfacility';
+                Ctrl_pop("alert","visible",34);
+                document.getElementById('btn_addfacility').style.top = y + "px";
+                document.getElementById('btn_addfacility').style.visibility = 'Visible';
+                break;
+
             case "btn_addfacility_input_pre":
                 document.getElementById('btn_yes').style.visibility = 'hidden';
                 disp = 'btn_addfacility_input';
@@ -539,7 +548,20 @@ function ini_img() {
                 document.getElementById('btn_addfacility_input').style.top = y + "px";
                 document.getElementById('btn_addfacility_input').style.visibility = 'Visible';
                 break;
-
+            case "btn_addgroup_pre":
+                document.getElementById('btn_yes').style.visibility = 'hidden';
+                disp = 'btn_addgroup';
+                Ctrl_pop("alert","visible",34);
+                document.getElementById('btn_addgroup').style.top = y + "px";
+                document.getElementById('btn_addgroup').style.visibility = 'Visible';
+                break;
+            case "btn_fixgroup_pre":
+                document.getElementById('btn_yes').style.visibility = 'hidden';
+                disp = 'btn_fixgroup';
+                Ctrl_pop("alert","visible",34);
+                document.getElementById('btn_fixgroup').style.top = y + "px";
+                document.getElementById('btn_fixgroup').style.visibility = 'Visible';
+                break;
 
             //データ表示
             case "btn_datadisp_pre":

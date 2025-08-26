@@ -309,36 +309,6 @@
                             </span>
                             </td>
                         </tr>
-                        <!-- ▼ グループ（既存＋追加） -->
-                        <tr>
-                        <td><label>グループ</label></td>
-                        <td colspan="2">
-                            <div id="group-fields">
-                            @forelse($groups ?? [] as $g)
-                                <div class="group-row" style="margin-bottom:6px;">
-                                {{-- 既存グループはIDを hidden で持ち、名前は上書き可能 --}}
-                                <input type="hidden" name="group_ids[]" value="{{ $g->group_id }}">
-                                <input type="text"
-                                        name="group_names[]"
-                                        maxlength="100"
-                                        value="{{ old('group_names.'.$loop->index, $g->group_name) }}"
-                                        placeholder="グループ名">
-                                </div>
-                            @empty
-                                {{-- 既存が無いときは空で1行出しておいてもOK（任意） --}}
-                            @endforelse
-                            </div>
-
-                            {{-- ＋ボタン（新規行を追加） --}}
-                            <button type="button" id="btn_add_group" style="margin-top:6px;" onclick="addGroupField()">＋</button>
-
-                            <div>
-                            <span class="invalid-feedback validate" role="alert">
-                                <nobr id="err_groups"></nobr>
-                            </span>
-                            </div>
-                        </td>
-                        </tr>
 
         <!-- 修正ボタン -->
         <input id="btn_fixfacility" type="image" src="image/img_yes.png" alt="修正" border="0">

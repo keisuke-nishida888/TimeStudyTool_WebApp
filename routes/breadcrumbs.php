@@ -199,6 +199,14 @@ Breadcrumbs::for('group', function ($trail, $facilityno = null) {
     }
     $trail->push('グループ一覧', $url);
 });
+Breadcrumbs::for('group_add', function ($trail, $facilityno = null) {
+    $trail->parent('group', $facilityno);
+    $url = url('/groups/add');
+    if (!empty($facilityno)) {
+        $url .= '?facilityno=' . urlencode($facilityno);
+    }
+    $trail->push('グループ追加', $url);
+});
 
 // ===========================
 // 平均データ / 施設情報入力 / コスト登録
@@ -214,4 +222,21 @@ Breadcrumbs::for('facilityinput', function ($trail) {
 Breadcrumbs::for('costregist', function ($trail) {
     $trail->parent('mainmenu');
     $trail->push('現状コスト/導入コスト登録', url('/costregist'));
+});
+
+// ===========================
+// グループ修正
+// ===========================
+Breadcrumbs::for('group_fix', function ($trail, $facilityno = null, $groupno = null) {
+    // 親は「グループ一覧」
+    $trail->parent('group', $facilityno);
+
+    // 自ページへのURL（クエリ付与）
+    $url = url('/group_fix');
+    $q = [];
+    if (!empty($facilityno)) $q['facilityno'] = $facilityno;
+    if (!empty($groupno))    $q['groupno']    = $groupno;
+    if ($q) $url .= '?' . http_build_query($q);
+
+    $trail->push('グループ修正', $url);
 });

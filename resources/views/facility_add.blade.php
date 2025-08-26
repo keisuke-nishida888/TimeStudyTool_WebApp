@@ -292,19 +292,6 @@
                                 </span>
                             </td>
                         </tr>
-                        <!-- グループ入力欄 -->
-                        <tr>
-                        <td><label>{{ __('グループ') }}</label></td>
-                        <td>
-                            <div id="groupFields">
-                            <div class="group-row">
-                                <input type="text" name="group_names[]" maxlength="100" placeholder="グループ名">
-                            </div>
-                            </div>
-                            <button type="button" class="btn-add-group" onclick="addGroupField()">＋</button>
-                            <div class="hint">※ 追加したい分だけ［＋］で行を増やしてください（未入力は無視して保存されます）</div>
-                        </td>
-                        </tr>
             <!-- 追加ボタン -->
             <input id="btn_addfacility" type="image" src="image/img_yes.png" alt="追加" border="0">
                 

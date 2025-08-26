@@ -84,6 +84,9 @@ class Common
         "averdata"=> "平均データ表示",
         "facilityinput"=> "施設情報入力",
         "costregist"=> "現状コスト/導入コスト登録",
+        "group"=> "グループ一覧",
+        "group_add"=> "グループ追加",
+        "groups_add"=> "グループ追加",
     );
 
     static public $group = array(
@@ -113,6 +116,8 @@ class Common
         "averdata"=> "mainmenu",
         "facilityinput"=> "mainmenu",
         "costregist"=> "mainmenu",
+        "group"=> "facility",
+        "group_add"=> "group",
     );
 
 
