@@ -24,9 +24,9 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 // 既存の use 群の下あたりに追加
-use App\Models\Group;                 // ★ 追加
-use Illuminate\Support\Facades\DB;     // ★ 追加（トランザクションに使用）
-
+use App\Models\Group;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class HelperController extends Controller
 {
@@ -424,132 +424,6 @@ class HelperController extends Controller
 
                 //アップデート
                 Common::Update_helper($request->all());
-                //Meauserアップデート
-                //期間の入れ違い対策はjavascriptで行う
-            /*
-                if(isset($_POST["measufrom"]) && isset($_POST["measuto"]))
-                {
-                    if(mb_strlen($_POST["measufrom"])==10 &&  mb_strlen($_POST["measuto"])==10)
-                    {
-                        //Meauserアップデート
-                        //期間の入れ違い対策はjavascriptで行う
-                        $time1 = strtotime($_POST["measufrom"]);
-                        $time2 = strtotime($_POST["measuto"]);
-
-                        $from = array();
-                        $from = explode("-",$_POST["measufrom"]);
-                        $to = array();
-                        $to = explode("-",$_POST["measuto"]);
-                        $span = ($time2 - $time1) / (60 * 60 * 24);
-
-                        $time3 = strtotime($_POST["measufrom_pre"]);
-                        $time4 = strtotime($_POST["measuto_pre"]);
-
-                        $from2 = array();
-                        $from2 = explode("-",$_POST["measufrom_pre"]);
-                        $to2 = array();
-                        $to2 = explode("-",$_POST["measuto_pre"]);
-                        $span2 = ($time4 - $time3) / (60 * 60 * 24);
-
-
-                        $y = 0;
-                        $m = 0;
-                        $d = 0;
-                        // 測定期間が一致するか調べる
-                        // if($_POST["measufrom"] != $_POST["measufrom_pre"])
-                        // {
-                        //     //前回の日付よりも今回の日付が後
-                        //     if($time3 < $time1)
-                        //     {
-                        //         //前回設定した日付よりも今回の日付が後の場合は、差分を削除する
-                        //         //IDを検索、削除
-                        //         Meauser::whereIn('helperno',[$insertid])
-                        //         // ->whereIn('wearableno',[$_POST('wearableno')])
-                        //         // ->whereIn('backpainno',[$_POSY['backpainno']])
-                        //         ->where('ymd', '<', [sprintf("%04d",$from[0]).sprintf("%02d",$from[1]).sprintf("%02d",$from[2])])
-                        //         ->delete();
-                        //     }
-                        // }
-                        if($_POST["measuto"] != $_POST["measuto_pre"])
-                        {
-                            //前回の日付よりも今回の日付が前
-                            if($time4 > $time2)
-                            {
-                                //前回設定した日付よりも今回の日付が前の場合は、差分を削除する
-                                //IDを検索、削除
-                                Meauser::whereIn('helperno',[$insertid])
-                                ->where('ymd', '>=', [date("Ymd")])
-                                ->where('ymd', '>', [sprintf("%04d",$to[0]).sprintf("%02d",$to[1]).sprintf("%02d",$to[2])])
-                                ->delete();
-                            }
-                        }
-
-
-                        //該当するデータがあるか調べる
-                        for($i= 0; $i < $span+1; $i++)
-                        {
-                            $last_day = date("t", mktime(0, 0, 0, $m+1, 0,sprintf("%04d",$y)));
-                            if($i == 0)
-                            {
-                                $y = intval($from[0]);
-                                $m = intval($from[1]);
-                                $d = intval($from[2]);
-                            }
-                            else
-                            {
-                                $d = $d + 1;
-                            }
-                            if($d > $last_day)
-                            {
-                                $m = $m + 1;
-                                $d = 1;
-                                if($m > 12)
-                                {
-                                    $m = 1;
-                                    $y = $y + 1;
-                                }
-                            }
-                            if(sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d) >= $to[0].$to[1].$to[2])
-                            {
-                                if(sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d) == $to[0].$to[1].$to[2])
-                                {
-                                    //既にデータがある場合はスキップ
-                                    $rtn = Meauser::whereIn('helperno',[$insertid])
-                                    ->whereIn('ymd',[sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d)])
-                                    ->exists();
-                                    if($rtn == false)
-                                    {
-                                        Common::create_measure($request->all(),sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d),$insertid);
-                                    }
-                                }
-                                break;
-                            }
-                            //既にデータがある場合はスキップ
-                            $rtn = Meauser::whereIn('helperno',[$insertid])
-                                    ->whereIn('ymd',[sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d)])
-                                    ->exists();
-                            //データない場合,レコード作成
-                            if($rtn == false)
-                            {
-                                Common::create_measure($request->all(),sprintf("%04d",$y).sprintf("%02d",$m).sprintf("%02d",$d),$insertid);
-                            }
-                        }
-
-                        //MeauserのデバイスNoも更新する
-                        Meauser::whereIn('helperno',[$insertid])
-                        ->update(['wearableno'=> $wearableno]);
-
-                        Meauser::whereIn('helperno',[$insertid])
-                        ->update(['backpainno'=> $backpainno]);
-
-                    }
-                }
-            */
-                //ウェアラブルデバイスアップデート
-                // Wearable::whereIn('id',[$_POST["wearableno"]])->update(['helperno'=>$insertid]);
-
-                //腰痛デバイスアップデート
-                // BackPain::whereIn('id',[$_POST["backpainno"]])->update(['helperno'=>$insertid]);
 
                 //作業者情報
                 $getdata = Helper::whereIn('id',[$insertid])->get();
@@ -920,34 +794,54 @@ class HelperController extends Controller
                     $startFormatted = $startDateTime->format('Y-m-d H:i:s');
                     $stopFormatted = $stopDateTime->format('Y-m-d H:i:s');
                     
-                    $timeStudy = \App\Models\TimeStudy::create([
+                   // 基本項目
+                    $payload = [
                         'timestudy_id' => $timestudyId,
-                        'helpno' => $helper->id, // helperテーブルのidを使用
-                        'task_id' => $taskId,
-                        'start' => $startFormatted,
-                        'stop' => $stopFormatted,
-                    ]);
+                        'task_id'      => $taskId,
+                        'start'        => $startFormatted,
+                        'stop'         => $stopFormatted,
+                    ];
                     
-                    \Log::info('TimeStudy登録成功: ' . json_encode([
-                        'timestudy_id' => $timeStudy->timestudy_id,
-                        'helpno' => $helper->id,
-                        'task_id' => $taskId,
-                        'start' => $startFormatted,
-                        'stop' => $stopFormatted
-                    ]));
-                    
+                    // helpno / helperno どちらのカラムがあるかで出し分け
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'helpno')) {
+                        $payload['helpno'] = $helper->id;     // helperテーブルのid
+                    } elseif (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'helperno')) {
+                        $payload['helperno'] = $helper->id;   // 別名カラムに対応
+                    }
+
+                    // 任意カラム（存在する場合のみ追加）
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'task_name')) {
+                        $payload['task_name'] = $taskName;
+                    }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'task_type_no')) {
+                        $payload['task_type_no'] = (int) $taskTypeNo;
+                    }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'task_category_no')) {
+                        $payload['task_category_no'] = (int) $taskCategoryNo;
+                    }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'ymd')) {
+                        $payload['ymd'] = $startDateTime->format('Ymd');  // start の日付から生成
+                    }
+
+                    // timestamps がある環境なら埋める
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'created_at')) {
+                        $payload['created_at'] = now();
+                    }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('time_study', 'updated_at')) {
+                        $payload['updated_at'] = now();
+                    }
+
+                    // 挿入（$fillable に依存しない）
+                    \Illuminate\Support\Facades\DB::table('time_study')->insert($payload);
+
+                    \Log::info('TimeStudy登録成功: ' . json_encode($payload, JSON_UNESCAPED_UNICODE));
                     $importCount++;
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     \Log::error('TimeStudy登録エラー: ' . $e->getMessage());
-                    \Log::error('登録データ: ' . json_encode([
-                        'timestudy_id' => $timestudyId,
-                        'helpno' => $helper->id,
-                        'task_id' => $taskId,
-                        'start' => $start,
-                        'stop' => $stop
-                    ]));
+                    \Log::error('登録データ: ' . json_encode($payload ?? [], JSON_UNESCAPED_UNICODE));
                     continue;
                 }
+
             }
 
             return response()->json([
