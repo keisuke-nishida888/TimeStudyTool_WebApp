@@ -33,12 +33,12 @@
 
 {{-- CSV取込--}}
 <div id="a_csvoutput_helper_list">
-    <button id="btn_csvoutput_helper_list" class="csvoutput_helper_list" onclick="console.log('CSV取込ボタンがクリックされました'); showTaskCsvImportModal()">CSV取込</button>
+    <button id="btn_csvoutput_helper_list" class="csvoutput_helper_list" onclick="console.log('CSV取込ボタンがクリックされました'); showTaskCsvImportModal()">Time Study CSV取込</button>
 </div>
 
 {{-- CSV出力　作業者データ --}}
 <div>
-    <button id="btn_helperdata_csvoutput_pre" class="csvout_helper_data" onclick="VisibleChange(this.id)">CSV出力　作業者データ</button>
+    <button id="btn_helperdata_csvoutput_pre" class="csvout_helper_data" onclick="VisibleChange(this.id)">Time Study CSV出力</button>
 </div>
 
 
@@ -177,7 +177,7 @@
 
 {{-- 作業内容CSV取り込みモーダル --}}
 <span id="pop_task_csvimport" style="visibility: collapse;">
-    <center><nobr id="lb_task_csvimport">作業内容CSV取り込み</nobr></center>
+    <center><nobr id="lb_task_csvimport">Time Study CSV取込</nobr></center>
     <form id="form_task_csvimport" method="POST" enctype="multipart/form-data" onsubmit="return false;">
         @csrf
         <div style="margin:10px 0;">
@@ -199,7 +199,7 @@
             <button id="btn_task_csvimport_start" onclick="startTaskCsvImport()" style="
                 display:inline-block; padding:8px 20px; border:2px solid #2563eb; color:#2563eb; border-radius:4px;
                 background:#fff; cursor:pointer; margin-right:10px;">
-                取り込み開始
+                取込開始
             </button>
             <button id="btn_task_csvimport_cancel" onclick="closeTaskCsvImportModal()" style="
                 display:inline-block; padding:8px 20px; border:2px solid #f44336; color:#f44336; border-radius:4px;
@@ -240,49 +240,6 @@ function closeTimeStudyModal() {
 function showSelectedFileName(input) {
     const fileName = input.files[0] ? input.files[0].name : '';
     document.getElementById('csv_filename').innerText = fileName;
-}
-function uploadTimeStudyCSV() {
-    var formdata = new FormData();
-
-    if (!document.getElementById('timestudy_csv').files[0]) {
-        Ctrl_pop("error", "visible", "CSVファイルを選択してください。");
-        return;
-    }
-
-    formdata.append('csv_file', document.getElementById('timestudy_csv').files[0]);
-    formdata.append('helpername', document.getElementById('timestudy_helpername').value);
-
-    // CSRFトークン取得＆FormDataとヘッダー両方にセット
-    var token = document.querySelector('meta[name="csrf-token"]').content;
-    formdata.append('_token', token);
-
-    var url = "/time_study_csv_upload"; // 必ず絶対パスで指定
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
-    xhr.setRequestHeader('X-CSRF-Token', token);
-
-    xhr.responseType = 'json';
-    xhr.send(formdata);
-
-    try {
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4) {
-                if (xhr.status == 200) {
-                    var response = this.response;
-                    if (response.success) {
-                        closeTimeStudyModal();
-                        Ctrl_pop("error", "visible", "CSVファイルのアップロードが成功しました。");
-                    } else {
-                        Ctrl_pop("error", "visible", response.message);
-                    }
-                } else {
-                    Ctrl_pop("error", "visible", "エラーが発生しました。");
-                }
-            }
-        };
-    } catch(e) {
-        alert(e);
-    }
 }
 
 // 作業内容CSV取り込み関連の関数
@@ -692,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         catch{alert();}
     }
-
+    //Time Study CSV取込
     function uploadTimeStudyCSV() {
         var formdata = new FormData();
 
