@@ -23,10 +23,11 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
-// 既存の use 群の下あたりに追加
 use App\Models\Group;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
+
 
 class HelperController extends Controller
 {
@@ -523,57 +524,118 @@ class HelperController extends Controller
     }
 
     // 作業者一覧のCSV出力
-    public function HelperListCsvOutput(Request $request)
+   /**
+     * TimeStudy CSV 出力
+     * POST: /time_study_csvoutput
+     * 受取: facilityno (任意), st_ymd, ed_ymd (どちらも 'YYYY/MM/DD' or 'YYYY-MM-DD')
+     * 仕様: start/stop の「区間が指定期間と重なる」time_study を出力
+     */
+    public function timeStudyCsvOutput(Request $request)
     {
-        if ($request->has('facilityno')) {
-            // 施設に属している作業者を取得
-            $getdata = Helper::select('id', 'helpername')
-            ->whereIn('facilityno', [$request->facilityno])
-                ->orderBy('helper.id', 'asc')
-                ->whereNotIn('helper.delflag', [1])
-                ->get();
+    $st = $request->input('st_ymd');
+    $ed = $request->input('ed_ymd');
+    $helperId = (int)$request->input('helper_id'); // ★ 追加
 
-            // CSVデータの作成
-            $spreadsheet = new Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // ヘッダ(項目名書き込み)
-            $header = array("作業者ID", "作業者名");
-            $sheet->fromArray($header, null, 'A1');
-
-            $num = 2; // 2行目から作業者情報のデータ書き込み
-
-            foreach ($getdata->toArray() as $value) {
-                $sheet->setCellValue("A" . $num, $value['id']);
-                $sheet->setCellValue("B" . $num, $value['helpername']);
-                $num++;
-            }
-
-            //後処理
-            $sheet->getColumnDimension('A')->setAutoSize(true); // A列の幅を自動調整
-            $sheet->getColumnDimension('B')->setAutoSize(true); // B列の幅を自動調整
-
-
-            $writer = new Csv($spreadsheet);
-
-            //ダウンロード用
-            // header('Content-Disposition: attachment; filename="'.$file_path.$file_name.'" ');
-            // header('Content-Type: text/csv　 charset=UTF-8');
-            header('Content-Type: text/csv　 charset=Shift_JIS');
-            header('Content-Transfer-Encoding: binary');
-            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-            header('Expires: 0');
-            if (ob_get_contents()) ob_end_clean(); //バッファ消去
-
-            $fp = fopen('php://output', 'w');
-            //フィルタをストリームに付加する
-            stream_filter_prepend($fp, 'convert.iconv.utf-8/cp932');
-            $writer->save($fp);
-            // $writer->save('php://output');
-            exit; // ※※これがないと余計なものも出力してファイルが開けない
-
-        }
+    if (!$st || !$ed) {
+        return response()->json(['message' => '期間を指定してください。'], 422);
     }
+    if ($helperId <= 0) {
+        return response()->json(['message' => '作業者が選択されていません。'], 422);
+    }
+
+    $start = Carbon::parse(str_replace('/', '-', $st))->startOfDay();
+    $end   = Carbon::parse(str_replace('/', '-', $ed))->endOfDay();
+
+    $q = DB::table('time_study as ts')
+        ->select([
+            'ts.timestudy_id',
+            'ts.task_id',
+            'ts.task_name',
+            'ts.task_type_no',
+            'ts.task_category_no',
+            'ts.start',
+            'ts.stop',
+            'ts.helpno',
+        ])
+        // ★ helper で絞る
+        ->where('ts.helpno', $helperId)
+        // 期間（T をスペースに置換した文字列保存にも対応）
+        ->where(function ($qq) use ($start, $end) {
+            $a = $start->format('Y-m-d H:i:s');
+            $b = $end->format('Y-m-d H:i:s');
+            $qq->whereBetween('ts.start', [$a, $b])
+               ->orWhereBetween(DB::raw("REPLACE(ts.start,'T',' ')"), [$a, $b]);
+        });
+
+    // 任意: facility で更に縛りたい場合は併用（渡されていれば）
+    if ($request->filled('facilityno')) {
+        $q->join('helper as h', 'h.id', '=', 'ts.helpno')
+          ->where('h.facilityno', $request->facilityno)
+          ->when(Schema::hasColumn('helper','delflag'), function($qq){
+              $qq->where('h.delflag','!=',1);
+          });
+    }
+
+    $rows = $q->orderBy('ts.start')->get();
+
+    if ($rows->isEmpty()) {
+        return response('', 204); // フロントは空＝データなしとして扱う
+    }
+
+    $headers = [
+        'Content-Type'        => 'text/csv; charset=Shift_JIS',
+        'Content-Disposition' => 'attachment; filename="TimeStudy.csv"',
+        'Cache-Control'       => 'no-store, no-cache',
+    ];
+
+    $callback = function () use ($rows) {
+        $out = fopen('php://output', 'w');
+        stream_filter_prepend($out, 'convert.iconv.utf-8/cp932//TRANSLIT');
+
+        fputcsv($out, [
+            'timestudy_id','task_id','task_name',
+            'task_type_no','task_category_no',
+            'start','stop','helpno'
+        ]);
+
+        foreach ($rows as $r) {
+            // 0 を消さない（null のみ空文字）
+            $taskType     = is_null($r->task_type_no)     ? '' : (string)$r->task_type_no;
+            $taskCategory = is_null($r->task_category_no) ? '' : (string)$r->task_category_no;
+
+            fputcsv($out, [
+                (string)$r->timestudy_id,
+                (string)$r->task_id,
+                (string)($r->task_name ?? ''),
+                $taskType,
+                $taskCategory,
+                (string)$r->start,
+                (string)$r->stop,
+                (string)$r->helpno,
+            ]);
+        }
+        fclose($out);
+    };
+
+    return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * 'YYYY/MM/DD' or 'YYYY-MM-DD' を Carbon に。$startOfDay=true なら 00:00:00、false なら 23:59:59。
+     */
+    private function parseYmdToCarbon(?string $ymd, bool $startOfDay = true): ?Carbon
+    {
+        if (!$ymd) return null;
+        $ymd = str_replace('.', '-', str_replace('/', '-', trim($ymd)));
+
+        try {
+            $c = Carbon::createFromFormat('Y-m-d', $ymd);
+        } catch (\Throwable $e) {
+            return null;
+        }
+        return $startOfDay ? $c->startOfDay() : $c->endOfDay();
+    }
+
 
     // 作業者データのCSV出力
     public function HelperDataCsvOutput(Request $request)

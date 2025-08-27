@@ -20,8 +20,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
- //time study tool　連携
-Route::post('/time_study_csv_upload', [TimeStudyController::class, 'upload']);
+ 
 
 
 //ログインしていないユーザはログイン画面へ
@@ -225,7 +224,15 @@ Route::group(['middleware' => ['auth','authroot']], function(){
     Route::post('/group_del', [App\Http\Controllers\GroupController::class, 'del'])
     ->name('groups.delete');
 
-    
+    //time study　CSV取込
+    Route::post('/time_study_csv_upload', [TimeStudyController::class, 'upload']);
+    // TimeStudy CSV 出力
+    Route::post(
+        '/time_study_csvoutput',
+        [App\Http\Controllers\HelperController::class, 'TimeStudyCsvOutput']
+    )->name('time_study.csvoutput');
+    // TimeStudy CSV 出力（期間指定）
+    Route::post('/time_study_csvoutput', [App\Http\Controllers\HelperController::class, 'timeStudyCsvOutput']);
 
 });
 

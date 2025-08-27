@@ -31,14 +31,19 @@
 
 <input type="image" id="btn_delhelper"  src="image/img_del.png" alt="作業者削除" onclick="del_check(targetID,this.id)" border="0">
 
-{{-- CSV取込--}}
+{{-- Time Study CSV取込 --}}
 <div id="a_csvoutput_helper_list">
     <button id="btn_csvoutput_helper_list" class="csvoutput_helper_list" onclick="console.log('CSV取込ボタンがクリックされました'); showTaskCsvImportModal()">Time Study CSV取込</button>
 </div>
 
-{{-- CSV出力　作業者データ --}}
+{{-- Time Study CSV出力 --}}
 <div>
-    <button id="btn_helperdata_csvoutput_pre" class="csvout_helper_data" onclick="VisibleChange(this.id)">Time Study CSV出力</button>
+<button id="btn_helperdata_csvoutput_pre"
+        class="csvout_helper_data"
+        type="button"
+        onclick="VisibleChange(this.id)">
+  Time Study CSV出力
+</button>
 </div>
 
 
@@ -138,7 +143,7 @@
 <span id="cover_pop_alert">
     <center><nobr id="cover_lb_alert"></nobr></center>
     <input type="image" id="cover_btn_no"  src="image/img_no.png" alt="いいえ" onclick="Ctrl_pop('cover_pop_alert_no','visible','');" border="0">
-    <input type="image" id="cover_btn_yes"  src="image/img_yes.png" alt="はい" onclick="helperDataCsvOutput({{$facilityno}})" border="0">
+    <input type="image" id="cover_btn_yes"  src="image/img_yes.png" alt="はい" onclick="timeStudyCsvOutput({{ (int)$facilityno }})" border="0">
     <p id="error"> 空のデータの為出力出来ません </p>
 </span>
 
@@ -175,7 +180,7 @@
     </div>
 </span>
 
-{{-- 作業内容CSV取り込みモーダル --}}
+{{-- 作業内容CSV取込モーダル --}}
 <span id="pop_task_csvimport" style="visibility: collapse;">
     <center><nobr id="lb_task_csvimport">Time Study CSV取込</nobr></center>
     <form id="form_task_csvimport" method="POST" enctype="multipart/form-data" onsubmit="return false;">
@@ -210,7 +215,7 @@
     </form>
 </span>
 
-{{-- 作業内容CSV取り込み確認モーダル --}}
+{{-- 作業内容CSV取込確認モーダル --}}
 <span id="pop_task_csvimport_confirm" style="visibility: collapse;">
     <center><nobr id="lb_task_csvimport_confirm">作業内容データを取り込みます。よろしいですか。</nobr></center>
     <div style="margin-top:10px; text-align:center;">
@@ -449,84 +454,97 @@ document.addEventListener('DOMContentLoaded', function() {
           yearSuffix: '年'};
         $.datepicker.setDefaults($.datepicker.regional['ja']);
     });
-    //作業者一覧csv出力
-    function helperListCsvOutput(facilityno)
-    {
-        // XMLHttpRequestによるアップロード処理
-        var url = "helper_list_csvoutput";
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', url, true);
-        var token = document.getElementsByName('csrf-token').item(0).content;
-        xhr.setRequestHeader('X-CSRF-Token', token);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+   
+   // TimeStudy CSV 出力（指定期間・選択作業者のみ）
+    function timeStudyCsvOutput(facilityno) {
+    // 既存のエラーメッセージを隠す
+    var err = document.getElementById('error');
+    if (err) err.style.visibility = 'collapse';
 
-        xhr.responseType = 'arraybuffer'; //arraybuffer型のレスポンスを受け付ける
-        xhr.dataType = 'binary';
+    // 期間
+    var startDate = (document.getElementById('st_ymd')?.value || '').trim();
+    var endDate   = (document.getElementById('ed_ymd')?.value || '').trim();
+    if (!startDate || !endDate) { alert('期間を指定してください。'); return; }
+    if (startDate > endDate) { document.getElementById('error_date').style.visibility = 'visible'; return; }
 
-        // パラメータ設定
-        var param = "facilityno=" + facilityno;
-        xhr.send(param);
+    // ★ 選択中 helper の取得（既存の targetID を最優先）
+    var helperId =
+        (typeof window.targetID !== 'undefined' && String(window.targetID).trim() !== '')
+            ? String(window.targetID).trim()
+            : (
+                document.querySelector('#table3 tr.selected td.id')?.textContent?.trim()
+                || document.querySelector('#table3 tr.active td.id')?.textContent?.trim()
+                || ''
+            );
 
-        try
-        {
-            xhr.onreadystatechange = function()
-            {
-                if (xhr.readyState == 4 && xhr.status == 200)
-                {
-                    var response_data = this.response;
-                    var uint8_array = new Uint8Array(response_data);
-                    //エラーの場合
-                    if(uint8_array.length == 2)
-                    {
-                        var text_decoder = new TextDecoder("Shift_JIS");
-                        var str = text_decoder.decode(Uint8Array.from(uint8_array).buffer);
-                        if(str == "-1")
-                        {
-                            document.getElementById('pop_alert_back').style.visibility = 'collapse';
-                            document.getElementById("btn_yes").style.visibility = 'collapse';
-                            document.getElementById("btn_csvoutput").style.visibility = 'collapse';
-                            Ctrl_pop("error","visible",17);
-                            return ;
-                        }
-                        return ;
-                    }
-                    // rtn : -1/エラー ,-2/アップロード失敗,-3/拡張子がxlslのファイルを選択してください,-4/ファイルを選択してください
-                    var downloadData = new Blob([uint8_array], {type: "text/csv;"});
-
-                    //ファイル名用のデータ取得
-                    //ファイル名は、「施設名_作業者データ.csv」
-                    var facilityname = @json($facilityname);
-                    var filelastname = "作業者データ";
-                    var separator = "_";
-                    var extension = ".csv"
-                    var filename = facilityname + separator +  filelastname + extension;
-                    //ファイルのダウンロードにはブラウザ毎に処理を分ける
-                    if(window.navigator.msSaveBlob)
-                    { // for IE
-                        window.navigator.msSaveBlob(downloadData, filename);
-                    }
-                    else
-                    {
-                        //レスポンスからBlobオブジェクト＆URLの生成
-                        var downloadUrl  = (window.URL || window.webkitURL).createObjectURL(downloadData);
-                        var link = document.createElement("a");
-                        //URLをセット
-                        link.href = downloadUrl;
-                        // //ダウンロードさせるファイル名の生成
-                        link.download = filename;
-                        // //クリックイベント発火
-                        link.click();
-
-                        link.remove();
-                        URL.revokeObjectURL(downloadData);
-                        Ctrl_pop('','collapse','');
-                    }
-
-                }
-            };
-        }
-        catch{alert();}
+    if (!helperId) {
+        // どうしても取れない場合、最後の手段として取込モーダルのセレクトから読む
+        var sel = document.getElementById('timestudy_helpername');
+        if (sel && sel.value) helperId = String(sel.value);
     }
+    if (!helperId) { alert('作業者を選択してください。'); return; }
+
+    // 送信用フォーマットに揃える
+    var apiStart = startDate.replace(/[./]/g, '-');
+    var apiEnd   = endDate.replace(/[./]/g, '-');
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/time_study_csvoutput', true);
+
+    // CSRF
+    var tokenEl = document.querySelector('meta[name="csrf-token"]');
+    var token   = tokenEl ? tokenEl.getAttribute('content') : '';
+    if (token) xhr.setRequestHeader('X-CSRF-Token', token);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+
+    // CSV をバイナリで受ける
+    xhr.responseType = 'arraybuffer';
+
+    // ★ helper_id を必ず付与
+    var params = 'st_ymd=' + encodeURIComponent(apiStart)
+                + '&ed_ymd=' + encodeURIComponent(apiEnd)
+                + '&helper_id=' + encodeURIComponent(helperId);
+    if (facilityno !== undefined && facilityno !== null && String(facilityno) !== '') {
+        params += '&facilityno=' + encodeURIComponent(facilityno);
+    }
+
+    xhr.onload = function () {
+        var ct = xhr.getResponseHeader('Content-Type') || '';
+        if (ct.indexOf('application/json') !== -1) {
+        try {
+            var txt = new TextDecoder('utf-8').decode(new Uint8Array(xhr.response || []));
+            var js  = JSON.parse(txt);
+            Ctrl_pop('error','visible', js.message || 'エラーが発生しました。');
+        } catch(e) { Ctrl_pop('error','visible','エラーが発生しました。'); }
+        return;
+        }
+
+        if (xhr.status === 204 || !xhr.response || xhr.response.byteLength === 0) {
+        if (err) err.style.visibility = 'visible'; // 「空のデータの為出力出来ません」
+        return;
+        }
+        if (xhr.status !== 200) { alert('エラーが発生しました。'); return; }
+
+        var blob = new Blob([xhr.response], { type: 'text/csv' });
+        var url  = (window.URL || window.webkitURL).createObjectURL(blob);
+
+        var facilityname = @json($facilityname ?? 'TimeStudy');
+        var st = startDate.replace(/\D/g, '');
+        var ed = endDate.replace(/\D/g, '');
+        var filename = facilityname + '_TimeStudy_helper' + helperId + '_' + st + '-' + ed + '.csv';
+
+        var a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        (window.URL || window.webkitURL).revokeObjectURL(url);
+
+        Ctrl_pop('','collapse','');
+    };
+
+    xhr.onerror = function () { alert('通信エラーが発生しました。'); };
+    xhr.send(params);
+    }
+
 
     function validateDate()
     {
