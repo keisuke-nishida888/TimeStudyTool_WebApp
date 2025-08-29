@@ -31,6 +31,14 @@ function ini_img() {
     // 未使用関数のため空実装（必要なら後で追加）
 }
 </script>
+    @php
+    // どの画面でも未定義で落ちないようにデフォルト化
+    $group = $group ?? '';
+
+    // 戻りボタン用の隠し値も安全に拾う
+    $__facilityno = $__facilityno ?? ($facilityno ?? request('facilityno') ?? '');
+    $__groupno    = $__groupno    ?? ($groupno    ?? request('groupno')    ?? '');
+    @endphp
 
     <main class="all">
 

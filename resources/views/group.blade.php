@@ -9,7 +9,7 @@
         <input type="hidden" id="groupno" name="groupno" value="">
         <input type="image" class="img_style2" src="{{ asset('image/img_helper.png') }}" alt="作業者一覧" border="0">
     </form>
-
+    {{-- グループ追加 --}}
     <a id="a_group_add" a href="{{ route('groups.add', ['facilityno' => $facilityno]) }}">
         <img src="{{ asset('image/img_add.png') }}" class="img_style" alt="グループ追加" border="0">
     </a>

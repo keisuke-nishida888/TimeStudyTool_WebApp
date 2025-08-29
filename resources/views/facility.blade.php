@@ -5,16 +5,22 @@
 <script src="/js/facility.js"></script>
 
 <div class="allcont">
-<form id="a_task" action = '/task'  method = "get">
-    <input type="image" class="img_style2" src="image/img_task.png" alt="作業名内容一覧" border="0">
+    <!-- ★作業一覧（専用フォーム） -->
+<form id="a_task" action = '/task'  method = "get" onsubmit="return submitTaskList();">
+    <!-- 実際に送るパラメータ -->
+    <input id="facilityno_for_task" type="hidden" name="facilityno" value="">
+    <!-- 互換: facility.js が入れる想定の選択施設ID -->
+    <input id="targetid" type="hidden" value="">
+    <input type="image" class="img_style2" src="image/img_task.png" 
+            alt="作業名一覧" border="0" onclick="return submitTaskList();" >
 </form>
 
-<!-- ★グループ一覧（専用フォーム） -->
-<form id="a_group" action="/groups" method="get">
-  <!-- 実際に送るパラメータ -->
-  <input id="facilityno_for_group" type="hidden" name="facilityno" value="">
-  <!-- 互換: facility.js が入れる想定の選択施設ID -->
-  <input id="targetid" type="hidden" value="">
+    <!-- ★グループ一覧（専用フォーム） -->
+    <form id="a_group" action="/groups" method="get" onsubmit="return submitGroupList();">
+        <!-- 実際に送るパラメータ -->
+        <input id="facilityno_for_group" type="hidden" name="facilityno" value="">
+        <!-- 互換: facility.js が入れる想定の選択施設ID -->
+        <input id="targetid" type="hidden" value="">
   <input type="image" class="img_style2" src="image/img_group.png"
          alt="グループ一覧" onclick="return submitGroupList();" border="0">
 </form>
@@ -30,6 +36,33 @@ function submitGroupList() {
   }
   document.getElementById('facilityno_for_group').value = selected;
   return true; // 送信
+}
+
+function submitTaskList() {
+  // 1) a_task フォーム内の hidden を最優先
+  var fieldInForm = document.querySelector('#a_task #targetid');
+  var selected = '';
+
+  if (fieldInForm && fieldInForm.value) {
+    selected = fieldInForm.value.trim();
+  } else if (document.getElementById('targetid') && document.getElementById('targetid').value) {
+    // 2) ページ内の（最初の）#targetid
+    selected = document.getElementById('targetid').value.trim();
+  } else if (typeof window.targetID !== 'undefined' && window.targetID !== null) {
+    // 3) facility.js が入れてくれるフォールバック
+    selected = String(window.targetID).trim();
+  }
+
+  if (!selected) {
+    alert('施設を選択してください。');
+    return false; // 送信中止
+  }
+
+  // 送信用 hidden にセット
+  var hidden = document.getElementById('facilityno_for_task');
+  if (hidden) hidden.value = selected;
+
+  return true; // 送信実行
 }
 </script>
 

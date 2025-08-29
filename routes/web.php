@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TimeStudyController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HelperController;
+use App\Http\Controllers\TaskController;
 
 /*
 |--------------------------------------------------------------------------
@@ -118,24 +119,21 @@ Route::group(['middleware' => ['auth','authroot']], function(){
             Route::post('/costctrl_upload', 'App\Http\Controllers\CostController@Upload');
 
         //作業内容一覧
-        Route::get('/task', 'App\Http\Controllers\TaskController@index');
-        Route::post('/task', 'App\Http\Controllers\TaskController@index');
-            //削除
-            Route::post('/task_delete','App\Http\Controllers\TaskController@del');
-            //作業内容追加
-            Route::get('/task_add', 'App\Http\Controllers\TaskController@add_index');
-            Route::post('/task_add', 'App\Http\Controllers\TaskController@add_index');
-                //追加処理
-                Route::post('/task_addctrl','App\Http\Controllers\TaskController@TaskAdd');
-            //作業内容修正
-            Route::get('/task_fix', 'App\Http\Controllers\TaskController@fix_index');
-            Route::post('/task_fix', 'App\Http\Controllers\TaskController@fix_index');
-                //フォームリセット
-                Route::post('/cxl_taskfix', 'App\Http\Controllers\TaskController@cxl_TaskFix');
-                //修正処理
-                Route::post('/task_fixctrl', 'App\Http\Controllers\TaskController@TaskFix');
-            //CSV取り込み
-            Route::post('/task_csv_import', 'App\Http\Controllers\HelperController@csvImport');
+        Route::match(['get','post'], '/task', [TaskController::class, 'index'])->name('tasks.index');
+
+        Route::post('/task_delete',   [TaskController::class, 'del'])->name('tasks.delete');
+        
+        Route::get('/task_add',       [TaskController::class, 'add_index'])->name('tasks.create');
+        // ★ Controller 側のメソッド名に合わせる（Taskadd か TaskAdd かを統一）
+        Route::post('/task_addctrl', [\App\Http\Controllers\TaskController::class, 'Taskadd']);
+        
+        
+        Route::get('/task_fix',       [TaskController::class, 'fix_index'])->name('tasks.edit');
+        Route::post('/task_fix',      [TaskController::class, 'fix_index']); // 必要なら残す
+        Route::post('/task_fixctrl',  [TaskController::class, 'TaskFix'])->name('tasks.update');
+        Route::post('/cxl_taskfix',   [TaskController::class, 'cxl_TaskFix'])->name('tasks.edit.cancel');
+        
+        Route::post('/task_csv_import', [HelperController::class, 'csvImport'])->name('tasks.csv_import');
 
         //作業者データ表示 ※※作業者一覧と順番入れ替えないこと※※
         Route::get('/helperdata', 'App\Http\Controllers\HelperdataController@index');

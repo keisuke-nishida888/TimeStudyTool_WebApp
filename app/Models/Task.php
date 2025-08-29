@@ -9,8 +9,11 @@ class Task extends Model
 {
     protected $table = 'task_table';
     protected $primaryKey = 'task_id';
+    public $timestamps = false;        // 無ければ false
+
     
     protected $fillable = [
+        'facilityno',
         'task_id',
         'task_name',
         'task_type_no',

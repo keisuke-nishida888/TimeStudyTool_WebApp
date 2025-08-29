@@ -4,11 +4,15 @@
 <script src="/js/task.js"></script>
 
 <div class="allcont">
-<a id="a_task_add" href="{{ url('/task_add') }}"> <img src="image/img_add.png" class="img_style" alt="作業内容追加"  border="0"> </a>
+    {{-- 作業追加 --}}
+    <a id="a_task_add" href="{{ url('/task_add') }}?facilityno={{ (int)($facilityno ?? 0) }}">
+    <img src="{{ asset('image/img_add.png') }}" class="img_style" alt="作業内容追加" border="0">
+    </a>
 
-<input type="image" id="btn_deltask"  src="image/img_del.png" alt="作業内容削除" onclick="del_check_task(targetID,this.id)" border="0">
-
-<form id="a_task_fix" action = '/task_fix'  method = "post" onsubmit = "return Idcheck_task(targetID)">
+    {{-- 削除 --}}
+    <input type="image" id="btn_deltask"  src="image/img_del.png" alt="作業内容削除" onclick="del_check_task(targetID,this.id)" border="0">
+    {{-- 修正 --}}
+    <form id="a_task_fix" action = '/task_fix'  method = "post" onsubmit = "return Idcheck_task(targetID)">
     @csrf
     <input id="targetid_task" type="hidden" name="id" value="">
     <input type="image" class="img_style" src="image/img_fix.png" alt="作業内容修正" border="0">
