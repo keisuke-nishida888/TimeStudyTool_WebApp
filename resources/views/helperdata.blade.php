@@ -55,7 +55,8 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-md-12">
-
+                            <!-- ★ ここから：確定後に出すセクション（初期は非表示） -->
+                            <div id="time-table-section" style="display:none;">
                             <!-- 横並びラッパー START -->
                             <div style="display: flex; align-items: flex-start;">
 
@@ -78,7 +79,8 @@
 
                         </div>
                         <!-- 横並びラッパー END -->
-
+                    </div>
+                    <!-- ★ ここまで：確定後に出すセクション -->
                     </div>
                 </div>
             </div>
@@ -223,7 +225,10 @@ function createTimeTable(data) {
 // 確定ボタンでデータ取得しグラフ描画
 document.getElementById('graph-form').addEventListener('submit', function(e) {
     e.preventDefault();
-
+     // ★ 確定ボタンクリックで表示開始
+    const section = document.getElementById('time-table-section');
+    if (section) section.style.display = 'block';
+    
     // 既存のグラフ・エラーをクリア
     if (timeGraph) { timeGraph.destroy(); timeGraph = null; }
     document.getElementById('graph-error').style.display = 'none';
