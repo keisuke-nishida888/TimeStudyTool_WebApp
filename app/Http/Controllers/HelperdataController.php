@@ -175,45 +175,6 @@ class HelperdataController extends Controller
         return view($page, compact('title', 'page', 'group', 'data', 'data2', 'facilityno', 'ymdGroupData', 'timeStudyData'));
     }
 
-    //比較画面
-    public function comparison(Request $request)
-    {
-        //対象作業者の腰痛データと心拍データ
-        //requestは作業者No(id)が送られてくる
-
-        //対象作業者のデータを検索する
-        if(isset($_POST["id"]))
-        {
-            $getdata = bpainhed::select()
-            ->whereIn('helperno',[$_POST["id"]])
-            ->orderBy('bpainhed.ymd','asc')
-            ->orderBy('bpainhed.hms','asc')
-            ->get();
-            $ymdData = bpainhed::select("ymd")
-            ->whereIn('helperno',[$_POST["id"]])
-            ->orderBy('bpainhed.ymd','asc')
-            ->groupBy('bpainhed.ymd')
-            ->get();
-            $data = json_decode(json_encode($getdata,JSON_PRETTY_PRINT),true);
-            $ymdGroupData = json_decode(json_encode($ymdData,JSON_PRETTY_PRINT),true);
-
-            $getdata2 = Helper::select('helper.id as Helper_id','helper.helpername','helper.facilityno','helper.delflag','facility.facility')
-            ->whereIn('helper.id',[$_POST["id"]])
-            ->whereNotIn('helper.delflag',[1])
-            ->join('facility','facility.id','=','helper.facilityno')
-            ->get();
-            if(isset($getdata2[0]['facilityno'])) $facilityno = $getdata2[0]['facilityno'];
-            else $facilityno = 0;
-            $data2 = json_decode(json_encode($getdata2,JSON_PRETTY_PRINT),true);
-        }
-
-
-        $page = 'comparison';
-        $title = Common::$title[$page];
-        $group = Common::$group[$page];
-
-        return view($page, compact('title' ,'page','group','data','data2','facilityno','ymdGroupData'));
-    }
 
     //データ表示
     public function Helperdata_disp(Request $request)
