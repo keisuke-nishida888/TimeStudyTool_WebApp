@@ -17,6 +17,12 @@ use App\Http\Controllers\HelperdataController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+// ===== Time Study サマリー（GET）=====
+// ※ authroot は外す（ここが 302 の原因）
+Route::middleware('auth')->group(function () {
+    Route::get('/time-study-summary', [TimeStudyController::class, 'index'])
+        ->name('time.summary');
+});
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,6 +32,8 @@ Route::get('/', function () {
 //ログインしていないユーザはログイン画面へ
 //下記のように書いておくとauthの後にauthrootが行われる
 Route::group(['middleware' => ['auth','authroot']], function(){
+
+   
     Route::get('/', 'App\Http\Controllers\MainmenuController@index');
     //メインメニュー画面
     Route::get('/mainmenu', 'App\Http\Controllers\MainmenuController@index');
@@ -157,7 +165,7 @@ Route::group(['middleware' => ['auth','authroot']], function(){
     Route::post('/time_study/summary', [HelperdataController::class, 'summary'])
     ->name('time_study.summary');
 
-  
+
 });
 
 
@@ -168,4 +176,5 @@ Auth::routes();
 //エラーでるため前Ver.と違うところ、注意('App\Http\Controllers\HomeController@index')
 Route::get('/home', 'App\Http\Controllers\HomeController@index')->name('home');
 Route::post('/home', 'App\Http\Controllers\HomeController@index')->name('home');
+
 

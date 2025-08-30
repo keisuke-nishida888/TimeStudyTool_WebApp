@@ -8,8 +8,18 @@
     <!-- {{$code[4]['value']}} -->
     <!-- 施設ユーザ 3-->
     <!-- {{$code[8]['value']}} -->
+
+    @php
+    $facilityno = Auth::user()->facilityno ?? null;
+    @endphp
+
 <div class="allcont">
     @if(Auth::user()->policyflag == 0)
+    <img id="btn_ts_summary"
+         src="{{ asset('image/img_ts_summary.png') }}"
+         alt="Time Study サマリー"
+         border="0">
+  </a>
         <span style="visibility: visible;"></span>
             <span id="policy_dailog"  style="visibility: visible;">
                 <nobr id="policy_sentence">
@@ -95,6 +105,16 @@
             <!-- <a href="https://questant.jp/account/login" target="_blank"><img id="btn_linkquestionary4" src="image/img_linkquestionary.png" alt="アンケートサイト"></a> -->
         @endif
     @endif
+    {{-- ▼ Time Study サマリー（この1つだけ残す） --}}
+        <a id="ts-summary-link"
+        href="{{ route('time.summary', (Auth::user()->facilityno ?? null) ? ['facilityno' => Auth::user()->facilityno] : []) }}"
+        class="btn-ts-summary">
+        <img src="{{ asset('image/img_ts_summary.png') }}"
+            alt="Time Study サマリー"
+            onerror="this.style.display='none'; this.parentNode.classList.add('btn-ts-summary--fallback'); this.parentNode.textContent='Time Study サマリー';">
+        </a>
+
+
 </div>
 
 @endsection
@@ -137,3 +157,52 @@
     });
 
 </script>
+
+<style>
+   /* 画像ボタン（通常時） */
+a.btn-ts-summary{
+  display:inline-block;
+  margin:12px 8px;
+  vertical-align:middle;
+}
+a.btn-ts-summary img{
+  width:240px; height:auto; display:block;
+}
+
+/* フォールバック（画像404時もクリック可能にする） */
+a.btn-ts-summary.btn-ts-summary--fallback{
+  min-width:240px;
+  padding:14px 18px;
+  border:2px solid #333;
+  border-radius:6px;
+  background:#fff;
+  color:#333;
+  font-weight:700;
+  text-decoration:none;
+  display:inline-block;
+}
+a.btn-ts-summary.btn-ts-summary--fallback:hover{
+  background:#f2f2f2;
+}
+
+/* ダイアログ外はクリックを通す（リンクが押せない問題の応急措置） */
+#policy_dailog{
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+#policy_dailog *{
+  pointer-events: auto !important; /* ダイアログ内の要素は操作可 */
+}
+
+/* サマリーボタンを前面に */
+#ts-summary-link{
+  position: relative;
+  z-index: 5;
+}
+
+#policy_dailog{ pointer-events:none !important; z-index:1 !important; }
+#policy_dailog *{ pointer-events:auto !important; }
+#ts-summary-link{ position:relative; z-index:5; }
+
+
+</style>

@@ -11,6 +11,15 @@ use PhpOffice\PhpSpreadsheet\Reader\Csv;
 
 class TimeStudyController extends Controller
 {
+    public function index(Request $request)
+    {
+        return view('time_summary', [
+            'title' => 'Time Study サマリー',
+            'page'  => 'time_summary',
+            'group' => 'time_summary',
+        ]);
+    }
+    
     public function upload(Request $request)
     {
 

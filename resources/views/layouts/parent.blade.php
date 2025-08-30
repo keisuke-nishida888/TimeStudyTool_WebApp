@@ -1,204 +1,220 @@
+{{-- resources/views/layouts/parent.blade.php --}}
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <title>Time Study Tool</title>
-        <meta charset="utf-8">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <meta name="robots" content="noindex,nofollow">
-        <meta name="googlebot" content="noindex,nofollow">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-         <!-- Fonts -->
-         <link href="https://fonts.googleapis.com/css?family=Nunito:200,600" rel="stylesheet">
-        <!-- Styles -->
-        <!-- //assetを使うとpublicフォルダ内のリソースを読み込めるようになる -->
-        <link rel="stylesheet" href="{{ asset('css/main.css') }}">
-        <link rel="shortcut icon" href="{{ asset('/image/img_logo1.ico') }}">
-      <script src="{{ asset('/js/jquery-3.3.1.min.js') }}"></script>
+<head>
+  <meta charset="utf-8">
+  <title>{{ $title ?? 'Time Study Tool' }}</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="googlebot" content="noindex,nofollow">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,600" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset('css/main.css') }}">
+  <link rel="shortcut icon" href="{{ asset('image/img_logo1.ico') }}">
 
-<!-- ✅ jQuery UI 追加（CSS + JS） -->
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  {{-- jQuery / jQuery UI（必要に応じて） --}}
+  <script src="{{ asset('js/jquery-3.3.1.min.js') }}"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
-<script src="{{ asset('/js/Chart.min.js') }}"></script>
+  {{-- Chart.js（旧画面互換） --}}
+  <script src="{{ asset('js/Chart.min.js') }}"></script>
 
-        <meta name="google-site-verification" content="pbXWDZiEXs_5VJ-APYNHphhnpjPiQB_P5VBajcgwhqA" />
-    </head>
+  <meta name="google-site-verification" content="pbXWDZiEXs_5VJ-APYNHphhnpjPiQB_P5VBajcgwhqA" />
+  @stack('head')
+</head>
 
-    <body onload="ini();ini_img();">
+<body onload="try{ if(typeof ini==='function') ini(); }catch(e){} try{ ini_img(); }catch(e){}">
 <script>
-function ini_img() {
-    // 未使用関数のため空実装（必要なら後で追加）
-}
+  // 参照されても落ちないダミー
+  function ini_img() {}
 </script>
-    @php
-    // どの画面でも未定義で落ちないようにデフォルト化
-    $group = $group ?? '';
 
-    // 戻りボタン用の隠し値も安全に拾う
-    $__facilityno = $__facilityno ?? ($facilityno ?? request('facilityno') ?? '');
-    $__groupno    = $__groupno    ?? ($groupno    ?? request('groupno')    ?? '');
-    @endphp
-
-    <main class="all">
-
-    <div id = "bar_div">
-        <!-- タイトルバー -->
-        <img id = "img_bar" src="image/img_bar.png" alt="" >
-        <!-- タイトル -->
-        <nobr id="title">{{$title}}</nobr>
-        <!-- ロゴ -->
-        <a  href="{{ url('/mainmenu') }}"> <img id="img_logo" src="image/img_logo3.png" alt="JCLS" border="0"> </a>
-
-        <!-- ログアウト -->
-        <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
-            <img id="btn_logout" src="image/img_logout.png" alt="ログアウト" >
-        </a>
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-            @csrf
-        </form>
-
-        <!-- パンくずリスト -->
-        @php
-            $__facilityno =
-                ($facilityno ?? null)
-                ?? data_get($data2 ?? [], '0.facilityno')
-                ?? data_get($data2 ?? [], '0.id')
-                ?? data_get($data ?? [],  '0.facilityno')
-                ?? old('facilityno')
-                ?? request('facilityno');
-
-            $__groupno =
-                request('groupno')
-                ?? data_get($data ?? [], '0.groupno')
-                ?? (isset($selectedGroup) ? ($selectedGroup->group_id ?? null) : null);
-        @endphp
-
-        <div id="breadcrumbs">
-            @if(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helper")
-                {{ Breadcrumbs::render("helper_facil", $__facilityno, $__groupno) }}
-            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helper_add")
-                {{ Breadcrumbs::render("helper_add_facil", $__facilityno, $__groupno) }}
-            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helper_fix")
-                {{ Breadcrumbs::render("helper_fix_facil", $__facilityno, $__groupno) }}
-            @elseif(Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $page == "helperdata")
-                {{ Breadcrumbs::render("helperdata_facil", $__facilityno, $__groupno) }}
-            @else
-                {{-- 既存その他のページ --}}
-                @if(isset($__facilityno))
-                    {{ Breadcrumbs::render($page, $__facilityno, $__groupno) }}
-                @else
-                    {{ Breadcrumbs::render($page) }}
-                @endif
-            @endif
-        </div>
-
-        {{-- 戻る --}}
 @php
-    // 可能な限り facilityno / groupno を拾う
-    $__facilityno =
-        ($facilityno ?? null)
+  // どの画面でも未定義で落ちないようにフォールバック
+  $title = $title ?? 'Time Study Tool';
+  $page  = $page  ?? '';
+  $group = $group ?? '';
+
+  // ← これを追加
+  $data  = $data  ?? [];
+  $data2 = $data2 ?? [];
+  $code  = $code  ?? [];
+
+  // 戻りボタン用の拾い先
+  $__facilityno =
+      ($facilityno ?? null)
+      ?? data_get($data2, '0.facilityno')
+      ?? data_get($data2, '0.id')
+      ?? data_get($data,  '0.facilityno')
+      ?? old('facilityno')
+      ?? request('facilityno')
+      ?? '';
+
+  $__groupno =
+      request('groupno')
+      ?? data_get($data, '0.groupno')
+      ?? (isset($selectedGroup) ? ($selectedGroup->group_id ?? null) : null)
+      ?? '';
+@endphp
+
+<main class="all">
+  <div id="bar_div">
+    {{-- タイトルバー --}}
+    <img id="img_bar" src="{{ asset('image/img_bar.png') }}" alt="">
+
+    {{-- 画面タイトル --}}
+    <nobr id="title">{{ $title }}</nobr>
+
+    {{-- ロゴ（メインメニューへ） --}}
+    <a href="{{ url('/mainmenu') }}">
+      <img id="img_logo" src="{{ asset('image/img_logo3.png') }}" alt="JCLS" border="0">
+    </a>
+
+    {{-- ログアウト --}}
+    <a class="dropdown-item" href="{{ route('logout') }}"
+       onclick="event.preventDefault();document.getElementById('logout-form').submit();">
+      <img id="btn_logout" src="{{ asset('image/img_logout.png') }}" alt="ログアウト">
+    </a>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+      @csrf
+    </form>
+
+    {{-- ===== パンくず =====
+         未定義名でも落ちないように exists() で防御
+         time_summary は引数不要で描画
+    --}}
+    <div id="breadcrumbs">
+      @php $pageName = $page ?? ''; @endphp
+
+      {{-- Time Study サマリー --}}
+      @if ($pageName === 'time_summary')
+        @if (Breadcrumbs::exists('time_summary'))
+          {{ Breadcrumbs::render('time_summary') }}
+        @endif
+
+      {{-- 施設ユーザ系（既存互換） --}}
+      @elseif (Auth::check() && isset($code[8]['value']) && Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $pageName === 'helper' && Breadcrumbs::exists('helper_facil'))
+        {{ Breadcrumbs::render('helper_facil', $__facilityno, $__groupno) }}
+
+      @elseif (Auth::check() && isset($code[8]['value']) && Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $pageName === 'helper_add' && Breadcrumbs::exists('helper_add_facil'))
+        {{ Breadcrumbs::render('helper_add_facil', $__facilityno, $__groupno) }}
+
+      @elseif (Auth::check() && isset($code[8]['value']) && Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $pageName === 'helper_fix' && Breadcrumbs::exists('helper_fix_facil'))
+        {{ Breadcrumbs::render('helper_fix_facil', $__facilityno, $__groupno) }}
+
+      @elseif (Auth::check() && isset($code[8]['value']) && Auth::user()->authority == $code[8]['value'] && Auth::user()->facilityno && $pageName === 'helperdata' && Breadcrumbs::exists('helperdata_facil'))
+        {{ Breadcrumbs::render('helperdata_facil', $__facilityno, $__groupno) }}
+
+      {{-- 汎用：$page に一致する名前が存在する場合のみ描画（引数はある/なし両対応） --}}
+      @elseif ($pageName && Breadcrumbs::exists($pageName))
+        @if (!empty($__facilityno))
+          {{ Breadcrumbs::render($pageName, $__facilityno, $__groupno) }}
+        @else
+          {{ Breadcrumbs::render($pageName) }}
+        @endif
+      @endif
+    </div>
+
+    {{-- ===== 戻るボタン ===== --}}
+    @php
+    // 可能な限り facilityno / groupno / helperno を安全に拾う
+    $__facilityno = ($facilityno ?? null)
         ?? data_get($data2 ?? [], '0.facilityno')
         ?? data_get($data2 ?? [], '0.id')
-        ?? data_get($data ?? [],  '0.facilityno')
+        ?? data_get($data  ?? [], '0.facilityno')
         ?? old('facilityno')
         ?? request('facilityno');
 
-    $__groupno =
-        request('groupno')
+    $__groupno = request('groupno')
         ?? data_get($data ?? [], '0.groupno')
         ?? (isset($selectedGroup) ? ($selectedGroup->group_id ?? null) : null);
+
+    $helperId = data_get($data ?? [],  '0.id')
+        ?? data_get($data2 ?? [], '0.id')
+        ?? request('helperno');
+
+    // 画面識別のデフォルト
+    $group = $group ?? '';
+    $title = $title ?? '';
 @endphp
 
 @if ($group === 'helper')
-    {{-- 絶対URL + GET で一覧へ戻す --}}
-    <form action="{{ url('/helper') }}" method="get">
-        <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
-        @if(!empty($__facilityno))
-            <input type="hidden" name="facilityno" value="{{ $__facilityno }}">
-        @endif
-        @if(!empty($__groupno))
-            <input type="hidden" name="groupno" value="{{ $__groupno }}">
-        @endif
-    </form>
+  {{-- 作業者一覧へ戻る（GET & 絶対URL） --}}
+  <form action="{{ url('/helper') }}" method="get">
+    <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
+    @if(!empty($__facilityno)) <input type="hidden" name="facilityno" value="{{ $__facilityno }}"> @endif
+    @if(!empty($__groupno))    <input type="hidden" name="groupno"    value="{{ $__groupno }}">    @endif
+  </form>
 
 @elseif ($group === 'helperdata')
-    <form action="{{ url('/helperdata') }}" method="get">
-        <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
-        @if(!empty($__facilityno))
-            <input type="hidden" name="facilityno" value="{{ $__facilityno }}">
-        @endif
-        @if(!empty($__groupno))
-            <input type="hidden" name="groupno" value="{{ $__groupno }}">
-        @endif
-        {{-- helperdata で必要なら --}}
-        @if(isset($data[0]['id']))
-            <input type="hidden" name="helperno" value="{{ $data[0]['id'] }}">
-        @endif
-    </form>
+  {{-- 作業者データ表示へ戻る（GET & 絶対URL） --}}
+  <form action="{{ url('/helperdata') }}" method="get">
+    <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
+    @if(!empty($__facilityno)) <input type="hidden" name="facilityno" value="{{ $__facilityno }}"> @endif
+    @if(!empty($__groupno))    <input type="hidden" name="groupno"    value="{{ $__groupno }}">    @endif
+    @if(!empty($helperId))     <input type="hidden" name="helperno"   value="{{ $helperId }}">     @endif
+  </form>
 
 @else
-    @if ($title !== 'メニュー')
-        {{-- 他画面も絶対URLに統一 --}}
-        <form action="{{ url('/'.$group) }}" method="get">
-            <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
-            @if(!empty($__facilityno))
-                <input type="hidden" name="facilityno" value="{{ $__facilityno }}">
-            @endif
-            @if(!empty($__groupno))
-                <input type="hidden" name="groupno" value="{{ $__groupno }}">
-            @endif
-        </form>
-    @endif
+  {{-- その他画面：メニュー以外なら「/$group」へ戻る --}}
+  @if ($title !== 'メニュー' && !empty($group))
+    <form action="{{ url('/'.$group) }}" method="get">
+      <input type="image" id="btn_back" src="{{ asset('image/img_back.png') }}" alt="戻る" border="0">
+      @if(!empty($__facilityno)) <input type="hidden" name="facilityno" value="{{ $__facilityno }}"> @endif
+      @if(!empty($__groupno))    <input type="hidden" name="groupno"    value="{{ $__groupno }}">    @endif
+    </form>
+  @endif
 @endif
-    </div>
+  </div>
 
+  {{-- ====== エラーポップアップ（既存互換） ====== --}}
+  @if(isset($adderror))
+    <span id="pop_error_back" style="visibility: visible;"></span>
+    <span id="pop_error" style="visibility: visible;">
+      <center><nobr id="lb_error">{{ $errdata[8]['error'] ?? 'エラーが発生しました' }}</nobr></center>
+      <center><input type="image" id="btn_ok" src="{{ asset('image/img_ok.png') }}" alt="OK" onclick="VisibleChange(this.id)" border="0"></center>
+    </span>
+  @elseif(isset($fixerror))
+    <span id="pop_error_back" style="visibility: visible;"></span>
+    <span id="pop_error" style="visibility: visible;">
+      <center><nobr id="lb_error">{{ $errdata[9]['error'] ?? 'エラーが発生しました' }}</nobr></center>
+      <center><input type="image" id="btn_ok" src="{{ asset('image/img_ok.png') }}" alt="OK" onclick="VisibleChange(this.id)" border="0"></center>
+    </span>
+  @else
+    <span id="pop_error_back" style="visibility: collapse;"></span>
+    <span id="pop_error" style="visibility: collapse;">
+      <center><nobr id="lb_error"></nobr></center>
+      <center><input type="image" id="btn_ok"     src="{{ asset('image/img_ok.png') }}" alt="OK" onclick="VisibleChange(this.id)" border="0"></center>
+      <center><input type="image" id="btn_reload" src="{{ asset('image/img_ok.png') }}" alt="OK" onclick="location.reload();" border="0"></center>
+    </span>
+  @endif
 
+  <span id="pop_alert_back"></span>
+  <span id="pop_alert">
+    <center><nobr id="lb_alert"></nobr></center>
+    <input type="image" id="btn_no"  src="{{ asset('image/img_no.png') }}"  alt="いいえ" onclick="Ctrl_pop('','collapse','');" border="0">
+    <input type="image" id="btn_yes" src="{{ asset('image/img_yes.png') }}" alt="はい"   onclick="" border="0">
+  </span>
 
-        <!-- エラー -->
-        @if(isset($adderror))
-            <span id="pop_error_back" style="visibility: visible;"></span>
-            <span id="pop_error"  style="visibility: visible;">
-                <center><nobr id="lb_error">{{$errdata[8]['error']}}</nobr></center>
-                <center><input type="image" id="btn_ok" src="image/img_ok.png" alt="OK" onclick="VisibleChange(this.id)" border="0"></center>
-            </span>
-        @elseif(isset($fixerror))
-            <span id="pop_error_back" style="visibility: visible;"></span>
-            <span id="pop_error"  style="visibility: visible;">
-                <center><nobr id="lb_error">{{$errdata[9]['error']}}</nobr></center>
-                <center><input type="image" id="btn_ok" src="image/img_ok.png" alt="OK" onclick="VisibleChange(this.id)" border="0"></center>
-            </span>
-        @else
-            <span id="pop_error_back" style="visibility: collapse;"></span>
-            <span id="pop_error"  style="visibility: collapse;">
-                <center><nobr id="lb_error"></nobr></center>
-                <center><input type="image" id="btn_ok" src="image/img_ok.png" alt="OK" onclick="VisibleChange(this.id)" border="0"></center>
-                <center><input type="image" id="btn_reload" src="image/img_ok.png" alt="OK" onclick="location.reload();" border="0"></center>
-            </span>
-        @endif
+  {{-- メッセージ表示 --}}
+  @if(isset($addmess))
+    <p id="addmess" class="mess">{{ $addmess }}</p>
+    <p id="fixmess" class="mess"></p>
+  @elseif(isset($fixmess))
+    <p id="fixmess" class="mess">{{ $fixmess }}</p>
+  @else
+    <p id="fixmess" class="mess"></p>
+  @endif
 
+  {{-- 子ビュー --}}
+  @yield('content')
+</main>
 
+@stack('body_end')
+</body>
+</html>
 
-        <span id="pop_alert_back"></span>
-        <span id="pop_alert">
-            <center><nobr id="lb_alert"></nobr></center>
-            <input type="image" id="btn_no"  src="image/img_no.png" alt="いいえ" onclick="Ctrl_pop('','collapse','');" border="0">
-            <input type="image" id="btn_yes"  src="image/img_yes.png" alt="はい" onclick="" border="0">
-        </span>
-
-        <!-- 追加修正後のメッセージ -->
-        @if(isset($addmess))
-            <p id="addmess" class = "mess">{{$addmess}}</P>
-            <p id="fixmess" class = "mess"></P>
-        @elseif(isset($fixmess))
-            <p id="fixmess" class = "mess">{{$fixmess}}</P>
-        @else
-            <p id="fixmess" class = "mess"></P>
-        @endif
-
-            @yield('content')
-
-        </main>
 
 
 <script type="text/javascript">
