@@ -114,6 +114,30 @@
   </div><!-- /.container -->
 </div><!-- /.allcont -->
 
+<!-- ▼ 月別 集計（複数月） -->
+<div id="monthly-sum-section" class="ts-section">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">月別 集計（複数選択可）</h5>
+
+      <div class="row g-2 align-items-end" id="month-picker-row">
+        <div class="col-sm-3">
+          <label class="form-label">年月</label>
+          <input type="month" class="form-control month-input" />
+        </div>
+        <div class="col-sm-auto">
+          <button type="button" id="btn-add-month" class="btn btn-outline-primary">＋ 追加</button>
+        </div>
+        <div class="col-sm-auto">
+          <button type="button" id="btn-run-monthly" class="btn btn-success">集計</button>
+        </div>
+      </div>
+
+      <div id="monthly-graphs" class="mt-4"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =========================
    定数
@@ -455,6 +479,154 @@ function renderTaskDayMatrix(res) {
   const mount = document.getElementById('taskDayMatrix');
   if (mount) mount.innerHTML = html;
 }
+
+/* ========= 月別集計 ========= */
+const MONTHLY_URL_SUMMARY = `{{ url('/time_study/summary') }}`;
+// 残業を出したい場合は所定時間を時間(h)で設定。使わないなら null のまま
+const MONTHLY_STANDARD_HOURS = null; // 例: 160 にすると「残業」表示が出ます
+
+// ＋ボタン
+document.getElementById('btn-add-month')?.addEventListener('click', () => {
+  const wrap = document.getElementById('month-picker-row');
+  const col  = document.createElement('div');
+  col.className = 'col-sm-3';
+  col.innerHTML = `
+    <label class="form-label d-sm-none d-block">年月</label>
+    <div class="d-flex gap-2">
+      <input type="month" class="form-control month-input" />
+      <button type="button" class="btn btn-outline-danger btn-month-remove" title="削除">×</button>
+    </div>`;
+  wrap.insertBefore(col, wrap.querySelector('#btn-add-month').parentElement);
+  col.querySelector('.btn-month-remove').addEventListener('click', () => col.remove());
+});
+
+// 集計ボタン
+document.getElementById('btn-run-monthly')?.addEventListener('click', runMonthlySummary);
+
+async function runMonthlySummary(){
+  const helpno = document.getElementById('helper-id')?.textContent.trim();
+  if (!helpno || helpno === '未選択') return alert('作業者IDが取得できません。');
+
+  // 入力された年月（重複除去）
+  const months = [...document.querySelectorAll('.month-input')]
+    .map(i => (i.value || '').trim())
+    .filter(Boolean);
+  if (!months.length) return alert('年月を入力してください。');
+
+  const uniq = [...new Set(months)];
+  // 表示クリア
+  const mount = document.getElementById('monthly-graphs');
+  mount.innerHTML = '';
+
+  for (const ym of uniq){
+    const {start, end, labelJP} = monthToRange(ym); // YYYY-MM -> その月の 1日〜末日
+    let res;
+    try{
+      res = await fetchJSON(MONTHLY_URL_SUMMARY, { helpno, start_date:start, end_date:end });
+    }catch(e){
+      const err = document.createElement('div');
+      err.className = 'alert alert-danger';
+      err.textContent = `${labelJP} の集計取得に失敗: ${e.message}`;
+      mount.appendChild(err);
+      continue;
+    }
+
+    // ---- 月合計（分）を算出 ----
+    const sum = a => (a||[]).reduce((p,c)=>p+(+c||0),0);
+    const directMin   = sum(res?.directTotals);
+    const indirectMin = sum(res?.indirectTotals);
+
+    // other は API に total が無い前提：otherByTask を足し合わせる
+    let otherMin = 0;
+    const otherDict = res?.otherByTask || {};
+    Object.keys(otherDict).forEach(task => { otherMin += sum(otherDict[task] || []); });
+
+    const totalMin = directMin + indirectMin + otherMin;
+
+    // ---- 描画 ----
+    mount.appendChild(buildMonthlyBar({
+      labelJP,
+      directMin,
+      indirectMin,
+      otherMin,
+      totalMin,
+      overtimeMin: (MONTHLY_STANDARD_HOURS != null)
+        ? Math.max(0, totalMin - MONTHLY_STANDARD_HOURS * 60)
+        : null
+    }));
+  }
+}
+
+// YYYY-MM -> その月の範囲と表示ラベル
+function monthToRange(ym){
+  const [y,m] = ym.split('-').map(n=>+n);
+  const last = new Date(y, m, 0).getDate(); // 翌月0日=当月末
+  return {
+    start: `${y}-${String(m).padStart(2,'0')}-01`,
+    end:   `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`,
+    labelJP: `${y}年 ${m}月`
+  };
+}
+
+function fmtHour(min){
+  const h = min/60;
+  return (Math.round(h*10)/10).toString().replace(/\.0$/,'') + 'h';
+}
+
+// 月の横棒グラフ DOM を作る
+function buildMonthlyBar({labelJP, directMin, indirectMin, otherMin, totalMin, overtimeMin}){
+  const wrap = document.createElement('div');
+  wrap.className = 'month-graph';
+
+  // 見出し
+  const caption = document.createElement('div');
+  caption.className = 'month-caption';
+  caption.textContent = labelJP;
+  wrap.appendChild(caption);
+
+  // バー本体
+  const bar = document.createElement('div');
+  bar.className = 'month-bar';
+  if (totalMin > 0){
+    [
+      {cls:'seg-direct',  name:'直接業務',  min:directMin},
+      {cls:'seg-indirect',name:'間接業務',  min:indirectMin},
+      {cls:'seg-other',   name:'その他',    min:otherMin},
+    ].forEach(seg=>{
+      if (!seg.min) return;
+      const div = document.createElement('div');
+      div.className = `month-seg ${seg.cls}`;
+      div.style.flexBasis = (seg.min/totalMin*100) + '%';
+      div.innerHTML = `<span>${seg.name}&nbsp;&nbsp;${fmtHour(seg.min)}</span>`;
+      bar.appendChild(div);
+    });
+  }else{
+    const empty = document.createElement('div');
+    empty.className = 'month-empty';
+    empty.textContent = 'データなし';
+    bar.appendChild(empty);
+  }
+  wrap.appendChild(bar);
+
+  // 右側テキスト
+  const meta = document.createElement('div');
+  meta.className = 'month-meta';
+  meta.textContent = `合計：${fmtHour(totalMin)}` + (overtimeMin!=null ? `　残業：${fmtHour(overtimeMin)}` : '');
+  wrap.appendChild(meta);
+
+  return wrap;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 画面の一番メインのカラム（col-md-12）の末尾へ monthly を移動
+  const monthly = document.getElementById('monthly-sum-section');
+  const mainCol = document.querySelector('.allcont .container .row .col-md-12');
+  if (monthly && mainCol && mainCol.lastElementChild !== monthly) {
+    mainCol.appendChild(monthly);
+  }
+});
+
+
 </script>
 
 <style>
@@ -529,5 +701,101 @@ function renderTaskDayMatrix(res) {
 .bg-direct  { background:#fde9df !important; }
 .bg-indirect{ background:#dff1fb !important; }
 .bg-other   { background:#eaf5e5 !important; }
+
+/* 余分な余白をなくす：内容の高さに合わせる */
+#graph-container{
+  height: auto !important;      /* ← 固定高さを解除 */
+  min-height: 0 !important;     /* ← 最小高さを解除 */
+  overflow-x: auto;              /* 横スクロールは維持 */
+  overflow-y: visible;           /* 縦は内容に合わせて伸縮 */
+  padding-bottom: 8px;           /* 下の余白も少しだけに */
+}
+
+/* 表の下マージンがあれば消す（Bootstrap対策） */
+#timeTableArea table{ margin-bottom: 0 !important; }
+
+/* カード下の余白を少しだけに（必要なら） */
+#time-table-section .card{ margin-bottom: 12px !important; }
+
+/* ===== 月別 横棒グラフ ===== */
+.month-graph{
+  display:flex;
+  align-items:center;
+  gap:28px;
+  margin:28px 0 40px;
+}
+.month-caption{
+  border:3px solid #1e2a35;
+  padding:6px 16px;
+  font-weight:800;
+  font-size:22px;
+  color:#1e2a35;
+  border-radius:6px;
+  min-width:110px;
+  text-align:center;
+}
+.month-bar{
+  display:flex;
+  align-items:stretch;
+  min-width:420px;           /* お好みで */
+  max-width:720px;
+  width:60%;
+  border:3px solid #1e2a35;
+  border-radius:4px;
+  overflow:hidden;
+  background:#fff;
+}
+.month-seg{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  padding:6px 10px;
+  border-right:3px solid #1e2a35;
+  white-space:nowrap;
+}
+.month-seg:last-child{ border-right:none; }
+
+/* 色は既存に寄せた柔らかいトーン */
+.seg-direct  { background:#fde9df; }
+.seg-indirect{ background:#dff1fb; }
+.seg-other   { background:#e6f3de; }
+
+.month-empty{
+  padding:8px 12px;
+  color:#777;
+}
+.month-meta{
+  font-size:18px;
+  font-weight:700;
+  color:#1e2a35;
+  min-width:220px;
+}
+
+/* 一番下に積まれて、他と重ならないように */
+#monthly-sum-section{
+  position: relative;
+  z-index: 1;        /* クリックできるが前面に出過ぎない */
+  margin-top: 28px;
+  clear: both;       /* 左右のフロート/横並びの下に回り込む */
+}
+
+/* クリック優先にしたいセクションの z-index をそろえる（上げすぎ注意） */
+#graph-form,
+#range-form,
+#time-table-section,
+#task-day-matrix-section,
+#monthly-sum-section{
+  position: relative;
+  z-index: 2;
+}
+
+/* 月グラフの入れ物は縦並びに */
+#monthly-graphs{
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
 </style>
 @endsection
