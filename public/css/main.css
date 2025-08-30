@@ -362,6 +362,14 @@ html, body {
                 width:calc(263.74px / var(--coef));
             }
 
+            #ts-summary-link
+            {
+                position: absolute;
+                top:calc((414.89px - 33.54px - 100px) / var(--coef));
+                left:calc(1259px / var(--coef));
+                width:calc(263.74px / var(--coef));
+            }
+
             /* #btn_costregist
             {
                 position: absolute;
@@ -436,13 +444,7 @@ html, body {
                 left:calc(268.13px / var(--coef));
                 width:calc(263.74px / var(--coef));
             }
-            #btn_linkquestionary3
-            {
-                position: absolute;
-                top:calc((414.89px - 33.54px - 100px) / var(--coef));
-                left:calc(1259px / var(--coef));
-                width:calc(263.74px / var(--coef));
-            }
+           
             /* (施設登録未) */
             #btn_facilityinput_3
             {
