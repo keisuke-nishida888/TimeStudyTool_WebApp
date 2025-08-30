@@ -89,6 +89,36 @@
     </div>
 </div>
 
+            <!-- ▼ 期間指定 集計フォーム（新規） -->
+            <div class="card mb-4">
+            <div class="card-body">
+                <form id="range-form" class="row g-3">
+                <div class="col-md-3">
+                    <label for="range-start">期間(開始)</label>
+                    <input type="date" id="range-start" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="range-end">期間(終了)</label>
+                    <input type="date" id="range-end" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label>&nbsp;</label><br>
+                    <button type="submit" class="btn btn-secondary">集計</button>
+                </div>
+                </form>
+            </div>
+            </div>
+
+            <!-- ▼ マトリクス表（新規） -->
+            <div class="card mb-4" id="matrix-card" style="display:none;">
+            <div class="card-body">
+                <h5 class="card-title">日別 × 作業名 集計表</h5>
+                <div id="task-day-matrix-wrap" class="matrix-scroll">
+                <div id="task-day-matrix"></div>
+                </div>
+            </div>
+            </div>
+
 <script>
 let timeGraph = null;
 
@@ -359,7 +389,150 @@ function drawMiniGraph(data) {
     target.innerHTML = html;
 }
 
+// ---------- 期間集計：送信 ----------
+document.addEventListener('DOMContentLoaded', () => {
+  const f = document.getElementById('range-form');
+  if (f) f.addEventListener('submit', onRangeFormSubmit);
+});
 
+async function onRangeFormSubmit(e){
+  e.preventDefault();
+  const start  = document.getElementById('range-start').value;
+  const end    = document.getElementById('range-end').value;
+  const helpno = document.getElementById('helper-id')?.textContent.trim();
+  if (!helpno || helpno === '未選択') return alert('作業者IDが取得できません。');
+  if (!start || !end) return alert('期間を選択してください。');
+
+  let res;
+  try{
+    res = await fetchJSON(`{{ url('/time_study/summary') }}`, { helpno, start_date:start, end_date:end });
+  }catch(err){
+    console.error(err);
+    alert('集計データの取得に失敗しました：' + err.message);
+    return;
+  }
+  renderTaskDayMatrix(res);
+  document.getElementById('matrix-card').style.display = 'block';
+}
+
+// ---------- fetchJSON 共通 ----------
+async function fetchJSON(url, payload){
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const resp = await fetch(url,{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'X-CSRF-TOKEN': csrf,
+      'Accept':'application/json'
+    },
+    credentials:'same-origin',
+    body: JSON.stringify(payload||{})
+  });
+  const raw = await resp.text();
+  const ct  = resp.headers.get('content-type')||'';
+  if(!resp.ok){ console.error(raw); throw new Error('HTTP '+resp.status); }
+  if(!ct.includes('application/json')){ console.error(raw); throw new Error('Server returned non-JSON'); }
+  return JSON.parse(raw);
+}
+
+// ---------- 表を描画 ----------
+function renderTaskDayMatrix(res){
+  const el = document.getElementById('task-day-matrix');
+  if (!el) return;
+
+  const days = res?.days || [];
+  if (!days.length){
+    el.innerHTML = '<div class="text-muted">該当データがありません。</div>';
+    return;
+  }
+
+  const groups = [
+    { title:'直接業務',  key:'directByTask',   cls:'bg-direct'   },
+    { title:'間接業務',  key:'indirectByTask', cls:'bg-indirect' },
+  ];
+  if (res.otherByTask && Object.keys(res.otherByTask).length){
+    groups.push({ title:'その他業務', key:'otherByTask', cls:'bg-other' });
+  }
+
+  // ヘッダ
+  let html = '<table class="matrix-table"><thead><tr>';
+  html += '<th class="matrix-group-cell"></th><th class="matrix-task-cell">作業名</th>';
+  html += days.map(d => {
+    const dt = new Date(d.replace(/-/g,'/'));
+    return `<th class="matrix-num-cell">${dt.getMonth()+1}/${dt.getDate()} 計測</th>`;
+  }).join('');
+  html += '</tr></thead><tbody>';
+
+  // 日別合計
+  const dayTotals = new Array(days.length).fill(0);
+
+  // 各グループ
+  groups.forEach(g => {
+    const dict = res[g.key] || {};
+    const tasks = Object.keys(dict);
+    if (!tasks.length){
+      html += `<tr>
+                <td class="matrix-group-cell ${g.cls}">`+g.title+`</td>
+                <td class="matrix-task-cell text-muted">-</td>
+                ${days.map(()=>'<td class="matrix-num-cell"></td>').join('')}
+              </tr>`;
+      return;
+    }
+
+    tasks.forEach((task, i) => {
+      const arr = dict[task] || [];
+      html += '<tr>';
+      if (i===0){
+        html += `<td class="matrix-group-cell ${g.cls}" rowspan="${tasks.length}">${g.title}</td>`;
+      }
+      html += `<td class="matrix-task-cell">${task}</td>`;
+      for(let di=0; di<days.length; di++){
+        const v = Math.round(arr[di] || 0);
+        if (v>0) dayTotals[di] += v;
+        html += `<td class="matrix-num-cell">${v ? v : ''}</td>`;
+      }
+      html += '</tr>';
+    });
+  });
+
+  // 最下段 合計
+  html += `<tr class="matrix-total-row">
+             <td class="matrix-group-cell"></td>
+             <td class="matrix-task-cell">合計</td>
+             ${dayTotals.map(v=>`<td class="matrix-num-cell">${v||''}</td>`).join('')}
+           </tr>`;
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // ① 残留オーバーレイを確実に無効化
+  ['pop_alert_back','pop_alert','policy_check','policy_dailog','pop_csvimport','pop_csvimport_confirm']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '-1';
+      }
+    });
+
+  // ② 期間集計フォームの submit を必ずバインド（重複防止フラグ付き）
+  const rangeForm = document.getElementById('range-form');
+  if (rangeForm && !rangeForm.__bound) {
+    rangeForm.addEventListener('submit', onRangeFormSubmit);
+    rangeForm.__bound = true;
+  }
+
+  // ③ 1日表示フォームも念のため
+  const graphForm = document.getElementById('graph-form');
+  if (graphForm && !graphForm.__bound) {
+    graphForm.addEventListener('submit', onGraphFormSubmit);
+    graphForm.__bound = true;
+  }
+});
 
 </script>
 
@@ -453,6 +626,71 @@ function drawMiniGraph(data) {
 #mini-graph-area {
   min-width: 3200px;
   margin-left: 40px;
+}
+.matrix-scroll { overflow-x:auto; }
+
+.matrix-table{
+  border-collapse:collapse;
+  width:max-content;
+  min-width:100%;
+  table-layout:fixed;
+  font-size:14px;
+}
+.matrix-table th,.matrix-table td{
+  border:1px solid #8a8a8a;
+  padding:6px 10px;
+  text-align:center;
+  white-space:nowrap;
+}
+
+.matrix-table thead th{
+  background:#fafafa;
+  font-weight:700;
+}
+
+.matrix-group-cell{
+  width:120px;
+  font-weight:700;
+  color:#c33;
+  text-align:center;
+  vertical-align:middle;
+}
+.matrix-task-cell{ width:180px; text-align:left; background:#fff; }
+.matrix-num-cell{ width:90px; }
+
+.matrix-total-row .matrix-task-cell,
+.matrix-total-row .matrix-num-cell{
+  background:#f7f7df;
+  font-weight:700;
+}
+
+/* グループ帯の色 */
+.bg-direct{  background:#f7e4d8; }
+.bg-indirect{background:#d7ecf7; }
+.bg-other{   background:#e8f4e6; }
+
+/* クリックしたい領域を常に最前面へ */
+#graph-form,
+#range-form,
+#matrix-card,
+#time-table-section,
+#daily-summary-section {
+  position: relative;
+  z-index: 9999;
+}
+#range-form * { pointer-events: auto; }
+
+/* 残りがちなオーバーレイを強制無効化 */
+#pop_alert_back,
+#pop_alert,
+#policy_check,
+#policy_dailog,
+#pop_csvimport,
+#pop_csvimport_confirm {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
 </style>

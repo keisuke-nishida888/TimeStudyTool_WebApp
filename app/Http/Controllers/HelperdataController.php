@@ -18,6 +18,9 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\DB;
 
 class HelperdataController extends Controller
 {
@@ -331,6 +334,83 @@ class HelperdataController extends Controller
         ]);
     }
     
+    // 期間指定：日別×作業名の合計（分）を返す
+public function summary(Request $request)
+{
+    $helpno = $request->input('helpno');
+    $start  = $request->input('start_date'); // "YYYY-MM-DD"
+    $end    = $request->input('end_date');   // "YYYY-MM-DD"
+
+    if (!$helpno || !$start || !$end) {
+        return response()->json(['error' => 'bad request'], 400);
+    }
+
+    // 期間（日単位・両端含む）
+    $period = CarbonPeriod::create(Carbon::parse($start), Carbon::parse($end));
+    $days   = [];
+    foreach ($period as $d) $days[] = $d->format('Y-m-d');
+    $dayIndex = array_flip($days); // "YYYY-MM-DD" => 0..N
+
+    // 期間のレコードを取得（開始日の属する日で集計）
+    $rows = DB::table('time_study')
+        ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
+        ->where('time_study.helpno', $helpno)
+        ->whereBetween(DB::raw('DATE(time_study.start)'), [$start, $end])
+        ->select(
+            'task_table.task_name',
+            'task_table.task_type_no',
+            'time_study.start',
+            'time_study.stop'
+        )
+        ->orderBy('time_study.start')
+        ->get();
+
+    // 準備
+    $directByTask   = []; // task => [day0, day1, ...]（分）
+    $indirectByTask = [];
+    $otherByTask    = [];
+
+    $directTotals   = array_fill(0, count($days), 0);
+    $indirectTotals = array_fill(0, count($days), 0);
+
+    // 集計
+    foreach ($rows as $r) {
+        $dateKey = Carbon::parse($r->start)->format('Y-m-d');
+        if (!isset($dayIndex[$dateKey])) continue;
+        $idx = $dayIndex[$dateKey];
+
+        // 分に丸め（※レコードが日跨ぎしない前提。跨ぐ可能性がある場合はクリップ処理を追加）
+        $minutes = max(0, (int) round((strtotime($r->stop) - strtotime($r->start)) / 60));
+
+        // タスク別に配列を初期化
+        $ensureArr = function (&$arr, $task) use ($days) {
+            if (!isset($arr[$task])) $arr[$task] = array_fill(0, count($days), 0);
+        };
+
+        // 種別で仕分け（0:直接 / 1:間接 / それ以外:その他）
+        if ((int)$r->task_type_no === 0) {
+            $ensureArr($directByTask, $r->task_name);
+            $directByTask[$r->task_name][$idx] += $minutes;
+            $directTotals[$idx] += $minutes;
+        } elseif ((int)$r->task_type_no === 1) {
+            $ensureArr($indirectByTask, $r->task_name);
+            $indirectByTask[$r->task_name][$idx] += $minutes;
+            $indirectTotals[$idx] += $minutes;
+        } else {
+            $ensureArr($otherByTask, $r->task_name);
+            $otherByTask[$r->task_name][$idx] += $minutes;
+        }
+    }
+
+    return response()->json([
+        'days'            => $days,
+        'directByTask'    => $directByTask,
+        'indirectByTask'  => $indirectByTask,
+        'otherByTask'     => $otherByTask,
+        'directTotals'    => $directTotals,
+        'indirectTotals'  => $indirectTotals,
+    ]);
+}
 
 
 

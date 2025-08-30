@@ -5,6 +5,7 @@ use App\Http\Controllers\TimeStudyController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HelperController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\HelperdataController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,8 +23,6 @@ Route::get('/', function () {
 });
 
  
-
-
 //ログインしていないユーザはログイン画面へ
 //下記のように書いておくとauthの後にauthrootが行われる
 Route::group(['middleware' => ['auth','authroot']], function(){
@@ -155,7 +154,8 @@ Route::group(['middleware' => ['auth','authroot']], function(){
     Route::get('/facility_input_fixctrl', 'App\Http\Controllers\FacilityinputController@index');
 
 
-   
+    Route::post('/time_study/summary', [HelperdataController::class, 'summary'])
+    ->name('time_study.summary');
 
   
 });
