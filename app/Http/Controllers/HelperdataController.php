@@ -266,150 +266,213 @@ class HelperdataController extends Controller
   
     //TimeStudyのグラフデータを取得するメソッド
     public function getGraphData(Request $request)
-    {
-        $helpno = $request->input('helpno');
+{
+    try {
+        $helpno       = (int)$request->input('helpno');
         $selectedDate = $request->input('selected_date');
-        $graphType = $request->input('graph_type'); // 'type' or 'category'
-    
-        $rows = \DB::table('time_study')
-            ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
-            ->where('time_study.helpno', $helpno)
-            ->whereDate('time_study.start', $selectedDate)
-            ->select(
-                'task_table.task_name',
-                'time_study.start',
-                'time_study.stop',
-                'task_table.task_type_no',
-                'task_table.task_category_no'
-            )
-            ->orderBy('time_study.start')
+        $graphType    = $request->input('graph_type', 'type'); // 'type' or 'category'
+
+        if (!$helpno || !$selectedDate) {
+            return response()->json(['message' => 'helpno or selected_date missing'], 422);
+        }
+
+        $rows = DB::table('time_study as ts')
+            ->leftJoin('task_table as tt', 'ts.task_id', '=', 'tt.task_id')
+            ->where('ts.helpno', $helpno)
+            ->whereDate('ts.start', $selectedDate)
+            ->select([
+                DB::raw('COALESCE(tt.task_name, ts.task_name) as task_name'),
+                'ts.start',
+                'ts.stop',
+                DB::raw('COALESCE(tt.task_type_no, 2) as task_type_no'),
+                DB::raw('COALESCE(tt.task_category_no, 2) as task_category_no'),
+            ])
+            ->orderBy('ts.start')
             ->get();
-    
-        $taskNames = $rows->pluck('task_name')->unique()->values();
+
+        $taskNames = $rows->pluck('task_name')->unique()->values()->all();
+
         $taskIndividualDurations = [];
         $graphData = [];
         $timeSlots = [];
-        // 24時間を1時間ごとのスロットで生成
         for ($h = 0; $h < 24; $h++) {
             $timeSlots[] = sprintf('%02d:00', $h);
         }
-    
-        // 各作業ごとの個別データ
+
         foreach ($taskNames as $taskName) {
             $taskIndividualDurations[$taskName] = [];
-            $graphData[$taskName] = array_fill(0, 24, null); // 1時間ごとの配列（nullで初期化）
+            $graphData[$taskName] = array_fill(0, 24, null);
+
             foreach ($rows->where('task_name', $taskName) as $rec) {
-                $start = strtotime($rec->start);
-                $stop = strtotime($rec->stop);
-                $startDecimal = (float)date('H', $start) + ((float)date('i', $start) / 60);
-                $stopDecimal = (float)date('H', $stop) + ((float)date('i', $stop) / 60);
+                $startTs = strtotime($rec->start);
+                $stopTs  = strtotime($rec->stop);
+                if ($startTs === false || $stopTs === false || $stopTs <= $startTs) continue;
+
+                $startDec = (int)date('H', $startTs) + ((int)date('i', $startTs))/60;
+                $stopDec  = (int)date('H', $stopTs)  + ((int)date('i', $stopTs))/60;
+
                 $taskIndividualDurations[$taskName][] = [
                     'start' => $rec->start,
-                    'stop' => $rec->stop,
-                    'start_hour' => (int)date('H', $start),
-                    'start_minute' => (int)date('i', $start),
-                    'stop_hour' => (int)date('H', $stop),
-                    'stop_minute' => (int)date('i', $stop),
-                    'start_time_decimal' => $startDecimal,
-                    'stop_time_decimal' => $stopDecimal,
-                    'duration' => round(($stop - $start) / 60),
-                    'task_type_no' => $rec->task_type_no,
-                    'task_category_no' => $rec->task_category_no
+                    'stop'  => $rec->stop,
+                    'start_hour' => (int)date('H', $startTs),
+                    'start_minute' => (int)date('i', $startTs),
+                    'stop_hour' => (int)date('H', $stopTs),
+                    'stop_minute' => (int)date('i', $stopTs),
+                    'start_time_decimal' => $startDec,
+                    'stop_time_decimal'  => $stopDec,
+                    'duration' => max(0, (int)round(($stopTs - $startTs) / 60)),
+                    'task_type_no' => (int)$rec->task_type_no,
+                    'task_category_no' => (int)$rec->task_category_no,
                 ];
-                // グラフデータ（横軸：時間帯ごとに該当していたら色用番号を入れる）
+
+                // 表示タイプに応じて色番号（type/category）を埋める
                 for ($h = 0; $h < 24; $h++) {
-                    if ($startDecimal < ($h + 1) && $stopDecimal > $h) {
-                        $graphData[$taskName][$h] = ($graphType === 'type') ? $rec->task_type_no : $rec->task_category_no;
+                    if ($startDec < ($h + 1) && $stopDec > $h) {
+                        $graphData[$taskName][$h] = ($graphType === 'category')
+                            ? (int)$rec->task_category_no
+                            : (int)$rec->task_type_no;
                     }
                 }
             }
         }
-    
+
         return response()->json([
             'timeSlots' => $timeSlots,
             'taskNames' => $taskNames,
             'graphData' => $graphData,
             'graphType' => $graphType,
-            'taskIndividualDurations' => $taskIndividualDurations
+            'taskIndividualDurations' => $taskIndividualDurations,
         ]);
+    } catch (\Throwable $e) {
+        \Log::error('getGraphData failed: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
+        return response()->json(['message' => 'server error', 'detail' => $e->getMessage()], 500);
     }
+}
+
+
     
     // 期間指定：日別×作業名の合計（分）を返す
+// ---- 期間指定：日別×3分類（介護種別＆カテゴリ）の合計（分）を返す ----
 public function summary(Request $request)
 {
-    $helpno = $request->input('helpno');
-    $start  = $request->input('start_date'); // "YYYY-MM-DD"
-    $end    = $request->input('end_date');   // "YYYY-MM-DD"
+    try {
+        $helpno = (int)$request->input('helpno');
+        $start  = $request->input('start_date'); // "YYYY-MM-DD"
+        $end    = $request->input('end_date');   // "YYYY-MM-DD"
 
-    if (!$helpno || !$start || !$end) {
-        return response()->json(['error' => 'bad request'], 400);
-    }
-
-    // 期間（日単位・両端含む）
-    $period = CarbonPeriod::create(Carbon::parse($start), Carbon::parse($end));
-    $days   = [];
-    foreach ($period as $d) $days[] = $d->format('Y-m-d');
-    $dayIndex = array_flip($days); // "YYYY-MM-DD" => 0..N
-
-    // 期間のレコードを取得（開始日の属する日で集計）
-    $rows = DB::table('time_study')
-        ->join('task_table', 'time_study.task_id', '=', 'task_table.task_id')
-        ->where('time_study.helpno', $helpno)
-        ->whereBetween(DB::raw('DATE(time_study.start)'), [$start, $end])
-        ->select(
-            'task_table.task_name',
-            'task_table.task_type_no',
-            'time_study.start',
-            'time_study.stop'
-        )
-        ->orderBy('time_study.start')
-        ->get();
-
-    // 準備
-    $directByTask   = []; // task => [day0, day1, ...]（分）
-    $indirectByTask = [];
-    $otherByTask    = [];
-
-    $directTotals   = array_fill(0, count($days), 0);
-    $indirectTotals = array_fill(0, count($days), 0);
-
-    // 集計
-    foreach ($rows as $r) {
-        $dateKey = Carbon::parse($r->start)->format('Y-m-d');
-        if (!isset($dayIndex[$dateKey])) continue;
-        $idx = $dayIndex[$dateKey];
-
-        // 分に丸め（※レコードが日跨ぎしない前提。跨ぐ可能性がある場合はクリップ処理を追加）
-        $minutes = max(0, (int) round((strtotime($r->stop) - strtotime($r->start)) / 60));
-
-        // タスク別に配列を初期化
-        $ensureArr = function (&$arr, $task) use ($days) {
-            if (!isset($arr[$task])) $arr[$task] = array_fill(0, count($days), 0);
-        };
-
-        // 種別で仕分け（0:直接 / 1:間接 / それ以外:その他）
-        if ((int)$r->task_type_no === 0) {
-            $ensureArr($directByTask, $r->task_name);
-            $directByTask[$r->task_name][$idx] += $minutes;
-            $directTotals[$idx] += $minutes;
-        } elseif ((int)$r->task_type_no === 1) {
-            $ensureArr($indirectByTask, $r->task_name);
-            $indirectByTask[$r->task_name][$idx] += $minutes;
-            $indirectTotals[$idx] += $minutes;
-        } else {
-            $ensureArr($otherByTask, $r->task_name);
-            $otherByTask[$r->task_name][$idx] += $minutes;
+        if (!$helpno || !$start || !$end) {
+            return response()->json([
+                'days' => [],
+                'directTotals' => [], 'indirectTotals' => [], 'otherTotals' => [],
+                'physicalTotals' => [], 'mentalTotals' => [], 'otherTotalsCategory' => [],
+                'directByTask' => [], 'indirectByTask' => [], 'otherByTask' => [],
+            ], 200);
         }
-    }
 
-    return response()->json([
-        'days'            => $days,
-        'directByTask'    => $directByTask,
-        'indirectByTask'  => $indirectByTask,
-        'otherByTask'     => $otherByTask,
-        'directTotals'    => $directTotals,
-        'indirectTotals'  => $indirectTotals,
-    ]);
+        $from = Carbon::parse($start)->startOfDay();
+        $to   = Carbon::parse($end)->endOfDay();
+
+        // 日付配列
+        $days = [];
+        for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
+            $days[] = $d->format('Y-m-d');
+        }
+        $dayIndex = array_flip($days);
+        $N = count($days);
+
+        // トータル配列
+        $directTotals   = array_fill(0, $N, 0); // 介護種別：直接(0)
+        $indirectTotals = array_fill(0, $N, 0); // 介護種別：間接(1)
+        $otherTotals    = array_fill(0, $N, 0); // 介護種別：その他(2)
+
+        $physicalTotals      = array_fill(0, $N, 0); // カテゴリ：肉体(0)
+        $mentalTotals        = array_fill(0, $N, 0); // カテゴリ：精神(1)
+        $otherTotalsCategory = array_fill(0, $N, 0); // カテゴリ：その他(2)
+
+        // （互換）タスク別（使わなければ無視されます）
+        $directByTask   = [];
+        $indirectByTask = [];
+        $otherByTask    = [];
+
+        $rows = DB::table('time_study as ts')
+            ->leftJoin('task_table as tt', 'ts.task_id', '=', 'tt.task_id')
+            ->where('ts.helpno', $helpno)
+            ->whereBetween('ts.start', [$from, $to])
+            ->select([
+                DB::raw('COALESCE(tt.task_name, ts.task_name) as task_name'),
+                DB::raw('COALESCE(tt.task_type_no, 2) as task_type_no'),
+                DB::raw('COALESCE(tt.task_category_no, 2) as task_category_no'),
+                'ts.start',
+                'ts.stop',
+            ])
+            ->orderBy('ts.start')
+            ->get();
+
+        foreach ($rows as $r) {
+            $startAt = Carbon::parse($r->start);
+            $stopAt  = Carbon::parse($r->stop);
+            if ($stopAt->lt($startAt)) continue;
+
+            $ymd = $startAt->format('Y-m-d');
+            if (!isset($dayIndex[$ymd])) continue;
+            $idx = $dayIndex[$ymd];
+
+            $min  = max(0, (int)$stopAt->diffInMinutes($startAt));
+            $type = (int)$r->task_type_no;      // 0=直接 1=間接 2=その他
+            $cat  = (int)$r->task_category_no;  // 0=肉体 1=精神 2=その他
+
+            // 介護種別トータル
+            if ($type === 0) {
+                $directTotals[$idx] += $min;
+                if (!isset($directByTask[$r->task_name])) $directByTask[$r->task_name] = array_fill(0, $N, 0);
+                $directByTask[$r->task_name][$idx] += $min;
+            } elseif ($type === 1) {
+                $indirectTotals[$idx] += $min;
+                if (!isset($indirectByTask[$r->task_name])) $indirectByTask[$r->task_name] = array_fill(0, $N, 0);
+                $indirectByTask[$r->task_name][$idx] += $min;
+            } else {
+                $otherTotals[$idx] += $min;
+                if (!isset($otherByTask[$r->task_name])) $otherByTask[$r->task_name] = array_fill(0, $N, 0);
+                $otherByTask[$r->task_name][$idx] += $min;
+            }
+
+            // カテゴリトータル
+            if     ($cat === 0) { $physicalTotals[$idx]      += $min; }
+            elseif ($cat === 1) { $mentalTotals[$idx]        += $min; }
+            else                { $otherTotalsCategory[$idx] += $min; }
+        }
+
+        return response()->json([
+            'days' => $days,
+
+            // 介護種別（typeモード）
+            'directTotals'   => $directTotals,
+            'indirectTotals' => $indirectTotals,
+            'otherTotals'    => $otherTotals,
+
+            // カテゴリ（categoryモード）
+            'physicalTotals'      => $physicalTotals,       // 肉体(赤)
+            'mentalTotals'        => $mentalTotals,         // 精神(紫)
+            'otherTotalsCategory' => $otherTotalsCategory,  // その他(灰)
+
+            // 互換（未使用なら無視）
+            'directByTask'   => $directByTask,
+            'indirectByTask' => $indirectByTask,
+            'otherByTask'    => $otherByTask,
+        ]);
+    } catch (\Throwable $e) {
+        \Log::error('summary failed: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
+        return response()->json(['message' => 'server error', 'detail' => $e->getMessage()], 500);
+    }
+}
+
+
+/** タスク別配列の初期化（互換用） */
+private function ensureArr(array &$map, string $taskName, int $len): void
+{
+    if (!isset($map[$taskName])) {
+        $map[$taskName] = array_fill(0, $len, 0);
+    }
 }
     // 画面表示用（GET）
     /**
