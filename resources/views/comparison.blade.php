@@ -358,5 +358,54 @@ function renderMatrixInto(mount, res, mode){
   margin-right:8px;
   vertical-align:middle;
 }
+
+/* ====== ここからコンパクト化（追記） ====== */
+.result-stack{ gap:10px !important; }
+.ts-section{ margin-top:0 !important; }
+
+/* カードも少し詰める */
+.result-stack .card .card-body{ padding:12px !important; }
+.result-stack .card .card-title{ font-size:14px !important; margin:0 0 6px !important; }
+
+/* 表全体を小さく */
+.cat-matrix{ 
+  font-size:12px !important;      /* 文字小さめ */
+  border:1px solid #333 !important;/* 枠線も細く */
+}
+.cat-matrix th, .cat-matrix td{
+  padding:4px 6px !important;      /* 行を細く（余白を縮小） */
+  border-width:1px !important;     /* 罫線を細く */
+  line-height:1.15 !important;     /* 行高を詰める */
+  white-space:nowrap;               /* 折返し抑制（必要なら外してください） */
+}
+.cat-matrix thead th{
+  padding:6px 6px !important;
+  background:#eef1ff !important;
+  font-weight:700 !important;
+}
+.cat-matrix tfoot th{ padding:6px 6px !important; }
+
+/* 左列（カテゴリー） */
+.cat-matrix .sticky-left{
+  position:sticky; left:0;
+  background:#f9f9f9 !important;
+  z-index:1;
+}
+
+/* ドットも小さく */
+.cat-matrix .dot{
+  width:10px !important;
+  height:10px !important;
+  margin-right:6px !important;
+}
+
+/* 行見出しの淡色背景（既存色は維持しつつ控えめに） */
+.row-direct  th{ background:#fff5e6 !important; }   /* 直接=オレンジ薄 */
+.row-indirect th{ background:#ecf7ff !important; }  /* 間接=水色薄 */
+.row-gray    th{ background:#f3f3f3 !important; }   /* その他=灰 */
+
+.row-physical th{ background:#ffeaea !important; }  /* 肉体=赤薄 */
+.row-mental   th{ background:#f1eaff !important; }  /* 精神=紫薄 */
+/* ====== ここまで ====== */
 </style>
 @endsection
