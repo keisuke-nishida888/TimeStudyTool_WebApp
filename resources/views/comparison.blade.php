@@ -10,7 +10,7 @@
         <h2>データ比較</h2>
 
         {{-- ▼ 作業者選択（A/B） --}}
-        <form method="GET" action="{{ route('comparison') }}" class="row g-3 mb-4">
+        <form class="row g-3 mb-3">
           <div class="col-md-4">
             <label class="form-label">作業者A</label>
             <select id="helper_a" name="helper_a" class="form-control">
@@ -33,13 +33,12 @@
               @endforeach
             </select>
           </div>
-          {{-- このフォームは送信しなくてOK（下の「集計」で取得） --}}
         </form>
 
-        {{-- ▼ 期間（A/B 共通） --}}
+        {{-- ▼ 期間（A/B 共通）＋ 表示切替ボタン --}}
         <div class="card mb-4">
           <div class="card-body">
-            <form id="range-form" class="row g-3">
+            <form id="range-form" class="row g-3 align-items-end">
               <div class="col-md-3">
                 <label for="range-start" class="form-label">期間(開始)</label>
                 <input type="date" id="range-start" class="form-control" required value="{{ $start ?? '' }}">
@@ -48,9 +47,16 @@
                 <label for="range-end" class="form-label">期間(終了)</label>
                 <input type="date" id="range-end" class="form-control" required value="{{ $end ?? '' }}">
               </div>
+
               <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
                 <button type="submit" class="btn btn-secondary w-100">集計</button>
+              </div>
+
+              <div class="col-md-3">
+                <div class="btn-group w-100" role="group" aria-label="表示切替">
+                  <button type="button" class="btn btn-outline-primary active" id="btn-mode-type" data-mode="type">介護種別</button>
+                  <button type="button" class="btn btn-outline-primary" id="btn-mode-category" data-mode="category">カテゴリ</button>
+                </div>
               </div>
             </form>
           </div>
@@ -93,6 +99,13 @@
 const URL_SUMMARY = `{{ url('/time_study/summary') }}`;
 
 /* =========================
+   状態（直近の取得結果と表示モード）
+========================= */
+let lastResA = null;
+let lastResB = null;
+let currentMode = 'type'; // 'type' or 'category'
+
+/* =========================
    共通 fetch
 ========================= */
 async function fetchJSON(url, payload){
@@ -121,12 +134,40 @@ async function fetchJSON(url, payload){
 }
 
 /* =========================
-   期間集計 submit（A/B まとめて）
+   初期化
 ========================= */
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('range-form')?.addEventListener('submit', onRangeFormSubmit);
+
+  // 表示切替ボタン
+  const btnType = document.getElementById('btn-mode-type');
+  const btnCat  = document.getElementById('btn-mode-category');
+
+  btnType?.addEventListener('click', () => {
+    currentMode = 'type';
+    btnType.classList.add('active');
+    btnCat.classList.remove('active');
+    rerenderIfCached();
+  });
+
+  btnCat?.addEventListener('click', () => {
+    currentMode = 'category';
+    btnCat.classList.add('active');
+    btnType.classList.remove('active');
+    rerenderIfCached();
+  });
 });
 
+function rerenderIfCached(){
+  // 直近の取得結果があれば再描画のみ（再フェッチしない）
+  if (lastResA) renderMatrix('tableA', lastResA, currentMode);
+  if (lastResB) renderMatrix('tableB', lastResB, currentMode);
+  if (lastResA || lastResB) document.getElementById('result-stack').style.display = 'block';
+}
+
+/* =========================
+   期間集計 submit（A/B まとめて）
+========================= */
 async function onRangeFormSubmit(e){
   e.preventDefault();
 
@@ -150,6 +191,7 @@ async function onRangeFormSubmit(e){
   // 初期化
   document.getElementById('tableA').innerHTML = '';
   document.getElementById('tableB').innerHTML = '';
+  lastResA = null; lastResB = null;
 
   // 並列取得
   const jobs = [];
@@ -167,27 +209,39 @@ async function onRangeFormSubmit(e){
   // 表示
   document.getElementById('result-stack').style.display = 'block';
   for (const r of results){
-    const mountId = (r.who === 'A') ? 'tableA' : 'tableB';
-    renderCategoryMatrix(mountId, r.res);
+    if (r.who === 'A') { lastResA = r.res; renderMatrix('tableA', r.res, currentMode); }
+    if (r.who === 'B') { lastResB = r.res; renderMatrix('tableB', r.res, currentMode); }
   }
   if (!helperA) document.getElementById('tableA').innerHTML = '<div class="alert alert-light">未選択</div>';
   if (!helperB) document.getElementById('tableB').innerHTML = '<div class="alert alert-light">未選択</div>';
 }
 
 /* =========================
-   列＝日付 / 行＝直接・間接・その他 のマトリクス
-   res.directTotals / indirectTotals / otherTotals を使用
+   列＝日付 / 行＝3分類 のマトリクス
+   mode: 'type' or 'category'
 ========================= */
-function renderCategoryMatrix(mountId, res){
-  const days     = res?.days || [];
-  const direct   = res?.directTotals   || [];
-  const indirect = res?.indirectTotals || [];
-  const other    = res?.otherTotals    || [];
-
-  if (!days.length){
+function renderMatrix(mountId, res, mode){
+  const days = res?.days || [];
+  if (!Array.isArray(days) || days.length === 0){
     const mount = document.getElementById(mountId);
     if (mount) mount.innerHTML = '<div class="alert alert-warning">データなし</div>';
     return;
+  }
+
+  // データセット切替
+  let rows, colors;
+  if (mode === 'category'){
+    rows = [
+      { key: 'physical', label: '肉体的負担',  arr: res?.physicalTotals || [],        className: 'row-physical',  dot: '#ff4d4f' },
+      { key: 'mental',   label: '精神的負担',  arr: res?.mentalTotals || [],          className: 'row-mental',    dot: '#8a63d2' },
+      { key: 'other',    label: 'その他',      arr: res?.otherTotalsCategory || [],   className: 'row-gray',      dot: '#bfbfbf' },
+    ];
+  } else {
+    rows = [
+      { key: 'direct',   label: '直接',        arr: res?.directTotals || [],          className: 'row-direct',    dot: '#ffa500' },
+      { key: 'indirect', label: '間接',        arr: res?.indirectTotals || [],        className: 'row-indirect',  dot: '#8fd3ff' },
+      { key: 'other',    label: 'その他',      arr: res?.otherTotals || [],           className: 'row-gray',      dot: '#bfbfbf' },
+    ];
   }
 
   const fmtMD = (ymd) => {
@@ -198,10 +252,8 @@ function renderCategoryMatrix(mountId, res){
   const sum = arr => (arr||[]).reduce((p,c)=>p+(parseInt(c,10)||0),0);
 
   // 日合計（列合計）
-  const dayTotals = days.map((_,i) =>
-    (parseInt(direct[i]  ||0,10)) +
-    (parseInt(indirect[i]||0,10)) +
-    (parseInt(other[i]   ||0,10))
+  const dayTotals = days.map((_, i) =>
+    rows.reduce((acc, r) => acc + (parseInt(r.arr[i]||0,10) || 0), 0)
   );
 
   let html = `<table class="cat-matrix">
@@ -212,29 +264,19 @@ function renderCategoryMatrix(mountId, res){
         <th>合計</th>
       </tr>
     </thead>
-    <tbody>
-      <tr class="row-direct">
-        <th class="sticky-left">
-          <span class="dot" style="background:#ffa500;"></span>直接
-        </th>
-        ${days.map((_,i)=>`<td class="num">${parseInt(direct[i]||0,10)}</td>`).join('')}
-        <td class="num">${sum(direct)}</td>
-      </tr>
-      <tr class="row-indirect">
-        <th class="sticky-left">
-          <span class="dot" style="background:#8fd3ff;"></span>間接
-        </th>
-        ${days.map((_,i)=>`<td class="num">${parseInt(indirect[i]||0,10)}</td>`).join('')}
-        <td class="num">${sum(indirect)}</td>
-      </tr>
-      <tr class="row-other">
-        <th class="sticky-left">
-          <span class="dot" style="background:#bfbfbf;"></span>その他
-        </th>
-        ${days.map((_,i)=>`<td class="num">${parseInt(other[i]||0,10)}</td>`).join('')}
-        <td class="num">${sum(other)}</td>
-      </tr>
-    </tbody>
+    <tbody>`;
+
+  rows.forEach(r => {
+    html += `<tr class="${r.className}">
+      <th class="sticky-left">
+        <span class="dot" style="background:${r.dot};"></span>${r.label}
+      </th>
+      ${days.map((_,i)=>`<td class="num">${parseInt(r.arr[i]||0,10)}</td>`).join('')}
+      <td class="num">${sum(r.arr)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody>
     <tfoot>
       <tr>
         <th class="sticky-left">日合計</th>
@@ -272,10 +314,13 @@ function renderCategoryMatrix(mountId, res){
 .cat-matrix .sticky-left{ position:sticky; left:0; background:#f9f9f9; z-index:1; }
 .cat-matrix .num{ text-align:right; white-space:nowrap; }
 
-/* 行の色味（薄め） */
-.row-direct  th{ background:#fff5e6; }   /* オレンジ系 */
-.row-indirect th{ background:#ecf7ff; }  /* 水色系 */
-.row-other   th{ background:#f3f3f3; }   /* 灰色系 */
+/* 行の色味（薄め背景） */
+.row-direct  th{ background:#fff5e6; }   /* 直接=オレンジ */
+.row-indirect th{ background:#ecf7ff; }  /* 間接=水色 */
+.row-gray    th{ background:#f3f3f3; }   /* その他=灰色 */
+
+.row-physical th{ background:#ffeaea; }  /* 肉体=赤の淡色 */
+.row-mental   th{ background:#f1eaff; }  /* 精神=紫の淡色 */
 
 .dot{
   display:inline-block;
