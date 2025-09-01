@@ -278,6 +278,77 @@ class AdminDashboardController extends Controller
         ]);
     }
     
-
+    
+        // 既存: dashboard() で $facilities を渡すと施設選択がドロップダウンになります
+        // 例）
+        // public function dashboard() {
+        //   $facilities = DB::table('facility')->select('id','facility')->orderBy('facility')->get();
+        //   ... 既存集計 ...
+        //   return view('admin_dashboard', compact('facilities', /* 既存の変数たち */));
+        // }
+    
+        /** 施設内の作業者一覧を返す（JSON） */
+        public function facilityHelpers(Request $request)
+        {
+            $fid = (int) $request->input('facility_id');
+            if (!$fid) return response()->json(['helpers'=>[]]);
+    
+            $helpers = DB::table('helper')
+                ->select('id', 'helpername')
+                ->where('facilityno', $fid)
+                ->where(function($q){
+                    // delflag がある環境向けの安全ガード
+                    $q->whereNull('delflag')->orWhere('delflag', '<>', 1);
+                })
+                ->orderBy('helpername')
+                ->get();
+    
+            return response()->json(['helpers' => $helpers]);
+        }
+    
+        /** 指定期間×選択作業者の time_study をタスク別に合計（分）で返す（JSON） */
+        public function taskSummary(Request $request)
+        {
+            $fid   = (int) $request->input('facility_id');
+            $ids   = (array) ($request->input('helper_ids') ?? []);
+            $start = $request->input('start_date');
+            $end   = $request->input('end_date');
+    
+            if (!$fid || !$start || !$end) {
+                return response()->json(['rows'=>[]], 200);
+            }
+    
+            // ヘルパー未指定なら施設内すべて
+            if (empty($ids)) {
+                $ids = DB::table('helper')->where('facilityno', $fid)->pluck('id')->all();
+            }
+            if (empty($ids)) return response()->json(['rows'=>[]], 200);
+    
+            $from = Carbon::parse($start)->startOfDay();
+            $to   = Carbon::parse($end)->endOfDay();
+    
+            // MySQL 前提：TIMESTAMPDIFF(MINUTE, start, stop) で分を集計
+            // task_table に task_name が無い（taskname のみ）環境にも配慮したい場合は
+            // ts.task_name を優先し、無ければ tt.task_name を使う運用が安全
+            $rows = DB::table('time_study as ts')
+                ->leftJoin('task_table as tt', 'ts.task_id', '=', 'tt.task_id')
+                ->whereIn('ts.helpno', $ids)
+                ->whereBetween('ts.start', [$from, $to])
+                ->whereNotNull('ts.stop')
+                ->selectRaw('COALESCE(ts.task_name, tt.task_name) as task_name')
+                ->selectRaw('SUM(TIMESTAMPDIFF(MINUTE, ts.start, ts.stop)) as minutes')
+                ->groupBy('task_name')
+                ->orderByDesc('minutes')
+                ->get()
+                ->map(function($r){
+                    $r->task_name = $r->task_name ?? '-';
+                    $r->minutes   = (int) $r->minutes;
+                    return $r;
+                });
+    
+            return response()->json(['rows' => $rows], 200);
+        }
+    
 
 }
+

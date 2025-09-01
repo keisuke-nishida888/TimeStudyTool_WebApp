@@ -159,16 +159,124 @@
             </div>
           </div>
         </div>
-        {{-- ▲▲▲ 都道府県比較（最下部） ▲▲▲ --}}
+        {{-- ▲▲▲ 都道府県比較 ▲▲▲ --}}
 
-      </div>
-    </div>
-  </div>
-</div>
+        {{-- ▼▼ 施設ダッシュボード（ページ最下部に配置） ▼▼ --}}
+        <div class="card mt-4">
+          <div class="card-body">
+            <h5 class="card-title">施設ダッシュボード</h5>
+
+            @php
+              $defaultFacilityId = (int) (Auth::user()->facilityno ?? 0);
+            @endphp
+
+            {{-- 入力フォーム --}}
+            <form id="fd-form" class="row g-2 align-items-end" onsubmit="return false;">
+              <div class="col-12 col-md-3">
+                <label class="form-label">期間（開始）</label>
+                <input type="date" id="fd-start" class="form-control" required>
+              </div>
+              <div class="col-12 col-md-3">
+                <label class="form-label">期間（終了）</label>
+                <input type="date" id="fd-end" class="form-control" required>
+              </div>
+
+              {{-- 施設選択（$facilities があればプルダウン、無ければログイン施設固定） --}}
+              <div class="col-12 col-md-3">
+                <label class="form-label">施設</label>
+                @if(!empty($facilities) && count($facilities))
+                  <select id="fd-facility" class="form-select form-select-sm">
+                    @foreach($facilities as $fc)
+                      <option value="{{ $fc->id }}" {{ ($fc->id == $defaultFacilityId) ? 'selected' : '' }}>
+                        {{ $fc->facility ?? ('ID:'.$fc->id) }}
+                      </option>
+                    @endforeach
+                  </select>
+                @else
+                  <input type="hidden" id="fd-facility" value="{{ $defaultFacilityId }}">
+                  <div class="form-text">（現在の施設 ID：{{ $defaultFacilityId ?: '未設定' }}）</div>
+                @endif
+              </div>
+
+              {{-- 施設内作業者（マルチセレクト。施設選択時に自動ロード） --}}
+              <div class="col-12 col-md-3">
+                <label class="form-label">施設内作業者</label>
+                <select id="fd-helpers" class="form-select" multiple size="6"></select>
+                <div class="d-flex gap-2 mt-1">
+                  <button type="button" id="fd-select-all" class="btn btn-outline-secondary btn-sm">全選択</button>
+                  <button type="button" id="fd-clear" class="btn btn-outline-secondary btn-sm">解除</button>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <button type="button" id="fd-run" class="btn btn-secondary">集計</button>
+                <span id="fd-msg" class="ms-2 text-muted"></span>
+              </div>
+            </form>
+
+            {{-- 結果テーブル --}}
+            <div class="table-responsive mt-3">
+              <table class="table table-bordered table-sm compact-table" id="fd-result">
+                <thead class="table-light">
+                  <tr>
+                    <th>作業名（task_name）</th>
+                    <th class="text-end">累計時間（分）</th>
+                    <th class="text-end">累計時間（時間）</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="3" class="text-center text-muted">未集計</td></tr>
+                </tbody>
+                <tfoot class="table-light d-none" id="fd-tfoot">
+                  <tr>
+                    <th>合計</th>
+                    <th class="text-end" id="fd-total-min">0</th>
+                    <th class="text-end" id="fd-total-hr">0.0</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+        {{-- ▲▲ 施設ダッシュボード ▲▲ --}}
+
+      </div> {{-- /.col-md-12 --}}
+    </div>   {{-- /.row --}}
+  </div>     {{-- /.container --}}
+</div>       {{-- /.allcont --}}
 
 <script>
-/* ========== 年齢ドーナツ ========== */
+/* =========================
+   共通 fetch（CSRF対応）
+========================= */
+async function fetchJSON(url, payload){
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrf, 'Accept':'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(payload || {})
+  });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+  const ct = r.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) throw new Error('Non-JSON response');
+  return JSON.parse(txt);
+}
+
+/* =========================
+   初期化
+========================= */
 document.addEventListener('DOMContentLoaded', function(){
+  setupAgeChart();
+  setupPrefCompare();
+  setupFacilityDashboard();
+});
+
+/* =========================
+   年齢ドーナツ
+========================= */
+function setupAgeChart(){
   const ageCtx = document.getElementById('agePie');
   if (!ageCtx) return;
   const ageLabels = @json(array_keys($ageBuckets));
@@ -190,14 +298,15 @@ document.addEventListener('DOMContentLoaded', function(){
       elements: { arc: { borderWidth: 1 } }
     }
   });
-});
+}
 
-/* ========== 都道府県比較 ========== */
+/* =========================
+   都道府県比較
+========================= */
 const URL_PREF_COMPARE = `{{ route('admin.pref.compare') }}`;
-// 47都道府県
 const PREFS = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
 
-document.addEventListener('DOMContentLoaded', () => {
+function setupPrefCompare(){
   addPrefRow(); addPrefRow();  // デフォルト2行
   updateLabels();
 
@@ -208,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-compare')?.addEventListener('click', runCompare);
-});
+}
 
 function addPrefRow(){
   const wrap = document.getElementById('pref-rows');
@@ -251,19 +360,6 @@ async function runCompare(){
   renderCompare(resp?.rows || []);
 }
 
-async function fetchJSON(url, payload){
-  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrf, 'Accept':'application/json' },
-    credentials: 'same-origin',
-    body: JSON.stringify(payload || {})
-  });
-  const body = await r.text();
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return JSON.parse(body || '{}');
-}
-
 function renderCompare(rows){
   const tbody = document.querySelector('#pref-compare-table tbody');
   if (!tbody) return;
@@ -286,6 +382,127 @@ function renderCompare(rows){
     </tr>
   `).join('');
 }
+
+/* =========================
+   施設ダッシュボード
+========================= */
+const URL_FAC_HELPERS = `{{ route('admin.facility.helpers') }}`;
+const URL_FAC_SUMMARY = `{{ route('admin.facility.task_summary') }}`;
+
+function setupFacilityDashboard(){
+  // 既定：今日〜今日
+  const today = new Date().toISOString().slice(0,10);
+  const $s = document.getElementById('fd-start');
+  const $e = document.getElementById('fd-end');
+  if ($s && !$s.value) $s.value = today;
+  if ($e && !$e.value) $e.value = today;
+
+  // 施設変更で作業者を取得
+  const $f = document.getElementById('fd-facility');
+  $f?.addEventListener('change', loadFacilityHelpers);
+  loadFacilityHelpers(); // 初回ロード
+
+  // 全選択 / 解除
+  document.getElementById('fd-select-all')?.addEventListener('click', () => {
+    const $h = document.getElementById('fd-helpers');
+    [...$h.options].forEach(o => o.selected = true);
+  });
+  document.getElementById('fd-clear')?.addEventListener('click', () => {
+    const $h = document.getElementById('fd-helpers');
+    [...$h.options].forEach(o => o.selected = false);
+  });
+
+  // 集計
+  document.getElementById('fd-run')?.addEventListener('click', runFacilitySummary);
+}
+
+async function loadFacilityHelpers(){
+  const fid = document.getElementById('fd-facility')?.value;
+  const $h  = document.getElementById('fd-helpers');
+  const $msg= document.getElementById('fd-msg');
+  if (!$h || !fid) return;
+
+  $h.innerHTML = '<option disabled>読み込み中...</option>';
+  $msg.textContent = '';
+
+  try{
+    const data = await fetchJSON(URL_FAC_HELPERS, { facility_id: fid });
+    const helpers = data.helpers || [];
+    if (!helpers.length){
+      $h.innerHTML = '<option disabled>（該当なし）</option>';
+      return;
+    }
+    $h.innerHTML = helpers.map(x => `<option value="${x.id}" selected>${x.helpername ?? ('ID:'+x.id)}</option>`).join('');
+  }catch(e){
+    console.error(e);
+    $h.innerHTML = '<option disabled>取得失敗</option>';
+    $msg.textContent = '作業者の取得に失敗しました';
+  }
+}
+
+async function runFacilitySummary(){
+  const fid = document.getElementById('fd-facility')?.value;
+  const st  = document.getElementById('fd-start')?.value;
+  const ed  = document.getElementById('fd-end')?.value;
+  const $h  = document.getElementById('fd-helpers');
+  const hids= [...($h?.selectedOptions || [])].map(o => o.value);
+  const $msg= document.getElementById('fd-msg');
+
+  if (!fid || !st || !ed){
+    alert('施設と期間を入力してください。'); return;
+  }
+  if (!hids.length){
+    alert('施設内作業者を1名以上選択してください。'); return;
+  }
+
+  $msg.textContent = '集計中...';
+
+  let res;
+  try{
+    res = await fetchJSON(URL_FAC_SUMMARY, {
+      facility_id: fid,
+      helper_ids: hids,
+      start_date: st,
+      end_date: ed
+    });
+  }catch(e){
+    console.error(e);
+    $msg.textContent = '集計に失敗しました';
+    return;
+  }
+  $msg.textContent = '';
+  renderFacilityTable(res?.rows || []);
+}
+
+function renderFacilityTable(rows){
+  const $tb   = document.querySelector('#fd-result tbody');
+  const $tf   = document.getElementById('fd-tfoot');
+  const $tmin = document.getElementById('fd-total-min');
+  const $thr  = document.getElementById('fd-total-hr');
+  if (!$tb) return;
+
+  if (!rows.length){
+    $tb.innerHTML = `<tr><td colspan="3" class="text-center text-muted">該当データがありません</td></tr>`;
+    $tf?.classList.add('d-none');
+    return;
+  }
+
+  let totalMin = 0;
+  $tb.innerHTML = rows.map(r => {
+    const m = +r.minutes || 0;
+    totalMin += m;
+    const h = (m/60);
+    return `<tr>
+      <td>${r.task_name || '-'}</td>
+      <td class="text-end">${m.toLocaleString()}</td>
+      <td class="text-end">${h.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+
+  $tmin.textContent = totalMin.toLocaleString();
+  $thr.textContent  = (totalMin/60).toFixed(1);
+  $tf?.classList.remove('d-none');
+}
 </script>
 
 <style>
@@ -303,11 +520,11 @@ function renderCompare(rows){
   border-collapse: collapse;
   background:#fff;
   table-layout: fixed;
-  font-size: 13px;         /* 小さく */
+  font-size: 13px;
 }
 .pref-table th, .pref-table td{
   border: 2px solid #333;
-  padding: 6px 8px;        /* コンパクト */
+  padding: 6px 8px;
   white-space: nowrap;
 }
 .pref-table .head-blue{ background: #cfe6f6; font-weight:700; text-align:center; }

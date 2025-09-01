@@ -35,6 +35,14 @@ Route::post('/admin/pref/compare', [AdminDashboardController::class, 'prefCompar
 
 });
 
+Route::middleware('auth')->group(function () {
+    // 施設ダッシュボード API
+    Route::post('/admin/facility/helpers', [AdminDashboardController::class, 'facilityHelpers'])
+        ->name('admin.facility.helpers');
+    Route::post('/admin/facility/task-summary', [AdminDashboardController::class, 'taskSummary'])
+        ->name('admin.facility.task_summary');
+});
+
 
 Route::get('/', function () {
     return view('welcome');
