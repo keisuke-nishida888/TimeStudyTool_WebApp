@@ -10,7 +10,16 @@
       <div class="col-md-12">
 
         <h2>作業者データ表示</h2>
+        {{-- 追加：データ比較ボタン --}}
+        <form action="{{ route('comparison') }}" method="get" class="ts-inline">
+        {{-- facilityno は不要なので削除 --}}
+        {{-- <input type="hidden" name="facilityno" value="{{ request('facilityno') ?? ($data2[0]['facilityno'] ?? '') }}"> --}}
+        {{-- 必要なら初期の作業者Aだけ渡すことは可能 --}}
+        <input type="hidden" name="helper_a" value="{{ $data2[0]['Helper_id'] ?? '' }}">
+        <button type="submit" class="ts-action-btn">データ比較</button>
+      </form>
 
+        
         <!-- 基本情報 -->
         <div class="card mb-4">
           <div class="card-body">
@@ -796,6 +805,26 @@ document.addEventListener('DOMContentLoaded', () => {
   flex-direction: column;
   gap: 28px;
 }
+
+/* ===== データ比較ボタン ===== */
+.ts-actions{
+  display:flex;
+  justify-content:flex-end;   /* 右寄せ */
+  gap:12px;
+  margin:8px 0 16px;
+}
+.ts-action-btn{
+  appearance:none;
+  border:none;
+  background:#1e90ff;         /* お好みで */
+  color:#fff;
+  font-weight:700;
+  padding:10px 16px;
+  border-radius:8px;
+  box-shadow:0 2px 4px rgba(0,0,0,.12);
+  cursor:pointer;
+}
+.ts-action-btn:hover{ opacity:.92; }
 
 </style>
 @endsection

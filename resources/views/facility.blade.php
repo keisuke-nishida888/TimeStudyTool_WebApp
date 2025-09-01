@@ -21,7 +21,7 @@
         <input id="facilityno_for_group" type="hidden" name="facilityno" value="">
         <!-- 互換: facility.js が入れる想定の選択施設ID -->
         <input id="targetid" type="hidden" value="">
-  <input type="image" class="img_style2" src="image/img_group.png"
+    <input type="image" class="img_style2" src="image/img_group.png"
          alt="グループ一覧" onclick="return submitGroupList();" border="0">
 </form>
 <script>

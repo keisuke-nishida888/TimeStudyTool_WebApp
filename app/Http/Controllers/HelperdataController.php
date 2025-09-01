@@ -411,7 +411,130 @@ public function summary(Request $request)
         'indirectTotals'  => $indirectTotals,
     ]);
 }
+    // 画面表示用（GET）
+    /**
+     * データ比較（GET表示）
+     * /comparison?helper_a=75&helper_b=79&start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+     */
+    public function comparison(Request $request)
+    {
+        // 入力
+        $helperA = (int) $request->query('helper_a');
+        $helperB = (int) $request->query('helper_b');
+        $start   = $request->query('start_date');  // "YYYY-MM-DD"
+        $end     = $request->query('end_date');    // "YYYY-MM-DD"
 
+        // 作業者プルダウン
+        $helpersQ = DB::table('helper')
+            ->select('id', 'helpername', 'facilityno')
+            ->orderBy('helpername', 'asc');
 
+        // 施設ユーザなら自施設で絞る（任意）
+        if (Auth::check() && !empty(Auth::user()->facilityno)) {
+            $helpersQ->where('facilityno', Auth::user()->facilityno);
+        }
+        $helpers = $helpersQ->get();
 
+        // 画面で使う変数を初期化
+        $problemTasks = [
+            'p1' => ['label' => '①事件・事故', 'names' => ['事件・事故']],
+            'p2' => ['label' => '②苦情対応',   'names' => ['苦情対応']],
+            'p3' => ['label' => '③不要な作業', 'names' => ['不要な作業']],
+        ];
+        $days  = [];   // [ ['ymd'=>'20250701','label'=>'7/1<br>計測'], ... ]
+        $table = [];   // [ helperId => ['_name'=>..., 'p1'=>[0..n], 'p1_avg'=>.., 'p1_effect'=>.., 'p2'=>.., ...] ]
+
+        // 集計は期間が揃っていて、A/Bのどちらかが選ばれている時だけ実行
+        if ($start && $end && ($helperA || $helperB)) {
+            $from = Carbon::parse($start)->startOfDay();
+            $to   = Carbon::parse($end)->endOfDay();
+
+            // 日付列を作成
+            for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
+                $days[] = [
+                    'ymd'   => $d->format('Ymd'),
+                    'label' => $d->format('n/j') . '<br>計測',
+                ];
+            }
+            // ymd -> index の逆引き表
+            $dayIndex = array_flip(array_column($days, 'ymd'));
+
+            // A/B それぞれ集計
+            foreach ([$helperA, $helperB] as $hid) {
+                if (!$hid) continue;
+
+                $hRow = $helpers->firstWhere('id', (int)$hid);
+                $table[$hid] = [
+                    '_name' => $hRow->helpername ?? ('ID:' . $hid),
+                    'p1' => [], 'p2' => [], 'p3' => [],
+                ];
+                // 0 で日数分初期化
+                foreach (['p1','p2','p3'] as $k) {
+                    $table[$hid][$k] = array_fill(0, count($days), 0);
+                }
+
+                // 期間中の time_study を取得（start の日時で絞る）
+                $rows = DB::table('time_study')
+                    ->select('start', 'stop', 'task_name')
+                    ->where('helpno', $hid)
+                    ->whereBetween('start', [$from, $to])
+                    ->orderBy('start')
+                    ->get();
+
+                foreach ($rows as $r) {
+                    // 日付インデックス
+                    $startAt = self::toCarbon($r->start);
+                    $stopAt  = self::toCarbon($r->stop);
+                    if (!$startAt || !$stopAt) continue;
+
+                    $ymdStr = $startAt->format('Ymd');
+                    if (!isset($dayIndex[$ymdStr])) continue; // 範囲外はスキップ
+                    $idx = $dayIndex[$ymdStr];
+
+                    // 分換算
+                    $min = max(0, $stopAt->diffInMinutes($startAt));
+
+                    // どの「問題あり」バケットに入れるか（名称に含まれているかで判定）
+                    $bucket = null;
+                    foreach ($problemTasks as $key => $meta) {
+                        foreach ($meta['names'] as $nm) {
+                            if ($nm !== '' && mb_strpos((string)$r->task_name, $nm) !== false) {
+                                $bucket = $key; break 2;
+                            }
+                        }
+                    }
+                    if (!$bucket) continue;
+
+                    $table[$hid][$bucket][$idx] += $min;
+                }
+
+                // 平均と効果（初日→最終日の差）
+                foreach (['p1','p2','p3'] as $k) {
+                    $arr = $table[$hid][$k];
+                    $n   = max(1, count($arr));
+                    $avg = (int) round(array_sum($arr) / $n);
+
+                    $effect = 0;
+                    if ($n >= 2) {
+                        $effect = (int) ($arr[0] - $arr[$n-1]); // お好みの式に変更可
+                    }
+                    $table[$hid]["{$k}_avg"]    = $avg;
+                    $table[$hid]["{$k}_effect"] = $effect;
+                }
+            }
+        }
+
+        // ← ここが重要：ビューへ必要な変数を全部渡す
+        return view('comparison', compact(
+            'helpers', 'start', 'end', 'helperA', 'helperB',
+            'problemTasks', 'days', 'table'
+        ));
+    }
+
+    private static function toCarbon($dt)
+    {
+        if (!$dt) return null;
+        $dt = str_replace('/', '-', $dt);
+        try { return Carbon::parse($dt); } catch (\Throwable $e) { return null; }
+    }
 }

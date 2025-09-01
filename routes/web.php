@@ -134,10 +134,6 @@ Route::group(['middleware' => ['auth','authroot']], function(){
     Route::post('/Wearabledata_disp2', 'App\Http\Controllers\HelperdataController@Wearabledata_disp2');
     // グラフデータ取得
     Route::post('/get_graph_data', 'App\Http\Controllers\HelperdataController@getGraphData');
-    // 施設/全国平均データ表示
-    Route::post('/averagedata', 'App\Http\Controllers\HelperdataController@Averagedata_disp');
-    Route::post('/comparison', 'App\Http\Controllers\HelperdataController@comparison');
-
     //フォームリセット
     Route::post('/cxl_helperfix', 'App\Http\Controllers\HelperController@cxl_HelperFix');
     //修正処理
@@ -164,6 +160,13 @@ Route::group(['middleware' => ['auth','authroot']], function(){
 
     Route::post('/time_study/summary', [HelperdataController::class, 'summary'])
     ->name('time_study.summary');
+
+    Route::match(['get'], '/comparison', [HelperdataController::class, 'comparison'])
+    ->name('comparison')
+    ->middleware(['auth','authroot']);
+    // データ比較（GET 専用）
+    Route::get('/comparison', [\App\Http\Controllers\HelperdataController::class, 'comparison'])
+    ->name('comparison');
 
 
 });
