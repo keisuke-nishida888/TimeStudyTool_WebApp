@@ -200,4 +200,84 @@ class AdminDashboardController extends Controller
         }
         return '不明';
     }
+
+    public function prefCompare(\Illuminate\Http\Request $request)
+    {
+        $prefs = array_values(array_unique(array_filter((array)$request->input('prefs', []))));
+        if (empty($prefs)) {
+            return response()->json(['rows' => [], 'range' => null]);
+        }
+    
+        $from = \Carbon\Carbon::now()->subDays(30)->startOfDay();
+        $to   = \Carbon\Carbon::now()->endOfDay();
+    
+        $rows = [];
+    
+        foreach ($prefs as $pref) {
+            // 施設ID
+            $facIds = \DB::table('facility')
+                ->where('address', 'like', "%{$pref}%")
+                ->pluck('id');
+    
+            $facilityCount = $facIds->count();
+    
+            // 作業者
+            $helpers = \DB::table('helper')
+                ->whereIn('facilityno', $facIds)
+                ->get(['id', 'age', 'sex']);
+    
+            $people = $helpers->count();
+            $avgAge = $people ? round((float)$helpers->avg('age'), 1) : null;
+            $male   = $helpers->where('sex', 1)->count();
+            $female = $helpers->where('sex', 2)->count();
+    
+            // 勤務・残業（helper×日で集計）
+            $avgWorkH = 0.0;
+            $avgOverH = 0.0;
+    
+            if ($people > 0) {
+                $helperIds = $helpers->pluck('id');
+    
+                $mins = \DB::table('time_study as ts')
+                    ->selectRaw('ts.helpno, DATE(ts.start) as d, SUM(TIMESTAMPDIFF(MINUTE, ts.start, ts.stop)) as min')
+                    ->whereIn('ts.helpno', $helperIds)
+                    ->whereBetween('ts.start', [$from, $to])
+                    ->groupBy('ts.helpno', \DB::raw('DATE(ts.start)'))
+                    ->get();
+    
+                if ($mins->count()) {
+                    $avgWorkMin = (float) $mins->avg('min');
+    
+                    // ★ ここを無名関数に変更（arrow function 使用禁止）
+                    $avgOverMin = (float) $mins->map(function ($r) {
+                        return max(0, ((int)$r->min - 480)); // 8h=480min 超過分
+                    })->avg();
+    
+                    $avgWorkH = round($avgWorkMin / 60, 1);
+                    $avgOverH = round($avgOverMin / 60, 1);
+                }
+            }
+    
+            $malePct   = $people ? round($male * 100 / $people) : 0;
+            $femalePct = $people ? (100 - $malePct) : 0;
+    
+            $rows[] = [
+                'pref'           => $pref,
+                'facility_count' => $facilityCount,
+                'people'         => $people,
+                'avg_age'        => $avgAge,
+                'avg_work_h'     => $avgWorkH,
+                'avg_over_h'     => $avgOverH,
+                'ratio'          => "{$malePct}%:{$femalePct}%",
+            ];
+        }
+    
+        return response()->json([
+            'rows'  => $rows,
+            'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+        ]);
+    }
+    
+
+
 }

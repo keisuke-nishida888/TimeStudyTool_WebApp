@@ -29,6 +29,10 @@ Route::middleware('auth')->group(function () {
 Route::group(['middleware' => ['auth','authroot']], function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'dashboard'])
         ->name('admin.dashboard');
+// 都道府県比較 API（JSON）
+Route::post('/admin/pref/compare', [AdminDashboardController::class, 'prefCompare'])
+->name('admin.pref.compare');
+
 });
 
 
