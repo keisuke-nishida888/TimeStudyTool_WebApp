@@ -9,33 +9,60 @@
 
         <h2>データ比較</h2>
 
-        {{-- ▼ 作業者選択（A/B） --}}
-        <form class="row g-3 mb-3">
-          <div class="col-md-4">
-            <label class="form-label">作業者A</label>
-            <select id="helper_a" name="helper_a" class="form-control">
-              <option value="">未選択</option>
-              @foreach(($helpers ?? []) as $h)
-                <option value="{{ $h->id }}" {{ (isset($helperA) && (int)$helperA === (int)$h->id) ? 'selected' : '' }}>
-                  {{ $h->helpername }}
-                </option>
-              @endforeach
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">作業者B</label>
-            <select id="helper_b" name="helper_b" class="form-control">
-              <option value="">未選択</option>
-              @foreach(($helpers ?? []) as $h)
-                <option value="{{ $h->id }}" {{ (isset($helperB) && (int)$helperB === (int)$h->id) ? 'selected' : '' }}>
-                  {{ $h->helpername }}
-                </option>
-              @endforeach
-            </select>
-          </div>
-        </form>
+        {{-- ▼ 作業者選択リスト + 追加ボタン --}}
+        <div class="card mb-3">
+          <div class="card-body">
+            <div id="helper-list" class="row g-3 align-items-end">
 
-        {{-- ▼ 期間（A/B 共通）＋ 表示切替ボタン --}}
+              {{-- 既定：1行目（削除不可） --}}
+              <div class="col-md-4 helper-row" data-fixed="true">
+                <label class="form-label helper-label">作業者</label>
+                <select name="helper[]" class="form-control helper-select">
+                  <option value="">未選択</option>
+                  @foreach(($helpers ?? []) as $h)
+                    <option value="{{ $h->id }}" {{ (isset($helperA) && (int)$helperA === (int)$h->id) ? 'selected' : '' }}>
+                      {{ $h->helpername }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+
+              {{-- 既定：2行目（削除不可） --}}
+              <div class="col-md-4 helper-row" data-fixed="true">
+                <label class="form-label helper-label">作業者</label>
+                <select name="helper[]" class="form-control helper-select">
+                  <option value="">未選択</option>
+                  @foreach(($helpers ?? []) as $h)
+                    <option value="{{ $h->id }}" {{ (isset($helperB) && (int)$helperB === (int)$h->id) ? 'selected' : '' }}>
+                      {{ $h->helpername }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+
+              {{-- 追加ボタン --}}
+              <div class="col-md-4">
+                <label class="form-label d-block">&nbsp;</label>
+                <button type="button" id="btn-add-helper" class="btn btn-outline-primary w-auto">＋ 追加</button>
+              </div>
+            </div>
+
+            {{-- 追加用オプションの素（非表示・JSでクローン） --}}
+            <select id="helper-options-source"
+                    class="d-none visually-hidden"
+                    hidden
+                    aria-hidden="true"
+                    tabindex="-1"
+                    style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">
+            <option value="">未選択</option>
+            @foreach(($helpers ?? []) as $h)
+                <option value="{{ $h->id }}">{{ $h->helpername }}</option>
+            @endforeach
+            </select>
+          </div>
+        </div>
+
+        {{-- ▼ 期間＋表示切替 --}}
         <div class="card mb-4">
           <div class="card-body">
             <form id="range-form" class="row g-3 align-items-end">
@@ -62,30 +89,8 @@
           </div>
         </div>
 
-        {{-- ▼ 結果（A の下に B） --}}
-        <div id="result-stack" class="result-stack" style="display:none;">
-
-          {{-- A --}}
-          <div class="ts-section">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">作業者A：<span id="nameA">未選択</span></h5>
-                <div id="tableA"></div>
-              </div>
-            </div>
-          </div>
-
-          {{-- B --}}
-          <div class="ts-section">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">作業者B：<span id="nameB">未選択</span></h5>
-                <div id="tableB"></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
+        {{-- ▼ 結果（選んだ人数分だけ下に積む） --}}
+        <div id="result-stack" class="result-stack" style="display:none;"></div>
 
       </div>
     </div>
@@ -93,21 +98,11 @@
 </div>
 
 <script>
-/* =========================
-   定数
-========================= */
 const URL_SUMMARY = `{{ url('/time_study/summary') }}`;
 
-/* =========================
-   状態（直近の取得結果と表示モード）
-========================= */
-let lastResA = null;
-let lastResB = null;
 let currentMode = 'type'; // 'type' or 'category'
+const cachedResults = new Map(); // key=helperId, val=response
 
-/* =========================
-   共通 fetch
-========================= */
 async function fetchJSON(url, payload){
   const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
   const resp = await fetch(url,{
@@ -122,125 +117,162 @@ async function fetchJSON(url, payload){
   });
   const raw = await resp.text();
   const ct  = resp.headers.get('content-type') || '';
-  if (!resp.ok) {
-    console.error('Server error body:\n', raw);
-    throw new Error('HTTP ' + resp.status);
-  }
-  if (!ct.includes('application/json')) {
-    console.error('Non-JSON response:\n', raw);
-    throw new Error('Server returned non-JSON');
-  }
+  if (!resp.ok) { console.error('Server error body:\n', raw); throw new Error('HTTP ' + resp.status); }
+  if (!ct.includes('application/json')) { console.error('Non-JSON response:\n', raw); throw new Error('Server returned non-JSON'); }
   return JSON.parse(raw);
 }
 
-/* =========================
-   初期化
-========================= */
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('range-form')?.addEventListener('submit', onRangeFormSubmit);
+  // 初回ラベル連番
+  renumberHelperLabels();
 
-  // 表示切替ボタン
+  // 追加ボタン
+  document.getElementById('btn-add-helper')?.addEventListener('click', addHelperRow);
+
+  // 表示切替
   const btnType = document.getElementById('btn-mode-type');
   const btnCat  = document.getElementById('btn-mode-category');
+  btnType?.addEventListener('click', () => { currentMode='type'; btnType.classList.add('active'); btnCat.classList.remove('active'); rerenderAll(); });
+  btnCat?.addEventListener('click', () => { currentMode='category'; btnCat.classList.add('active'); btnType.classList.remove('active'); rerenderAll(); });
 
-  btnType?.addEventListener('click', () => {
-    currentMode = 'type';
-    btnType.classList.add('active');
-    btnCat.classList.remove('active');
-    rerenderIfCached();
-  });
+  // 集計
+  document.getElementById('range-form')?.addEventListener('submit', onRangeFormSubmit);
 
-  btnCat?.addEventListener('click', () => {
-    currentMode = 'category';
-    btnCat.classList.add('active');
-    btnType.classList.remove('active');
-    rerenderIfCached();
+  // 行削除（追加分のみ）
+  document.getElementById('helper-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-remove-row');
+    if (!btn) return;
+    const row = btn.closest('.helper-row');
+    if (row?.dataset.fixed === 'true') return; // 既定2行は削除不可
+    row.remove();
+    renumberHelperLabels();
   });
 });
 
-function rerenderIfCached(){
-  // 直近の取得結果があれば再描画のみ（再フェッチしない）
-  if (lastResA) renderMatrix('tableA', lastResA, currentMode);
-  if (lastResB) renderMatrix('tableB', lastResB, currentMode);
-  if (lastResA || lastResB) document.getElementById('result-stack').style.display = 'block';
+/* 連番付け直し */
+function renumberHelperLabels(){
+  const rows = document.querySelectorAll('#helper-list .helper-row');
+  rows.forEach((row, i) => {
+    const label = row.querySelector('.helper-label');
+    if (label) label.textContent = '作業者' + (i + 1);
+  });
 }
 
-/* =========================
-   期間集計 submit（A/B まとめて）
-========================= */
+/* 行追加 */
+function addHelperRow(){
+  const list = document.getElementById('helper-list');
+  const col  = document.createElement('div');
+  col.className = 'col-md-4 helper-row';
+
+  const optionsHTML = [...document.getElementById('helper-options-source').options]
+    .map(o => `<option value="${o.value}">${o.text}</option>`).join('');
+
+  col.innerHTML = `
+    <label class="form-label helper-label">作業者</label>
+    <div class="d-flex gap-2">
+      <select name="helper[]" class="form-control helper-select">${optionsHTML}</select>
+      <button type="button" class="btn btn-outline-danger btn-remove-row" title="削除">×</button>
+    </div>`;
+  list.appendChild(col);
+  renumberHelperLabels();
+}
+
+/* 集計 submit */
 async function onRangeFormSubmit(e){
   e.preventDefault();
 
   const start = document.getElementById('range-start').value;
   const end   = document.getElementById('range-end').value;
-
-  const selA = document.getElementById('helper_a');
-  const selB = document.getElementById('helper_b');
-  const helperA = selA?.value || '';
-  const helperB = selB?.value || '';
-  const nameA   = selA?.options[selA.selectedIndex]?.text?.trim() || '未選択';
-  const nameB   = selB?.options[selB.selectedIndex]?.text?.trim() || '未選択';
-
   if (!start || !end) return alert('期間を選択してください。');
-  if (!helperA && !helperB) return alert('作業者A か B を選択してください。');
 
-  // タイトル更新
-  document.getElementById('nameA').textContent = nameA;
-  document.getElementById('nameB').textContent = nameB;
+  // 現在の並び順で作業者IDと見出し用の「作業者N」を取得
+  const rows = [...document.querySelectorAll('#helper-list .helper-row')];
+  const pairs = rows.map((row, i) => {
+    const sel  = row.querySelector('.helper-select');
+    const id   = sel?.value || '';
+    const name = sel?.options[sel.selectedIndex]?.text?.trim() || '未選択';
+    return { id, name, label: `作業者${i+1}` };
+  }).filter(p => p.id);
 
-  // 初期化
-  document.getElementById('tableA').innerHTML = '';
-  document.getElementById('tableB').innerHTML = '';
-  lastResA = null; lastResB = null;
+  if (!pairs.length) return alert('作業者を選択してください。');
 
-  // 並列取得
-  const jobs = [];
-  if (helperA) jobs.push(fetchJSON(URL_SUMMARY, { helpno: helperA, start_date: start, end_date: end }).then(res => ({who:'A', res})));
-  if (helperB) jobs.push(fetchJSON(URL_SUMMARY, { helpno: helperB, start_date: start, end_date: end }).then(res => ({who:'B', res})));
+  // 重複IDは先勝ち（1つだけ表示）
+  const seen = new Set();
+  const targets = [];
+  for (const p of pairs) { if (seen.has(p.id)) continue; seen.add(p.id); targets.push(p); }
 
-  let results = [];
+  // 表領域初期化
+  const stack = document.getElementById('result-stack');
+  stack.innerHTML = '';
+  stack.style.display = 'block';
+  cachedResults.clear();
+
+  // カード作成
+  targets.forEach(t => stack.appendChild(buildResultCard(t.id, t.name, t.label)));
+
+  // 取得 → 反映
   try {
-    results = await Promise.all(jobs);
-  } catch (err) {
+    const jobs = targets.map(t =>
+      fetchJSON(URL_SUMMARY, { helpno: t.id, start_date: start, end_date: end })
+        .then(res => ({id: t.id, res}))
+    );
+    const results = await Promise.all(jobs);
+    for (const {id, res} of results) {
+      cachedResults.set(id, res);
+      renderMatrixInto(document.getElementById(`table-${id}`), res, currentMode);
+    }
+  } catch(err) {
     console.error(err);
-    return alert('集計データの取得に失敗しました：' + err.message);
+    alert('集計データの取得に失敗しました：' + err.message);
   }
-
-  // 表示
-  document.getElementById('result-stack').style.display = 'block';
-  for (const r of results){
-    if (r.who === 'A') { lastResA = r.res; renderMatrix('tableA', r.res, currentMode); }
-    if (r.who === 'B') { lastResB = r.res; renderMatrix('tableB', r.res, currentMode); }
-  }
-  if (!helperA) document.getElementById('tableA').innerHTML = '<div class="alert alert-light">未選択</div>';
-  if (!helperB) document.getElementById('tableB').innerHTML = '<div class="alert alert-light">未選択</div>';
 }
 
-/* =========================
-   列＝日付 / 行＝3分類 のマトリクス
-   mode: 'type' or 'category'
-========================= */
-function renderMatrix(mountId, res, mode){
+/* カード DOM */
+function buildResultCard(helperId, helperName, labelText){
+  const wrap = document.createElement('div');
+  wrap.className = 'ts-section';
+  wrap.innerHTML = `
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">${escapeHtml(labelText)}：<span>${escapeHtml(helperName)}</span></h5>
+        <div id="table-${helperId}"><div class="text-muted">読み込み中...</div></div>
+      </div>
+    </div>`;
+  return wrap;
+}
+
+function escapeHtml(s){ return (s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* 表示モード切替の再描画 */
+function rerenderAll(){
+  if (!cachedResults.size) return;
+  document.getElementById('result-stack').style.display = 'block';
+  for (const [helperId, res] of cachedResults.entries()) {
+    const mount = document.getElementById(`table-${helperId}`);
+    if (mount) renderMatrixInto(mount, res, currentMode);
+  }
+}
+
+/* 列＝日付 / 行＝3分類 のマトリクス */
+function renderMatrixInto(mount, res, mode){
   const days = res?.days || [];
   if (!Array.isArray(days) || days.length === 0){
-    const mount = document.getElementById(mountId);
-    if (mount) mount.innerHTML = '<div class="alert alert-warning">データなし</div>';
+    mount.innerHTML = '<div class="alert alert-warning">データなし</div>';
     return;
   }
 
-  // データセット切替
-  let rows, colors;
+  let rows;
   if (mode === 'category'){
     rows = [
-      { key: 'physical', label: '肉体的負担',  arr: res?.physicalTotals || [],        className: 'row-physical',  dot: '#ff4d4f' },
-      { key: 'mental',   label: '精神的負担',  arr: res?.mentalTotals || [],          className: 'row-mental',    dot: '#8a63d2' },
-      { key: 'other',    label: 'その他',      arr: res?.otherTotalsCategory || [],   className: 'row-gray',      dot: '#bfbfbf' },
+      { label: '肉体的負担', arr: res?.physicalTotals || [], className: 'row-physical', dot: '#ff4d4f' },
+      { label: '精神的負担', arr: res?.mentalTotals   || [], className: 'row-mental',   dot: '#8a63d2' },
+      { label: 'その他',     arr: res?.otherTotalsCategory || [], className: 'row-gray', dot: '#bfbfbf' },
     ];
   } else {
     rows = [
-      { key: 'direct',   label: '直接',        arr: res?.directTotals || [],          className: 'row-direct',    dot: '#ffa500' },
-      { key: 'indirect', label: '間接',        arr: res?.indirectTotals || [],        className: 'row-indirect',  dot: '#8fd3ff' },
-      { key: 'other',    label: 'その他',      arr: res?.otherTotals || [],           className: 'row-gray',      dot: '#bfbfbf' },
+      { label: '直接',   arr: res?.directTotals   || [], className: 'row-direct',   dot: '#ffa500' },
+      { label: '間接',   arr: res?.indirectTotals || [], className: 'row-indirect', dot: '#8fd3ff' },
+      { label: 'その他', arr: res?.otherTotals    || [], className: 'row-gray',     dot: '#bfbfbf' },
     ];
   }
 
@@ -251,7 +283,6 @@ function renderMatrix(mountId, res, mode){
   };
   const sum = arr => (arr||[]).reduce((p,c)=>p+(parseInt(c,10)||0),0);
 
-  // 日合計（列合計）
   const dayTotals = days.map((_, i) =>
     rows.reduce((acc, r) => acc + (parseInt(r.arr[i]||0,10) || 0), 0)
   );
@@ -286,16 +317,15 @@ function renderMatrix(mountId, res, mode){
     </tfoot>
   </table>`;
 
-  const mount = document.getElementById(mountId);
-  if (mount) mount.innerHTML = html;
+  mount.innerHTML = html;
 }
 </script>
 
 <style>
 .result-stack{ display:flex; flex-direction:column; gap:16px; }
 .ts-section{ margin-top:4px; }
+.btn-remove-row{ padding:6px 10px; }
 
-/* 表 */
 .cat-matrix{
   width:100%;
   border-collapse:collapse;
@@ -314,10 +344,9 @@ function renderMatrix(mountId, res, mode){
 .cat-matrix .sticky-left{ position:sticky; left:0; background:#f9f9f9; z-index:1; }
 .cat-matrix .num{ text-align:right; white-space:nowrap; }
 
-/* 行の色味（薄め背景） */
-.row-direct  th{ background:#fff5e6; }   /* 直接=オレンジ */
+.row-direct   th{ background:#fff5e6; }  /* 直接=オレンジ */
 .row-indirect th{ background:#ecf7ff; }  /* 間接=水色 */
-.row-gray    th{ background:#f3f3f3; }   /* その他=灰色 */
+.row-gray     th{ background:#f3f3f3; }  /* その他=灰色 */
 
 .row-physical th{ background:#ffeaea; }  /* 肉体=赤の淡色 */
 .row-mental   th{ background:#f1eaff; }  /* 精神=紫の淡色 */
