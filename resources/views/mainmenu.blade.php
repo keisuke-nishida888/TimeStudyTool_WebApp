@@ -107,11 +107,11 @@
     @endif
     {{-- ▼ Time Study サマリー（この1つだけ残す） --}}
         <a id="ts-summary-link"
-        href="{{ route('time.summary', (Auth::user()->facilityno ?? null) ? ['facilityno' => Auth::user()->facilityno] : []) }}"
+        href="{{ route('admin.dashboard') }}"
         class="btn-ts-summary">
         <img src="{{ asset('image/img_ts_summary.png') }}"
             alt="Time Study サマリー"
-            onerror="this.style.display='none'; this.parentNode.classList.add('btn-ts-summary--fallback'); this.parentNode.textContent='Time Study サマリー';">
+            onerror="this.style.display='none'; this.parentNode.classList.add('btn-ts-summary--fallback'); this.parentNode.textContent='管理者ダッシュボード';">
         </a>
 
 

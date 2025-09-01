@@ -33,7 +33,7 @@ class authroot
             "HelperdataController",
             "MainmenuController",
             "TaskController",
-            "Login"
+            "Login",
         );
         //管理者
         $auth2 = array(
@@ -47,7 +47,8 @@ class authroot
             "CostregistController",
             "MainmenuController",
             "TaskController",
-            "Login"
+            "Login",
+            "AdminDashboardController"
         );
         //施設
         $auth3 = array(

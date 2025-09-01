@@ -6,6 +6,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HelperController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\HelperdataController;
+use App\Http\Controllers\AdminDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/time-study-summary', [TimeStudyController::class, 'index'])
         ->name('time.summary');
 });
+// 管理者ダッシュボード
+// ===== 管理者ダッシュボード（管理者のみ：auth + authroot）=====
+Route::group(['middleware' => ['auth','authroot']], function () {
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'dashboard'])
+        ->name('admin.dashboard');
+});
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -168,9 +176,8 @@ Route::group(['middleware' => ['auth','authroot']], function(){
     Route::get('/comparison', [\App\Http\Controllers\HelperdataController::class, 'comparison'])
     ->name('comparison');
 
-
+   
 });
-
 
 //ログイン関連
 //vender/laravel/ui/src/AuthRouteMethods.php
