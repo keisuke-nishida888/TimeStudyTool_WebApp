@@ -33,10 +33,10 @@
               @endforeach
             </select>
           </div>
-          {{-- GETでの表示切替が不要なら、このフォームは送信しなくてOK（選択だけ使います） --}}
+          {{-- このフォームは送信しなくてOK（下の「集計」で取得） --}}
         </form>
 
-        {{-- ▼ 期間集計（A/B共通の期間で取得） --}}
+        {{-- ▼ 期間（A/B 共通） --}}
         <div class="card mb-4">
           <div class="card-body">
             <form id="range-form" class="row g-3">
@@ -56,42 +56,35 @@
           </div>
         </div>
 
-        {{-- ▼ 結果表示：A/Bを横に並べて表示（狭い画面では縦積み） --}}
-        <div id="matrix-grid" class="matrix-grid" style="display:none;">
+        {{-- ▼ 結果（A の下に B） --}}
+        <div id="result-stack" class="result-stack" style="display:none;">
+
           {{-- A --}}
-          <div id="task-day-matrix-section-a" class="ts-section">
+          <div class="ts-section">
             <div class="card">
               <div class="card-body">
-                <h5 class="card-title">
-                  作業者A：
-                  <span id="title-helper-a">未選択</span>
-                </h5>
-                <div id="taskDayMatrixWrapA">
-                  <div id="taskDayMatrixA"></div>
-                </div>
+                <h5 class="card-title">作業者A：<span id="nameA">未選択</span></h5>
+                <div id="tableA"></div>
               </div>
             </div>
           </div>
+
           {{-- B --}}
-          <div id="task-day-matrix-section-b" class="ts-section">
+          <div class="ts-section">
             <div class="card">
               <div class="card-body">
-                <h5 class="card-title">
-                  作業者B：
-                  <span id="title-helper-b">未選択</span>
-                </h5>
-                <div id="taskDayMatrixWrapB">
-                  <div id="taskDayMatrixB"></div>
-                </div>
+                <h5 class="card-title">作業者B：<span id="nameB">未選択</span></h5>
+                <div id="tableB"></div>
               </div>
             </div>
           </div>
+
         </div>
 
-      </div><!-- /.col -->
-    </div><!-- /.row -->
-  </div><!-- /.container -->
-</div><!-- /.allcont -->
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* =========================
@@ -150,115 +143,146 @@ async function onRangeFormSubmit(e){
   if (!start || !end) return alert('期間を選択してください。');
   if (!helperA && !helperB) return alert('作業者A か B を選択してください。');
 
-  // タイトル表示
-  document.getElementById('title-helper-a').textContent = nameA;
-  document.getElementById('title-helper-b').textContent = nameB;
+  // タイトル更新
+  document.getElementById('nameA').textContent = nameA;
+  document.getElementById('nameB').textContent = nameB;
 
-  // 先にクリア
-  document.getElementById('taskDayMatrixA').innerHTML = '';
-  document.getElementById('taskDayMatrixB').innerHTML = '';
+  // 初期化
+  document.getElementById('tableA').innerHTML = '';
+  document.getElementById('tableB').innerHTML = '';
 
-  // A/B それぞれ取得（選択されている方だけ）
-  const tasks = [];
-  if (helperA) tasks.push(fetchJSON(URL_SUMMARY, { helpno: helperA, start_date: start, end_date: end }).then(res => ({who:'A', res})));
-  if (helperB) tasks.push(fetchJSON(URL_SUMMARY, { helpno: helperB, start_date: start, end_date: end }).then(res => ({who:'B', res})));
+  // 並列取得
+  const jobs = [];
+  if (helperA) jobs.push(fetchJSON(URL_SUMMARY, { helpno: helperA, start_date: start, end_date: end }).then(res => ({who:'A', res})));
+  if (helperB) jobs.push(fetchJSON(URL_SUMMARY, { helpno: helperB, start_date: start, end_date: end }).then(res => ({who:'B', res})));
 
   let results = [];
   try {
-    results = await Promise.all(tasks);
+    results = await Promise.all(jobs);
   } catch (err) {
     console.error(err);
     return alert('集計データの取得に失敗しました：' + err.message);
   }
 
-  // 表示グリッドを有効化
-  document.getElementById('matrix-grid').style.display = 'grid';
-
-  // 反映
+  // 表示
+  document.getElementById('result-stack').style.display = 'block';
   for (const r of results){
-    if (r.who === 'A') renderTaskDayMatrixInto('taskDayMatrixA', r.res);
-    if (r.who === 'B') renderTaskDayMatrixInto('taskDayMatrixB', r.res);
+    const mountId = (r.who === 'A') ? 'tableA' : 'tableB';
+    renderCategoryMatrix(mountId, r.res);
   }
-
-  // 片方未選択のときでもカードは表示しておく（中身は「データなし」を出す）
-  if (!helperA) document.getElementById('taskDayMatrixA').innerHTML = '<div class="alert alert-light">未選択</div>';
-  if (!helperB) document.getElementById('taskDayMatrixB').innerHTML = '<div class="alert alert-light">未選択</div>';
+  if (!helperA) document.getElementById('tableA').innerHTML = '<div class="alert alert-light">未選択</div>';
+  if (!helperB) document.getElementById('tableB').innerHTML = '<div class="alert alert-light">未選択</div>';
 }
 
 /* =========================
-   表描画（列=各日付、行=作業名、値=分）
-   mountId に描画
+   列＝日付 / 行＝直接・間接・その他 のマトリクス
+   res.directTotals / indirectTotals / otherTotals を使用
 ========================= */
-function renderTaskDayMatrixInto(mountId, res) {
-  const days = (res?.days || []).map(d => {
-    const [y,m,dd] = d.split('-');
-    return `${(+m)}/${(+dd)}<br>計測`;
-  });
+function renderCategoryMatrix(mountId, res){
+  const days     = res?.days || [];
+  const direct   = res?.directTotals   || [];
+  const indirect = res?.indirectTotals || [];
+  const other    = res?.otherTotals    || [];
 
-  const groups = [
-    { name: '直接業務',   key: 'directByTask'  },
-    { name: '間接業務',   key: 'indirectByTask'},
-    { name: 'その他業務', key: 'otherByTask'   },
-  ];
+  if (!days.length){
+    const mount = document.getElementById(mountId);
+    if (mount) mount.innerHTML = '<div class="alert alert-warning">データなし</div>';
+    return;
+  }
 
-  const dicts = {
-    directByTask:   res?.directByTask   || {},
-    indirectByTask: res?.indirectByTask || {},
-    otherByTask:    res?.otherByTask    || {}
+  const fmtMD = (ymd) => {
+    const [y,m,d] = (ymd||'').split('-');
+    if (!m || !d) return ymd || '';
+    return `${(+m)}/${(+d)}`;
   };
+  const sum = arr => (arr||[]).reduce((p,c)=>p+(parseInt(c,10)||0),0);
 
-  const colTotals = new Array(days.length).fill(0);
-  let html = `<table class="table-matrix">
+  // 日合計（列合計）
+  const dayTotals = days.map((_,i) =>
+    (parseInt(direct[i]  ||0,10)) +
+    (parseInt(indirect[i]||0,10)) +
+    (parseInt(other[i]   ||0,10))
+  );
+
+  let html = `<table class="cat-matrix">
     <thead>
       <tr>
-        <th class="col-group"></th>
-        <th class="col-task">作業名</th>
-        ${days.map(d => `<th>${d}</th>`).join('')}
+        <th class="sticky-left">カテゴリー</th>
+        ${days.map(d => `<th>${fmtMD(d)}</th>`).join('')}
+        <th>合計</th>
       </tr>
     </thead>
-    <tbody>`;
-
-  groups.forEach(g => {
-    const entries = Object.entries(dicts[g.key]); // [task, [m1,m2,...]]
-    if (!entries.length) return;
-    entries.forEach(([task, arr]) => {
-      html += `<tr>
-        <td class="matrix-group">${g.name}</td>
-        <td>${task}</td>
-        ${days.map((_,i) => {
-          const v = parseInt((arr && arr[i]) || 0, 10) || 0;
-          if (v) colTotals[i] += v;
-          return `<td>${v || ''}</td>`;
-        }).join('')}
-      </tr>`;
-    });
-  });
-
-  html += `</tbody><tfoot><tr>
-    <th></th>
-    <th>合計</th>
-    ${colTotals.map(v => `<th>${v || 0}</th>`).join('')}
-  </tr></tfoot></table>`;
+    <tbody>
+      <tr class="row-direct">
+        <th class="sticky-left">
+          <span class="dot" style="background:#ffa500;"></span>直接
+        </th>
+        ${days.map((_,i)=>`<td class="num">${parseInt(direct[i]||0,10)}</td>`).join('')}
+        <td class="num">${sum(direct)}</td>
+      </tr>
+      <tr class="row-indirect">
+        <th class="sticky-left">
+          <span class="dot" style="background:#8fd3ff;"></span>間接
+        </th>
+        ${days.map((_,i)=>`<td class="num">${parseInt(indirect[i]||0,10)}</td>`).join('')}
+        <td class="num">${sum(indirect)}</td>
+      </tr>
+      <tr class="row-other">
+        <th class="sticky-left">
+          <span class="dot" style="background:#bfbfbf;"></span>その他
+        </th>
+        ${days.map((_,i)=>`<td class="num">${parseInt(other[i]||0,10)}</td>`).join('')}
+        <td class="num">${sum(other)}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <th class="sticky-left">日合計</th>
+        ${dayTotals.map(v=>`<th class="num">${v}</th>`).join('')}
+        <th class="num">${sum(dayTotals)}</th>
+      </tr>
+    </tfoot>
+  </table>`;
 
   const mount = document.getElementById(mountId);
-  if (mount) mount.innerHTML = html || '<div class="alert alert-warning">データなし</div>';
+  if (mount) mount.innerHTML = html;
 }
 </script>
 
 <style>
-/* A/B を縦に並べる（常に A の下に B） */
-.matrix-grid{
-  display: grid;
-  grid-template-columns: 1fr;  /* ← 1列固定 */
-  gap: 16px;
-}
+.result-stack{ display:flex; flex-direction:column; gap:16px; }
+.ts-section{ margin-top:4px; }
 
-/* マトリクス表 */
-#taskDayMatrixWrapA, #taskDayMatrixWrapB { border: 2px solid #333; overflow:auto; }
-.table-matrix { border-collapse: collapse; width: 100%; }
-.table-matrix th, .table-matrix td { border:2px solid #333; padding:6px 8px; background:#fff; }
-.table-matrix thead th { background:#eef1ff; font-weight:700; }
-.matrix-group { background:#f7f7f7; font-weight:700; white-space:nowrap; }
-.ts-section { margin-top:8px; }
+/* 表 */
+.cat-matrix{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border:2px solid #333;
+}
+.cat-matrix th, .cat-matrix td{
+  border:2px solid #333;
+  padding:10px 12px;
+}
+.cat-matrix thead th{
+  background:#eef1ff;
+  font-weight:700;
+  white-space:nowrap;
+}
+.cat-matrix .sticky-left{ position:sticky; left:0; background:#f9f9f9; z-index:1; }
+.cat-matrix .num{ text-align:right; white-space:nowrap; }
+
+/* 行の色味（薄め） */
+.row-direct  th{ background:#fff5e6; }   /* オレンジ系 */
+.row-indirect th{ background:#ecf7ff; }  /* 水色系 */
+.row-other   th{ background:#f3f3f3; }   /* 灰色系 */
+
+.dot{
+  display:inline-block;
+  width:14px; height:14px;
+  border-radius:50%;
+  margin-right:8px;
+  vertical-align:middle;
+}
 </style>
 @endsection
