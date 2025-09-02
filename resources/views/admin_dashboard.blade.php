@@ -199,14 +199,12 @@
               </div>
 
               {{-- 施設内作業者（マルチセレクト。施設選択時に自動ロード） --}}
-              <div class="col-12 col-md-3">
+                <div class="col-12 col-md-3">
                 <label class="form-label">施設内作業者</label>
-                <select id="fd-helpers" class="form-select" multiple size="6"></select>
-                <div class="d-flex gap-2 mt-1">
-                  <button type="button" id="fd-select-all" class="btn btn-outline-secondary btn-sm">全選択</button>
-                  <button type="button" id="fd-clear" class="btn btn-outline-secondary btn-sm">解除</button>
+                <select id="fd-helpers" class="form-select"></select>
+                <div class="form-text small text-muted">施設を選ぶと作業者が表示されます。</div>
                 </div>
-              </div>
+
 
               <div class="col-12">
                 <button type="button" id="fd-run" class="btn btn-secondary">集計</button>
@@ -417,62 +415,97 @@ function setupFacilityDashboard(){
 }
 
 async function loadFacilityHelpers(){
-  const fid = document.getElementById('fd-facility')?.value;
-  const $h  = document.getElementById('fd-helpers');
-  const $msg= document.getElementById('fd-msg');
-  if (!$h || !fid) return;
+  const $f   = document.getElementById('fd-facility');
+  const $h   = document.getElementById('fd-helpers');
+  const $msg = document.getElementById('fd-msg');
+  if (!$h) return;
 
-  $h.innerHTML = '<option disabled>読み込み中...</option>';
+  let fid = $f?.value;
+
+  // 施設ID未設定時のフォールバック（プルダウンがあれば先頭を選ぶ）
+  if ((!fid || fid === '0') && $f && $f.tagName === 'SELECT' && $f.options.length) {
+    $f.selectedIndex = 0;
+    fid = $f.value;
+  }
+
+  if (!fid || fid === '0') {
+    $h.innerHTML = '<option value="">（施設を選択してください）</option>';
+    $msg.textContent = '施設IDが未設定です。リストから施設を選んでください。';
+    return;
+  }
+
+  $h.innerHTML = '<option value="">読み込み中...</option>';
   $msg.textContent = '';
 
   try{
-    const data = await fetchJSON(URL_FAC_HELPERS, { facility_id: fid });
-    const helpers = data.helpers || [];
+    const data = await fetchJSON(URL_FAC_HELPERS, { facility_id: Number(fid) });
+    const helpers = Array.isArray(data.helpers) ? data.helpers : [];
+
     if (!helpers.length){
-      $h.innerHTML = '<option disabled>（該当なし）</option>';
+      $h.innerHTML = '<option value="">（該当なし）</option>';
+      $msg.textContent = 'この施設に作業者が見つかりません。';
       return;
     }
-    $h.innerHTML = helpers.map(x => `<option value="${x.id}" selected>${x.helpername ?? ('ID:'+x.id)}</option>`).join('');
+
+    // 単一プルダウン用に描画（既定で先頭を選択）
+    $h.innerHTML = helpers.map(x => {
+      const name = x.helpername ?? x.helper_name ?? x.heper_name ?? x.name ?? ('ID:'+x.id);
+      return `<option value="${x.id}">${name}</option>`;
+    }).join('');
+    if ($h.options.length) $h.selectedIndex = 0;
+
   }catch(e){
     console.error(e);
-    $h.innerHTML = '<option disabled>取得失敗</option>';
+    $h.innerHTML = '<option value="">取得失敗</option>';
     $msg.textContent = '作業者の取得に失敗しました';
   }
 }
+
+
 
 async function runFacilitySummary(){
   const fid = document.getElementById('fd-facility')?.value;
   const st  = document.getElementById('fd-start')?.value;
   const ed  = document.getElementById('fd-end')?.value;
   const $h  = document.getElementById('fd-helpers');
-  const hids= [...($h?.selectedOptions || [])].map(o => o.value);
   const $msg= document.getElementById('fd-msg');
 
   if (!fid || !st || !ed){
     alert('施設と期間を入力してください。'); return;
   }
+
+  let hids = [];
+  if ($h) {
+    // 単一プルダウンなので value を1件だけ配列化
+    if ($h.value) hids = [$h.value];
+    // 念のため、未選択なら先頭を自動選択
+    else if ($h.options.length) {
+      $h.selectedIndex = 0;
+      if ($h.value) hids = [$h.value];
+    }
+  }
   if (!hids.length){
-    alert('施設内作業者を1名以上選択してください。'); return;
+    alert('施設内作業者を選択してください。');
+    return;
   }
 
   $msg.textContent = '集計中...';
 
-  let res;
   try{
-    res = await fetchJSON(URL_FAC_SUMMARY, {
+    const res = await fetchJSON(URL_FAC_SUMMARY, {
       facility_id: fid,
-      helper_ids: hids,
+      helper_ids: hids,     // サーバ側は配列のままでOK
       start_date: st,
       end_date: ed
     });
+    $msg.textContent = '';
+    renderFacilityTable(res?.rows || []);
   }catch(e){
     console.error(e);
     $msg.textContent = '集計に失敗しました';
-    return;
   }
-  $msg.textContent = '';
-  renderFacilityTable(res?.rows || []);
 }
+
 
 function renderFacilityTable(rows){
   const $tb   = document.querySelector('#fd-result tbody');

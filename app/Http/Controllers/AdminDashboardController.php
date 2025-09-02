@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
+
 
 class AdminDashboardController extends Controller
 {
@@ -25,9 +27,10 @@ class AdminDashboardController extends Controller
 
         $ageBuckets = $this->buildAgeBuckets();
         $prefRows   = $this->buildPrefRows();
-
+        // ★ 追加：施設プルダウン用
+        $facilities = DB::table('facility')->select('id','facility')->orderBy('facility')->get();
         return view('admin_dashboard', compact(
-            'facilityCount', 'helperCount', 'sexCounts', 'ageBuckets', 'prefRows'
+             'facilityCount', 'helperCount', 'sexCounts', 'ageBuckets', 'prefRows', 'facilities'
         ));
     }
 
@@ -233,22 +236,35 @@ class AdminDashboardController extends Controller
     
         /** 施設内の作業者一覧を返す（JSON） */
         public function facilityHelpers(Request $request)
-        {
-            $fid = (int) $request->input('facility_id');
-            if (!$fid) return response()->json(['helpers'=>[]]);
-    
-            $helpers = DB::table('helper')
-                ->select('id', 'helpername')
-                ->where('facilityno', $fid)
-                ->where(function($q){
-                    // delflag がある環境向けの安全ガード
-                    $q->whereNull('delflag')->orWhere('delflag', '<>', 1);
-                })
-                ->orderBy('helpername')
-                ->get();
-    
-            return response()->json(['helpers' => $helpers]);
-        }
+{
+    $fid = (int) $request->input('facility_id', 0);
+    if ($fid <= 0) {
+        return response()->json(['helpers' => []]);
+    }
+
+    $table = 'helper';
+
+    // 存在する「名前」カラムを探す（環境差分：helpername / heper_name / helper_name / name など）
+    $candidates = ['helpername', 'heper_name', 'helper_name', 'name'];
+    $nameCol = null;
+    foreach ($candidates as $c) {
+        if (Schema::hasColumn($table, $c)) { $nameCol = $c; break; }
+    }
+
+    // SELECT 句を安全に組み立て（存在しないカラムを SELECT しない）
+    $q = DB::table($table)->where('facilityno', $fid)->select('id');
+    if ($nameCol) {
+        $q->addSelect(DB::raw("$nameCol as helpername"))->orderBy('helpername');
+    } else {
+        // 最悪名前カラムが無い環境でも落ちないようフォールバック
+        $q->addSelect(DB::raw("CONCAT('ID:', id) as helpername"))->orderBy('helpername');
+    }
+
+    $helpers = $q->get();
+
+    return response()->json(['helpers' => $helpers]);
+}
+
     
         /** 指定期間×選択作業者の time_study をタスク別に合計（分）で返す（JSON） */
         public function taskSummary(Request $request)
@@ -292,6 +308,8 @@ class AdminDashboardController extends Controller
     
             return response()->json(['rows' => $rows], 200);
         }
+
+        
     
 
 }
