@@ -447,12 +447,23 @@ async function loadFacilityHelpers(){
       return;
     }
 
-    // 単一プルダウン用に描画（既定で先頭を選択）
-    $h.innerHTML = helpers.map(x => {
-      const name = x.helpername ?? x.helper_name ?? x.heper_name ?? x.name ?? ('ID:'+x.id);
-      return `<option value="${x.id}">${name}</option>`;
-    }).join('');
-    if ($h.options.length) $h.selectedIndex = 0;
+    // 先頭に「全て」を追加（value="__ALL__"）
+    const opts = ['<option value="__ALL__">全て</option>'].concat(
+      helpers.map(x => {
+        const name = x.helpername ?? x.helper_name ?? x.heper_name ?? x.name ?? ('ID:'+x.id);
+        return `<option value="${x.id}">${name}</option>`;
+      })
+    );
+
+    $h.innerHTML = opts.join('');
+
+    // 既定は「全て」を選択
+    if ($h.multiple) {
+      // 複数選択の場合は「全て」だけ選ばれている状態にする
+      [...$h.options].forEach(o => o.selected = (o.value === '__ALL__'));
+    } else {
+      $h.value = '__ALL__';
+    }
 
   }catch(e){
     console.error(e);
@@ -460,6 +471,7 @@ async function loadFacilityHelpers(){
     $msg.textContent = '作業者の取得に失敗しました';
   }
 }
+
 
 
 
@@ -474,19 +486,23 @@ async function runFacilitySummary(){
     alert('施設と期間を入力してください。'); return;
   }
 
-  let hids = [];
+  // 「全て」判定とID収集（単一/複数どちらでも動く）
+  let useAll = false;
+  let hids   = [];
+
   if ($h) {
-    // 単一プルダウンなので value を1件だけ配列化
-    if ($h.value) hids = [$h.value];
-    // 念のため、未選択なら先頭を自動選択
-    else if ($h.options.length) {
-      $h.selectedIndex = 0;
-      if ($h.value) hids = [$h.value];
+    if ($h.multiple) {
+      const vals = [...($h.selectedOptions || [])].map(o => o.value);
+      useAll = vals.includes('__ALL__') || vals.length === 0; // 0件選択も全員扱い
+      if (!useAll) hids = vals;
+    } else {
+      useAll = ($h.value === '__ALL__' || !$h.value);
+      if (!useAll) hids = [$h.value];
     }
   }
-  if (!hids.length){
-    alert('施設内作業者を選択してください。');
-    return;
+
+  if (!useAll && !hids.length){
+    alert('作業者を選択してください。'); return;
   }
 
   $msg.textContent = '集計中...';
@@ -494,7 +510,7 @@ async function runFacilitySummary(){
   try{
     const res = await fetchJSON(URL_FAC_SUMMARY, {
       facility_id: fid,
-      helper_ids: hids,     // サーバ側は配列のままでOK
+      helper_ids: useAll ? [] : hids,   // ★空配列ならサーバ側で「施設内全員」に展開
       start_date: st,
       end_date: ed
     });
@@ -505,6 +521,7 @@ async function runFacilitySummary(){
     $msg.textContent = '集計に失敗しました';
   }
 }
+
 
 
 function renderFacilityTable(rows){
