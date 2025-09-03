@@ -583,5 +583,30 @@ function renderFacilityTable(rows){
 /* よりコンパクトなテーブル用 */
 .compact-table{ font-size:12px; }
 .compact-table th, .compact-table td{ padding:.25rem .4rem!important; line-height:1.1; white-space:nowrap; }
+
+/* ▼ 枠線強化：都道府県比較／施設ダッシュボード */
+#pref-compare-table,
+#fd-result{
+  border-collapse: collapse !important;  /* 罫線を一体化 */
+  border: 2px solid #333 !important;     /* 外枠 */
+  background: #fff;
+}
+
+/* 全セルの罫線を太く濃く */
+#pref-compare-table th,
+#pref-compare-table td,
+#fd-result th,
+#fd-result td{
+  border: 2px solid #333 !important;
+}
+
+/* ヘッダ/フッタの見出し感を少し強化（任意） */
+#pref-compare-table thead th,
+#fd-result thead th,
+#fd-result tfoot th{
+  background: #eef1ff !important;  /* 見出しの薄い色 */
+  font-weight: 700;
+}
+
 </style>
 @endsection
