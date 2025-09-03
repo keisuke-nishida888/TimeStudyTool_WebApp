@@ -361,7 +361,7 @@ function drawMiniGraph(data) {
       items: [
         { key: 0, color: "#f7b98b", dot: "#f19545", label: "直接業務" },
         { key: 1, color: "#8ed6f6", dot: "#55b5ec", label: "間接業務" },
-        { key: 2, color: "#bcbcbc", dot: "#888", label: "その他業務" },
+        { key: 2, color: "#bcbcbc", dot: "#888",    label: "その他業務" },
       ]
     };
   } else {
@@ -370,7 +370,7 @@ function drawMiniGraph(data) {
       items: [
         { key: 0, color: "#f6999a", dot: "#e45757", label: "肉体的負担業務" },
         { key: 1, color: "#cfb0f7", dot: "#a15be7", label: "精神的負担業務" },
-        { key: 2, color: "#bcbcbc", dot: "#888", label: "その他業務" },
+        { key: 2, color: "#bcbcbc", dot: "#888",    label: "その他業務" },
       ]
     };
   }
@@ -384,25 +384,34 @@ function drawMiniGraph(data) {
       totalMinutes[no] += min;
     }
   }
-  const maxMinutes = Math.max(...totalMinutes, 1);
+  const maxMinutes = Math.max(...totalMinutes, 1); // 0割防止
 
-  let html = `<div style="border:2px solid #111;border-radius:18px;padding:16px 20px;background:#fff;">
-                <div style="font-weight:bold;margin-bottom:16px;">${meta.title}</div>`;
+  // ※ 棒はトラック内で % 指定にする
+  let html = `
+    <div class="mini-graph-card">
+      <div class="mini-graph-title">${meta.title}</div>
+  `;
   meta.items.forEach(item => {
     const min = totalMinutes[item.key] || 0;
     const h = Math.floor(min/60), m = min%60;
     const timeLabel = (h ? h+'時間' : '') + m + '分';
-    const barLen = Math.round((min/maxMinutes)*150);
-    html += `<div style="display:flex;align-items:center;margin-bottom:24px;gap:12px;">
-               <span style="width:20px;height:20px;border-radius:50%;background:${item.dot};flex-shrink:0;"></span>
-               <span style="width:110px;white-space:nowrap;font-size:1.05em;color:#6a6d6d;font-weight:600;">${item.label}</span>
-               <span style="min-width:100px;white-space:nowrap;font-size:1.1em;font-weight:500;color:#656969;text-align:right;">${timeLabel}</span>
-               <div style="height:24px;width:${barLen}px;background:${item.color};border-radius:12px;margin-left:16px;flex-shrink:0;"></div>
-             </div>`;
+    const pct = Math.round((min / maxMinutes) * 100);
+
+    html += `
+      <div class="mini-row">
+        <span class="mini-dot" style="background:${item.dot};"></span>
+        <span class="mini-label">${item.label}</span>
+        <span class="mini-time">${timeLabel}</span>
+        <div class="mini-bar-track">
+          <div class="mini-bar-fill" style="width:${pct}%; background:${item.color};"></div>
+        </div>
+      </div>
+    `;
   });
   html += `</div>`;
   target.innerHTML = html;
 }
+
 
 /* =========================
    期間集計：submit
@@ -825,6 +834,77 @@ document.addEventListener('DOMContentLoaded', () => {
   cursor:pointer;
 }
 .ts-action-btn:hover{ opacity:.92; }
+
+/* ===== 業務ジャンル別集計グラフ（ミニ） ===== */
+#mini-graph-area{
+  /* 枠内に収めるため横幅は親に合わせる */
+  max-width: 100%;
+}
+
+.mini-graph-card{
+  border:2px solid #111;
+  border-radius:18px;
+  padding:16px 20px;
+  background:#fff;
+  max-width: 100%;
+  box-sizing: border-box; /* 余白込みで幅計算 */
+}
+
+.mini-graph-title{
+  font-weight: bold;
+  margin-bottom: 16px;
+  color:#222;
+}
+
+.mini-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom: 18px;
+  /* 子要素が大きい場合でも行内で折り合う */
+  min-width: 0; /* 子の text-overflow が効くように */
+}
+
+.mini-dot{
+  width:20px; height:20px; border-radius:50%;
+  flex: 0 0 20px; /* 固定 */
+}
+
+.mini-label{
+  flex: 0 1 140px; /* できるだけ140pxを確保、足りなければ縮む */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.05em;
+  color:#6a6d6d;
+  font-weight:600;
+}
+
+.mini-time{
+  flex: 0 0 110px;  /* 時刻表示は固定幅で右寄せ */
+  text-align: right;
+  white-space: nowrap;
+  font-size:1.1em;
+  font-weight:500;
+  color:#656969;
+}
+
+.mini-bar-track{
+  /* 棒のトラックは行の残り幅を全て引き受ける */
+  flex: 1 1 auto;
+  height: 24px;
+  background:#f1f3f5;
+  border-radius: 12px;
+  overflow: hidden;      /* はみ出し防止のキモ */
+  min-width: 40px;       /* きつい幅でも最低限表示 */
+}
+
+.mini-bar-fill{
+  height:100%;
+  border-radius:12px;
+  /* width は JS から % で付与（0〜100%） */
+}
+
 
 </style>
 @endsection
