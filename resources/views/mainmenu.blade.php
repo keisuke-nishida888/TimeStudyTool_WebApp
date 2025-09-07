@@ -105,12 +105,12 @@
             <!-- <a href="https://questant.jp/account/login" target="_blank"><img id="btn_linkquestionary4" src="image/img_linkquestionary.png" alt="アンケートサイト"></a> -->
         @endif
     @endif
-    {{-- ▼ Time Study サマリー（この1つだけ残す） --}}
+    {{-- ▼ Time Study 分析ダッシュボード --}}
         <a id="ts-summary-link"
         href="{{ route('admin.dashboard') }}"
         class="btn-ts-summary">
         <img src="{{ asset('image/img_ts_summary.png') }}"
-            alt="Time Study サマリー"
+            alt="Time Study サマリー" style="width: 176px; height: 200px;"
             onerror="this.style.display='none'; this.parentNode.classList.add('btn-ts-summary--fallback'); this.parentNode.textContent='管理者ダッシュボード';">
         </a>
 
@@ -203,6 +203,5 @@ a.btn-ts-summary.btn-ts-summary--fallback:hover{
 #policy_dailog{ pointer-events:none !important; z-index:1 !important; }
 #policy_dailog *{ pointer-events:auto !important; }
 #ts-summary-link{ position:relative; z-index:5; }
-
 
 </style>
